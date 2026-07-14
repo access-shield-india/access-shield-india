@@ -1,0 +1,151 @@
+/**
+ * AccessShield button theme — plain CSS so styles always apply (no Tailwind @apply nesting).
+ * Imported by apps/web globals.css; class names referenced from @accessshield/ui Button.
+ */
+
+.as-btn-primary,
+.as-btn-secondary,
+.as-btn-outline,
+.as-btn-ghost,
+.as-btn-danger,
+.as-btn-on-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+  cursor: pointer;
+}
+
+.as-btn-primary:focus-visible,
+.as-btn-secondary:focus-visible,
+.as-btn-outline:focus-visible,
+.as-btn-ghost:focus-visible,
+.as-btn-danger:focus-visible,
+.as-btn-on-dark:focus-visible {
+  outline: 2px solid #1a56a0;
+  outline-offset: 2px;
+}
+
+.as-btn-sm {
+  min-height: 2.75rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.as-btn-md {
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+}
+
+.as-btn-lg {
+  min-height: 2.75rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.125rem;
+}
+
+.as-btn-primary {
+  border: 2px solid #1a3a5c;
+  background-color: #1a56a0;
+  color: #ffffff;
+  box-shadow:
+    0 1px 3px 0 rgb(0 0 0 / 0.1),
+    0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.as-btn-primary:hover {
+  border-color: #0d2e5a;
+  background-color: #1a3a5c;
+  color: #ffffff;
+}
+
+.as-btn-secondary {
+  border: 2px solid #1a56a0;
+  background-color: #ffffff;
+  color: #1a3a5c;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.as-btn-secondary:hover {
+  border-color: #1a3a5c;
+  background-color: #ebf3fb;
+  color: #1a3a5c;
+}
+
+.as-btn-outline {
+  border: 2px solid #1a56a0;
+  background-color: #ebf3fb;
+  color: #1a3a5c;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.as-btn-outline:hover {
+  border-color: #1a3a5c;
+  background-color: #ebf3fb;
+  color: #1a3a5c;
+}
+
+.as-btn-ghost {
+  border: 2px solid transparent;
+  background-color: transparent;
+  color: #1a56a0;
+}
+
+.as-btn-ghost:hover {
+  border-color: transparent;
+  background-color: #ebf3fb;
+  color: #1a3a5c;
+}
+
+.as-btn-danger {
+  border: 2px solid #6b1414;
+  background-color: #8b1a1a;
+  color: #ffffff;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.as-btn-danger:hover {
+  border-color: #5c1111;
+  background-color: #6b1414;
+  color: #ffffff;
+}
+
+.as-btn-on-dark {
+  border: 2px solid #ffffff;
+  background-color: #ffffff;
+  color: #1a3a5c;
+  box-shadow:
+    0 1px 3px 0 rgb(0 0 0 / 0.1),
+    0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.as-btn-on-dark:hover {
+  border-color: #ebf3fb;
+  background-color: #f4f8fd;
+  color: #1a3a5c;
+}
+
+.as-btn-primary:disabled,
+.as-btn-secondary:disabled,
+.as-btn-outline:disabled,
+.as-btn-ghost:disabled,
+.as-btn-danger:disabled,
+.as-btn-on-dark:disabled,
+.as-btn-primary[aria-disabled='true'],
+.as-btn-secondary[aria-disabled='true'],
+.as-btn-outline[aria-disabled='true'],
+.as-btn-ghost[aria-disabled='true'],
+.as-btn-danger[aria-disabled='true'],
+.as-btn-on-dark[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}

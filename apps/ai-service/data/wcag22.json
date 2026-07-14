@@ -1,0 +1,142 @@
+{
+  "1.1.1": {
+    "title": "Non-text Content",
+    "level": "A",
+    "short": "All non-text content has a text alternative that serves the equivalent purpose",
+    "indian_context": "Critical for screen reader users. India has 40M+ visually impaired people who rely on alt text.",
+    "common_fix": "Add descriptive alt attribute to img elements; use aria-label for icon buttons"
+  },
+  "1.3.1": {
+    "title": "Info and Relationships",
+    "level": "A",
+    "short": "Information, structure, and relationships conveyed through presentation can be programmatically determined",
+    "indian_context": "Essential for government forms and banking applications. Proper heading structure aids navigation.",
+    "common_fix": "Use semantic HTML (h1-h6, lists, tables); associate form labels with inputs"
+  },
+  "1.4.1": {
+    "title": "Use of Color",
+    "level": "A",
+    "short": "Color is not used as the only visual means of conveying information",
+    "indian_context": "8% of Indian males have color vision deficiency. Never use red/green alone for error/success states.",
+    "common_fix": "Add text labels, icons, or patterns alongside color indicators"
+  },
+  "1.4.3": {
+    "title": "Contrast (Minimum)",
+    "level": "AA",
+    "short": "Text has a contrast ratio of at least 4.5:1 (3:1 for large text)",
+    "indian_context": "Important for users in varying light conditions common in India. Low-end displays need higher contrast.",
+    "common_fix": "Increase text color darkness or background lightness; use contrast checker tools"
+  },
+  "1.4.4": {
+    "title": "Resize Text",
+    "level": "AA",
+    "short": "Text can be resized up to 200% without loss of content or functionality",
+    "indian_context": "Aging population and limited access to eye care make text resizing essential for Indian users.",
+    "common_fix": "Use relative units (rem, em) instead of px; test with browser zoom at 200%"
+  },
+  "1.4.10": {
+    "title": "Reflow",
+    "level": "AA",
+    "short": "Content reflows without horizontal scrolling at 320px width",
+    "indian_context": "High mobile usage in India (700M+ users). Most access web on small screens.",
+    "common_fix": "Use responsive design; avoid fixed widths; use CSS flexbox/grid"
+  },
+  "1.4.11": {
+    "title": "Non-text Contrast",
+    "level": "AA",
+    "short": "UI components and graphics have at least 3:1 contrast ratio",
+    "indian_context": "Form inputs and buttons must be visible on low-quality mobile displays common in India.",
+    "common_fix": "Ensure borders, icons, and focus indicators meet 3:1 contrast against adjacent colors"
+  },
+  "1.4.12": {
+    "title": "Text Spacing",
+    "level": "AA",
+    "short": "No loss of content when text spacing is adjusted",
+    "indian_context": "Users with dyslexia or cognitive disabilities may need increased spacing. Common in Indian workforce.",
+    "common_fix": "Avoid fixed heights on text containers; use flexible CSS"
+  },
+  "2.1.1": {
+    "title": "Keyboard",
+    "level": "A",
+    "short": "All functionality is operable through a keyboard interface",
+    "indian_context": "Many Indian users rely on keyboard due to motor disabilities or assistive technology.",
+    "common_fix": "Ensure all interactive elements are focusable; use native HTML buttons and links"
+  },
+  "2.1.2": {
+    "title": "No Keyboard Trap",
+    "level": "A",
+    "short": "Keyboard focus can be moved away from any component using standard keys",
+    "indian_context": "Keyboard traps prevent users from accessing other page content. Critical for accessibility.",
+    "common_fix": "Ensure Tab moves through all elements; Escape closes modals; avoid focus loops"
+  },
+  "2.4.1": {
+    "title": "Bypass Blocks",
+    "level": "A",
+    "short": "A mechanism is available to bypass blocks of content repeated on multiple pages",
+    "indian_context": "Skip links essential for government portals with complex navigation. Required by GIGW 3.0.",
+    "common_fix": "Add 'Skip to main content' link as first focusable element on every page"
+  },
+  "2.4.3": {
+    "title": "Focus Order",
+    "level": "A",
+    "short": "Focusable components receive focus in an order that preserves meaning",
+    "indian_context": "Logical tab order is essential for form completion on Indian banking/government sites.",
+    "common_fix": "Use natural DOM order; avoid positive tabindex values; test with Tab key"
+  },
+  "2.4.4": {
+    "title": "Link Purpose (In Context)",
+    "level": "A",
+    "short": "The purpose of each link can be determined from the link text alone or together with context",
+    "indian_context": "Avoid 'Click here' and 'Read more' - screen reader users need descriptive links.",
+    "common_fix": "Use descriptive link text like 'Download Annual Report 2024' instead of 'Click here'"
+  },
+  "2.4.7": {
+    "title": "Focus Visible",
+    "level": "AA",
+    "short": "Keyboard focus indicator is visible on all interactive elements",
+    "indian_context": "Required for keyboard navigation. Never remove outline without replacement.",
+    "common_fix": "Use visible outline on :focus-visible; minimum 2px solid with good contrast"
+  },
+  "2.4.11": {
+    "title": "Focus Not Obscured (Minimum)",
+    "level": "AA",
+    "short": "When a component receives focus, it is not entirely hidden by author-created content",
+    "indian_context": "New in WCAG 2.2. Sticky headers must not cover focused elements.",
+    "common_fix": "Use scroll-margin-top on focusable elements; ensure sticky elements don't obscure focus"
+  },
+  "2.5.3": {
+    "title": "Label in Name",
+    "level": "A",
+    "short": "UI components with visible text have accessible names that include the visible text",
+    "indian_context": "Voice control users say what they see. Button labeled 'Submit' must have accessible name 'Submit'.",
+    "common_fix": "Ensure aria-label starts with or matches visible text label"
+  },
+  "2.5.8": {
+    "title": "Target Size (Minimum)",
+    "level": "AA",
+    "short": "Touch targets are at least 24x24 CSS pixels with adequate spacing",
+    "indian_context": "New in WCAG 2.2. Essential for mobile users with motor impairments. 44x44px recommended.",
+    "common_fix": "Increase button/link padding; use min-height: 44px for touch targets"
+  },
+  "3.1.1": {
+    "title": "Language of Page",
+    "level": "A",
+    "short": "The default human language of each page can be programmatically determined",
+    "indian_context": "Critical for multilingual India. Screen readers need lang attribute to pronounce correctly.",
+    "common_fix": "Add lang='en' or lang='hi' to html element; use BCP 47 language codes"
+  },
+  "3.3.1": {
+    "title": "Error Identification",
+    "level": "A",
+    "short": "If an input error is automatically detected, the item in error is identified and described in text",
+    "indian_context": "Clear error messages essential for Indian users filling government/banking forms.",
+    "common_fix": "Display error text near the field; use aria-describedby to associate; announce with aria-live"
+  },
+  "4.1.2": {
+    "title": "Name, Role, Value",
+    "level": "A",
+    "short": "All UI components have accessible name, role, and state that can be programmatically set",
+    "indian_context": "Assistive technology must understand all interactive elements. Critical for NVDA/JAWS users.",
+    "common_fix": "Use native HTML elements; add ARIA attributes only when necessary; test with screen reader"
+  }
+}

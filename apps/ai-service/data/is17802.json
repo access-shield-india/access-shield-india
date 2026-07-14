@@ -1,0 +1,82 @@
+{
+  "IS-001": {
+    "title": "HTML Language Declaration",
+    "requirement": "HTML lang attribute must be a valid BCP 47 code for Indian languages",
+    "valid_codes": [
+      "hi",
+      "bn",
+      "te",
+      "mr",
+      "ta",
+      "gu",
+      "kn",
+      "ml",
+      "pa",
+      "or",
+      "as",
+      "ur",
+      "sa",
+      "sd",
+      "ks",
+      "ne",
+      "si",
+      "mni",
+      "doi",
+      "sat",
+      "mai",
+      "kok",
+      "en",
+      "en-IN"
+    ],
+    "legal_ref": "IS 17802:2021 Clause 9.3.1.1",
+    "rpwd_ref": "RPwD Act 2016 Section 40",
+    "testing": "Check if html element has valid lang attribute from approved list",
+    "fix": "Add lang='hi' for Hindi or lang='en-IN' for Indian English to the html element"
+  },
+  "IS-002": {
+    "title": "Devanagari Unicode for Hindi Content",
+    "requirement": "Hindi/Devanagari content must use Unicode (U+0900–U+097F range), not ASCII transliteration",
+    "unicode_range": "U+0900-U+097F",
+    "legal_ref": "IS 17802:2021 Clause 9.3.1.2",
+    "rpwd_ref": "RPwD Act 2016 Section 40",
+    "testing": "Verify Hindi text contains Unicode characters in Devanagari range",
+    "fix": "Replace ASCII transliteration (e.g., 'namaste') with proper Devanagari Unicode (e.g., 'नमस्ते')"
+  },
+  "IS-003": {
+    "title": "Form Help Text Language Consistency",
+    "requirement": "Form field help text must be in the same language as the field label",
+    "legal_ref": "IS 17802:2021 Clause 9.3.2",
+    "rpwd_ref": "RPwD Act 2016 Section 42",
+    "testing": "Compare lang attribute of label and associated help text/description",
+    "fix": "Ensure help text uses the same language as the form label; translate if necessary"
+  },
+  "IS-004": {
+    "title": "Indian Date Format Support",
+    "requirement": "All date inputs must support DD/MM/YYYY format (Indian standard)",
+    "format": "DD/MM/YYYY",
+    "legal_ref": "IS 17802:2021 Clause 9.4.1",
+    "rpwd_ref": "GIGW 3.0 Section 4.2",
+    "testing": "Verify date input accepts and displays DD/MM/YYYY format",
+    "fix": "Use pattern attribute with DD/MM/YYYY format; ensure placeholder shows Indian format"
+  },
+  "IS-005": {
+    "title": "Indian Phone Number Format",
+    "requirement": "Phone number inputs must accept +91 10-digit Indian mobile format",
+    "pattern": "^(\\+91|91|0)?[6-9]\\d{9}$",
+    "placeholder": "+91 98765 43210",
+    "legal_ref": "IS 17802:2021 Clause 9.4.2",
+    "rpwd_ref": "GIGW 3.0 Section 4.2",
+    "testing": "Verify phone input accepts Indian mobile numbers starting with 6-9",
+    "fix": "Update input pattern to accept Indian mobile format; show +91 prefix option"
+  },
+  "IS-006": {
+    "title": "Indian Currency Display",
+    "requirement": "Currency must be displayed using ₹ symbol with Indian numbering (lakhs/crores)",
+    "symbol": "₹",
+    "format": "₹X,XX,XXX (lakhs) or ₹X,XX,XX,XXX (crores)",
+    "legal_ref": "IS 17802:2021 Clause 9.4.3",
+    "rpwd_ref": "SEBI Circular 2024",
+    "testing": "Verify currency uses ₹ symbol (not Rs. or INR) and Indian comma placement",
+    "fix": "Use Intl.NumberFormat('en-IN', {style: 'currency', currency: 'INR'}) for formatting"
+  }
+}

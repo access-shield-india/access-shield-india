@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1781159432524,
+      "tag": "0000_graceful_trish_tilby",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781159432525,
+      "tag": "0001_add_public_scans_and_waitlist",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781159432526,
+      "tag": "0002_violation_ai_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781159432527,
+      "tag": "0003_document_scanner",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1781159432528,
+      "tag": "0004_document_scan_user_fk",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783516800000,
+      "tag": "0005_scan_page_jobs",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783517100000,
+      "tag": "0006_violation_fingerprint",
+      "breakpoints": true
+    }
+  ]
+}

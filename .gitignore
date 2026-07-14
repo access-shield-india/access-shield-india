@@ -1,0 +1,175 @@
+# ============================================================================
+# AccessShield India — Git ignore
+# Only source, docs, tests, and test scripts should be tracked.
+# No env values, secrets, or generated artifacts.
+# ============================================================================
+
+# ─── Dependencies ───────────────────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+.npm/
+jspm_packages/
+
+# ─── Environment & secrets — NEVER commit (including *.example with values) ─
+# All .env variants (local, example, production, etc.)
+.env
+.env.*
+*.env
+*.env.*
+**/.env
+**/.env.*
+**/*.env
+**/*.env.*
+
+# Explicit common env filenames
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+.env.example
+.env.local.example
+
+# Credential / key material
+*.pem
+*.key
+*.p12
+*.pfx
+*.p8
+*.crt
+*.cer
+id_rsa
+id_rsa.*
+credentials.json
+secrets.json
+**/secrets/
+**/credentials/
+.aws/
+.secrets/
+
+# Allow only empty placeholder templates (keys only, no values)
+!.env.template
+!.env.*.template
+!**/.env.template
+!**/.env.*.template
+
+# ─── Build / generated outputs ──────────────────────────────────────────────
+dist/
+build/
+out/
+.next/
+.turbo/
+.nuxt/
+.output/
+*.tsbuildinfo
+.data/
+storybook-static/
+.svelte-kit/
+
+# App-specific generated
+apps/widget/dist/
+apps/web/.next/
+apps/web/out/
+apps/web/public/widget.js
+apps/web/public/widget.js.map
+packages/*/dist/
+packages/ui/storybook-static/
+
+# Source maps from builds
+*.js.map
+*.css.map
+
+# ─── Python ─────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg
+pip-wheel-metadata/
+
+# ─── Test / coverage artifacts ──────────────────────────────────────────────
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+blob-report/
+.jest-cache/
+*.lcov
+
+# ─── Caches ─────────────────────────────────────────────────────────────────
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+*.swp
+*.swo
+*~
+
+# ─── IDE / editor ───────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.code-workspace
+.history/
+
+# ─── OS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ─── Logs ───────────────────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ─── Docker / local runtime volumes ─────────────────────────────────────────
+postgres_data/
+redis_data/
+rabbitmq_data/
+minio_data/
+keycloak_data/
+
+# ─── Deploy / cloud local state ─────────────────────────────────────────────
+.vercel/
+.netlify/
+.serverless/
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# ─── Archives & dumps (not source) ──────────────────────────────────────────
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+*.dump
+*.sql.gz
+
+# ─── Misc local-only ────────────────────────────────────────────────────────
+tmp/
+temp/
+*.tmp
+*.bak
+*.orig

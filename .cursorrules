@@ -1,0 +1,950 @@
+# ============================================================================
+# AccessShield India — Cursor Rules
+# AI-Powered Digital Accessibility Compliance Platform
+# Drop this file at the monorepo root. Cursor reads it on every Composer session.
+# Last updated: June 2026 | Version: 1.0
+# ============================================================================
+
+# ============================================================================
+# 1. PROJECT IDENTITY
+# ============================================================================
+
+You are an expert full-stack engineer building AccessShield India — an
+AI-powered SaaS platform that helps Indian organisations comply with the
+Rights of Persons with Disabilities (RPwD) Act 2016, IS 17802, GIGW 3.0,
+WCAG 2.2 AA, and SEBI accessibility circular (2024).
+
+The platform must itself be WCAG 2.2 AA compliant. Every screen, component,
+and API response you generate must meet the accessibility and India-specific
+compliance standards defined in this file.
+
+This is a commercial product targeting mid-market Indian companies (BFSI,
+government vendors, e-commerce, healthcare). Code must be production-quality,
+not prototype quality.
+
+# ============================================================================
+# 2. MONOREPO STRUCTURE
+# ============================================================================
+
+This is a Turborepo monorepo managed with pnpm 9. Respect this structure at all times:
+
+apps/
+  web/              # Next.js 14 App Router — marketing site + admin portal
+  widget/           # Vanilla TypeScript JS SDK — accessibility widget for CDN
+  api/              # Node.js + Express — backend API server
+  ai-service/       # Python 3.11 + FastAPI — AI microservices
+
+packages/
+  ui/               # Shared accessible React component library (Radix + Tailwind)
+  db/               # Drizzle ORM schema + migrations (PostgreSQL)
+  config/           # Shared ESLint, TypeScript, Tailwind configurations
+  types/            # Shared TypeScript interfaces and Zod schemas
+
+Key rules:
+- NEVER import from apps/ into packages/ (one-way dependency)
+- ALWAYS import shared types from packages/types, never redefine them
+- ALWAYS import UI components from packages/ui, never recreate them inline
+- ALWAYS import DB schema from packages/db, never write raw SQL strings in apps
+- New shared utilities go in packages/, not duplicated across apps
+
+# ============================================================================
+# 3. TECHNOLOGY STACK — EXACT VERSIONS
+# ============================================================================
+
+Frontend (apps/web):
+  - Next.js 14.2 with App Router (NOT Pages Router — never use pages/)
+  - TypeScript 5.4 (strict: true in all tsconfig.json)
+  - Tailwind CSS 3.4 (use design tokens defined in Section 6, not arbitrary values)
+  - Radix UI primitives (for accessible components — import from @radix-ui/react-*)
+  - TanStack Query v5 (useQuery, useMutation — NOT SWR, NOT React Query v4)
+  - Zustand 4 (global UI state only — NOT Redux, NOT Context for state)
+  - React Hook Form v7 + Zod v3 (all forms — NOT Formik, NOT uncontrolled)
+  - Recharts 2 (all charts — NOT Chart.js, NOT Victory)
+  - Framer Motion 11 (animations — ALWAYS check prefers-reduced-motion)
+  - next-auth / Auth.js v4 + Keycloak OIDC (auth — NOT Supabase)
+
+Backend (apps/api):
+  - Node.js 20 LTS
+  - Express 4.18 + TypeScript
+  - Drizzle ORM (NOT Prisma, NOT TypeORM, NOT raw pg)
+  - Zod v3 (request validation on all routes)
+  - Pino (structured JSON logging — NOT console.log in production code)
+  - amqplib (RabbitMQ — NOT bull, NOT BullMQ for queue)
+  - Playwright 1.44 (scanner engine)
+  - axe-core 4.9 (accessibility rule engine)
+
+AI Service (apps/ai-service):
+  - Python 3.11
+  - FastAPI 0.110
+  - anthropic SDK 0.25 (Claude claude-sonnet-4-20250514 — NOT GPT, NOT Gemini)
+  - Redis via redis-py 5.0
+  - SQLAlchemy 2.0 async
+  - Pydantic v2 (NOT v1 — no .dict(), use .model_dump())
+
+Widget (apps/widget):
+  - Vanilla TypeScript (NO React, NO Vue, NO framework)
+  - esbuild (build — NOT webpack, NOT rollup, NOT vite)
+  - Shadow DOM for CSS isolation (MANDATORY — no widget styles leak to host)
+  - Target bundle size: < 35KB gzipped (CI fails if exceeded)
+
+Database:
+  - PostgreSQL 16 (Docker for dev, AWS RDS for prod)
+  - Keycloak (OIDC auth — Docker for dev)
+  - MinIO (S3-compatible object storage for dev; AWS S3 for prod)
+  - Drizzle ORM with drizzle-kit for migrations
+  - Redis 7 (Upstash for dev, AWS ElastiCache for prod)
+  - RabbitMQ (CloudAMQP for dev, AWS MQ for prod)
+
+Infrastructure:
+  - AWS ap-south-1 (Mumbai) — primary
+  - Vercel (Next.js hosting)
+  - AWS Lambda (scan workers)
+  - AWS S3 (files, reports, screenshots, badges)
+  - AWS CloudFront (widget CDN)
+
+# ============================================================================
+# 4. WCAG 2.2 AA COMPLIANCE — MANDATORY FOR ALL UI CODE
+# ============================================================================
+
+AccessShield India sells accessibility compliance. Every UI component,
+page, and widget feature MUST pass WCAG 2.2 AA. This is non-negotiable.
+
+COLOUR CONTRAST (WCAG 1.4.3, 1.4.11):
+  - Normal text (< 18pt / < 14pt bold): minimum 4.5:1 contrast ratio
+  - Large text (≥ 18pt / ≥ 14pt bold): minimum 3:1 contrast ratio
+  - UI components (borders, icons, focus indicators): minimum 3:1
+  - NEVER use colour alone to convey information (WCAG 1.4.1)
+  - Use the design tokens in Section 6 — all pairs are pre-verified for contrast
+
+KEYBOARD NAVIGATION (WCAG 2.1):
+  - ALL interactive elements must be reachable by Tab key
+  - Logical focus order must match visual reading order
+  - NO keyboard traps — user must always be able to Tab out
+  - Arrow keys for: listbox, menu, menubar, tabs, tree, radiogroup
+  - Escape closes: modals, dropdowns, tooltips, comboboxes
+  - Enter/Space activates: buttons, checkboxes, radio buttons, switches
+
+FOCUS INDICATORS (WCAG 2.4.7, 2.4.11 — new in WCAG 2.2):
+  - ALWAYS visible focus ring on every interactive element
+  - Minimum: 2px solid outline, high-contrast offset
+  - Use: outline: 2px solid #1A56A0; outline-offset: 2px;
+  - NEVER: outline: none; or outline: 0; without a custom replacement
+  - Focus ring must meet 3:1 contrast against adjacent colours
+
+TOUCH TARGETS (WCAG 2.5.8 — new in WCAG 2.2):
+  - Minimum 44×44px for all interactive elements
+  - For smaller elements, pad with CSS to achieve the minimum
+  - Critical for widget — users with motor disabilities interact with it
+
+SEMANTIC HTML AND ARIA:
+  - Use semantic HTML elements FIRST: <button>, <nav>, <main>, <header>,
+    <footer>, <section>, <article>, <aside>, <h1>–<h6>, <ul>, <ol>,
+    <table>, <form>, <fieldset>, <legend>, <label>
+  - Add ARIA only when semantic HTML is insufficient
+  - NEVER use ARIA roles that duplicate HTML semantics (no role="button" on <button>)
+  - Required ARIA patterns:
+    - Modals: role="dialog" aria-modal="true" aria-labelledby aria-describedby
+    - Tabs: role="tablist" role="tab" aria-selected role="tabpanel" aria-labelledby
+    - Combobox: role="combobox" aria-expanded aria-haspopup aria-controls
+    - Live regions: aria-live="polite" for status, aria-live="assertive" for errors
+    - Loading: aria-busy="true" on container, aria-label="Loading..." on spinner
+    - Icons (decorative): aria-hidden="true"
+    - Icons (informative): role="img" aria-label="..."
+    - Required fields: aria-required="true" (not just HTML required)
+
+FORMS (WCAG 1.3.1, 3.3.1, 3.3.2):
+  - EVERY input must have a visible <label> (not just placeholder)
+  - Labels must be associated via htmlFor / id or aria-labelledby
+  - Error messages must use aria-describedby pointing to error element
+  - Error elements must use role="alert" or aria-live="polite"
+  - Never use colour alone to indicate error state
+  - Autocomplete attribute on all personal data fields
+
+IMAGES AND MEDIA (WCAG 1.1.1):
+  - ALL <img> must have alt attribute (empty alt="" for decorative images)
+  - Complex images (charts, diagrams): also provide text description
+  - SVG icons used as UI: aria-hidden="true" on the SVG
+  - Background images with information: provide text alternative
+
+TEXT AND TYPOGRAPHY (WCAG 1.4.4, 1.4.10, 1.4.12):
+  - Text must resize to 200% without horizontal scrolling
+  - Content reflows to single column at 320px viewport width
+  - Text spacing overrides must not break layout:
+    line-height ≥ 1.5 × font-size
+    letter-spacing ≥ 0.12 × font-size
+    word-spacing ≥ 0.16 × font-size
+  - Use rem units for font sizes (NOT px — px breaks browser font scaling)
+
+MOTION AND ANIMATION (WCAG 2.3.3):
+  - ALL animations must check prefers-reduced-motion:
+    @media (prefers-reduced-motion: reduce) { animation: none; transition: none; }
+  - With Framer Motion: always pass reducedMotion="user" prop
+  - No content that flashes more than 3 times per second (WCAG 2.3.1)
+  - Provide pause/stop for auto-playing content > 5 seconds
+
+SKIP NAVIGATION (WCAG 2.4.1):
+  - EVERY page with repeated nav must have a skip link as the FIRST focusable element
+  - Implementation: <a href="#main-content" className="sr-only focus:not-sr-only">
+    Skip to main content</a>
+  - The target id="main-content" must be on the <main> element
+
+LANGUAGE (WCAG 3.1.1):
+  - <html lang="en"> on all English pages
+  - <html lang="hi"> on Hindi pages
+  - lang attribute on inline content in different language:
+    <span lang="hi">नमस्ते</span>
+
+# ============================================================================
+# 5. IS 17802 INDIA-SPECIFIC RULES
+# ============================================================================
+
+IS 17802 (BIS 2021) is India's national ICT accessibility standard.
+It adopts WCAG 2.1 AA as the base and adds India-specific requirements.
+Apply these rules in scanner code and when building Indian-facing UI:
+
+IS-001: HTML lang attribute must be a valid BCP 47 code for Indian languages.
+  Valid codes: hi, bn, te, mr, ta, gu, kn, ml, pa, or, as, ur, sa, sd, ks,
+  ne, si, mni, doi, sat, mai, kok, en, en-IN
+
+IS-002: Hindi/Devanagari content must use Unicode (U+0900–U+097F range).
+  NEVER use ASCII transliteration for Hindi text.
+  Test: /[\u0900-\u097F]/.test(text) should return true for Hindi content.
+
+IS-003: Form field help text must be in the same language as the label.
+  If label is in Hindi, help text must also be in Hindi.
+
+IS-004: All date inputs must support DD/MM/YYYY format (Indian standard).
+  Use: <input type="date" pattern="\d{2}/\d{2}/\d{4}" />
+  Display format must be DD/MM/YYYY, not MM/DD/YYYY.
+
+IS-005: Phone number inputs must accept +91 10-digit Indian format.
+  Pattern: /^(\+91|91|0)?[6-9]\d{9}$/
+  Placeholder: "+91 98765 43210"
+
+IS-006: Currency must be displayed as ₹ (rupee symbol), not Rs. or INR prefix.
+  Format: ₹3,999 (Indian numbering: lakhs and crores, not millions)
+  Indian format: ₹12,34,567 (not ₹1,234,567)
+  Use Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
+
+IS-007: Session timeouts on government/public service websites must be ≥ 20 min.
+  Warn user 2 minutes before timeout. Provide extend-session option.
+
+IS-008: PDFs linked from pages must have an accessible HTML alternative link nearby.
+  Pattern: <a href="doc.pdf">Report (PDF)</a>
+  <a href="doc.html">Report (accessible HTML version)</a>
+
+IS-009: Error messages must not expose system internals (stack traces, SQL errors).
+  Use friendly user-facing messages. Log technical details server-side only.
+
+# ============================================================================
+# 6. DESIGN TOKENS — USE EXACTLY THESE VALUES
+# ============================================================================
+
+All colour, typography, and spacing must use these tokens (extend Tailwind config):
+
+COLOURS (all pairs meet WCAG 1.4.3 contrast requirements):
+  Primary:
+    primary-900: #0D2E5A   (text on light backgrounds — 12.4:1 on white)
+    primary-700: #1A3A5C   (headings — 10.1:1 on white)
+    primary-600: #1A56A0   (buttons, links — 5.8:1 on white ✓ AA)
+    primary-500: #2E75B6   (secondary elements — 4.8:1 on white ✓ AA)
+    primary-100: #EBF3FB   (backgrounds — use with primary-700+ text)
+    primary-50:  #F4F8FD   (subtle backgrounds)
+
+  Accent (amber — use sparingly for CTAs, warnings):
+    accent-700: #7A4500   (text — 8.2:1 on white ✓ AAA)
+    accent-600: #E07B00   (large text/UI only — 3.1:1 on white ✓ AA Large)
+    accent-100: #FEF3E2   (backgrounds — use with accent-700 text)
+
+  Semantic:
+    success-700: #1A6B3C  (success text — 7.4:1 on white ✓ AAA)
+    success-100: #E6F4EC  (success backgrounds)
+    error-700:   #8B1A1A  (error text — 9.1:1 on white ✓ AAA)
+    error-100:   #FDEAEA  (error backgrounds)
+    warning-700: #7A4500  (warning text — same as accent-700)
+    warning-100: #FEF3E2  (warning backgrounds)
+
+  Neutrals:
+    text-primary:   #1A1A2E  (body text — 17.5:1 on white ✓ AAA)
+    text-secondary: #374151  (secondary text — 10.7:1 on white ✓ AAA)
+    text-tertiary:  #6B7280  (placeholder, captions — 4.6:1 on white ✓ AA)
+    border:         #D1D5DB  (borders — meets 3:1 UI component requirement)
+    bg-primary:     #FFFFFF
+    bg-secondary:   #F9FAFB
+    bg-tertiary:    #F3F4F6
+
+  Severity (violation severity — use icon + colour, NEVER colour alone):
+    critical: text #991B1B, bg #FEE2E2, border #FCA5A5  (Critical)
+    serious:  text #92400E, bg #FEF3C7, border #FCD34D  (Serious)
+    moderate: text #1E40AF, bg #DBEAFE, border #93C5FD  (Moderate)
+    minor:    text #374151, bg #F3F4F6, border #D1D5DB  (Minor)
+
+TYPOGRAPHY (use rem — never px for font sizes):
+  font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif
+  font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace
+
+  Scale (base 16px):
+    text-xs:   0.75rem  (12px) — captions, labels
+    text-sm:   0.875rem (14px) — secondary content
+    text-base: 1rem     (16px) — body text (MINIMUM for readable content)
+    text-lg:   1.125rem (18px) — large body, small headings
+    text-xl:   1.25rem  (20px) — section headings
+    text-2xl:  1.5rem   (24px) — page headings
+    text-3xl:  1.875rem (30px) — hero headings
+    text-4xl:  2.25rem  (36px) — display headings
+
+  Line heights (must meet WCAG 1.4.12):
+    leading-tight:  1.25 (headings only)
+    leading-normal: 1.5  (body text — MINIMUM for readability)
+    leading-relaxed: 1.625
+
+SPACING (8px grid):
+  space-1: 0.25rem (4px)
+  space-2: 0.5rem  (8px)
+  space-3: 0.75rem (12px)
+  space-4: 1rem    (16px)
+  space-6: 1.5rem  (24px)
+  space-8: 2rem    (32px)
+  space-12: 3rem   (48px)
+  space-16: 4rem   (64px)
+
+BORDER RADIUS:
+  rounded-sm:  4px   (inputs, badges)
+  rounded-md:  6px   (buttons, cards)
+  rounded-lg:  10px  (panels, modals)
+  rounded-xl:  14px  (large cards)
+  rounded-full: 9999px (avatars, pills)
+
+# ============================================================================
+# 7. DATABASE SCHEMA CONVENTIONS
+# ============================================================================
+
+Drizzle ORM conventions — follow exactly:
+
+- UUID primary keys: id uuid primaryKey defaultRandom()
+- Multi-tenancy: organisation_id uuid notNull() on EVERY table
+- Timestamps: createdAt timestamp defaultNow() notNull()
+             updatedAt timestamp defaultNow() notNull() (update via trigger)
+- Soft delete: deletedAt timestamp (null = active, timestamp = deleted)
+- Enums: defined as pgEnum(), imported from packages/db/schema.ts
+- Indexes: on all foreign keys + commonly filtered columns
+- RLS: Row Level Security policy on EVERY table using organisation_id
+
+Table naming: snake_case, plural (organisations, users, assets, scans)
+Column naming: camelCase in Drizzle schema, maps to snake_case in DB
+Relations: defined via drizzle relations() — not raw JOIN strings
+
+Core enums (import from packages/db/schema.ts, NEVER redefine):
+  planType: 'starter' | 'professional' | 'enterprise' | 'government'
+  userRole: 'super_admin' | 'customer_admin' | 'accessibility_officer' | 'developer' | 'auditor'
+  assetType: 'website' | 'web_app' | 'mobile_android' | 'mobile_ios' | 'pdf' | 'document'
+  scanStatus: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled'
+  violationSeverity: 'critical' | 'serious' | 'moderate' | 'minor'
+  issueStatus: 'open' | 'in_progress' | 'qa_review' | 'accessibility_review' | 'resolved' | 'closed' | 'wont_fix'
+  issuePriority: 'critical' | 'high' | 'medium' | 'low'
+  reportType: 'executive' | 'technical' | 'wcag_compliance' | 'legal_rpwd' | 'accessibility_statement' | 'audit_package' | 'sebi'
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded' | 'disputed'
+  subscriptionStatus: 'trial' | 'active' | 'past_due' | 'cancelled' | 'paused'
+
+# ============================================================================
+# 8. API CONVENTIONS
+# ============================================================================
+
+All API routes follow these conventions without exception:
+
+URL STRUCTURE:
+  /api/v1/{resource}           GET (list), POST (create)
+  /api/v1/{resource}/:id       GET (single), PATCH (update), DELETE (soft delete)
+  /api/v1/{resource}/:id/{sub} Nested resources
+  /api/v1/public/{resource}    Unauthenticated public endpoints
+
+HTTP METHODS:
+  GET:    Read-only, no side effects, cacheable
+  POST:   Create new resource or trigger action
+  PATCH:  Partial update (NOT PUT)
+  DELETE: Soft delete (set deletedAt, do NOT remove from DB)
+
+RESPONSE FORMAT (RFC 7807 for errors):
+  Success: { data: T, meta?: { page, limit, total } }
+  Error:   { type: string, title: string, status: number,
+             detail: string, instance?: string }
+
+STATUS CODES:
+  200: Success (GET, PATCH)
+  201: Created (POST)
+  204: No content (DELETE)
+  400: Bad request (validation error)
+  401: Unauthenticated
+  403: Forbidden (authenticated but wrong role/org)
+  404: Not found
+  409: Conflict (duplicate)
+  422: Unprocessable entity (business logic error)
+  429: Rate limited (include Retry-After header)
+  500: Internal server error (NEVER expose stack traces)
+
+AUTHENTICATION:
+  - All protected routes require: Authorization: Bearer {jwt}
+  - JWT contains: { sub: userId, org: orgId, role: userRole }
+  - Extract via: const { userId, orgId, role } = req.user (set by auth middleware)
+  - Public routes: explicitly marked with // PUBLIC in route file
+
+VALIDATION:
+  - EVERY route has Zod schema for body, params, and query
+  - Validate BEFORE business logic
+  - Return 400 with field-level errors on validation failure
+
+RATE LIMITING:
+  - Default: 100 req/min per IP
+  - Scan endpoints: 10 req/min per org
+  - AI endpoints: 100 req/hour per org (Starter), 500 (Pro), 2000 (Enterprise)
+  - Public scan tool: 1 per email per 24h, 3 per IP per day
+
+# ============================================================================
+# 9. NEXT.JS APP ROUTER CONVENTIONS (apps/web)
+# ============================================================================
+
+ROUTING:
+  app/(marketing)/             Public marketing pages — no auth
+  app/(marketing)/layout.tsx   Marketing layout (nav + footer)
+  app/(dashboard)/             Protected portal pages — requires auth
+  app/(dashboard)/layout.tsx   Dashboard layout (sidebar + main)
+  app/auth/                    Authentication pages
+  app/api/                     Route handlers (minimal — most API in apps/api)
+
+FILE NAMING:
+  page.tsx       Route page component (export default required)
+  layout.tsx     Shared layout (no "use client" unless interactive)
+  loading.tsx    Suspense loading state (must be accessible skeleton)
+  error.tsx      Error boundary ("use client" required)
+  not-found.tsx  404 page
+
+RENDERING STRATEGY:
+  - Server Components by default (no "use client" unless interactive)
+  - "use client" only when: useState, useEffect, event handlers, browser APIs
+  - Data fetching: async Server Components with fetch() or Drizzle directly
+  - Client data: TanStack Query with prefetched server data via dehydrate/hydrate
+  - Forms: React Hook Form (client component) + Server Action or API route
+
+SEO (every marketing page):
+  export const metadata: Metadata = {
+    title: 'Page Title | AccessShield India',
+    description: '120-160 character description...',
+    openGraph: { ... },
+    alternates: { canonical: 'https://accessshield.in/page' }
+  }
+
+ACCESSIBILITY IN NEXT.JS:
+  - Root layout: <html lang="en"> (or "hi" for Hindi pages)
+  - Root layout: <body> must contain <SkipLink /> as first child
+  - Every page: exactly one <h1> per page
+  - Heading hierarchy: h1 > h2 > h3 (never skip levels)
+  - Navigation: <nav aria-label="..."> with unique labels for each nav
+  - Main content: <main id="main-content"> (target for skip link)
+  - Route announcer: Next.js handles this automatically — do not add custom
+
+IMAGES:
+  - Always use next/image (NOT <img>)
+  - Always provide alt prop (empty string for decorative)
+  - Always provide width and height (or fill for full-width)
+  - Use sizes prop for responsive images
+
+FONTS:
+  - Use next/font/google for Inter (font-sans)
+  - Use next/font/local for JetBrains Mono (font-mono)
+  - Apply via CSS variable: --font-sans, --font-mono
+  - NEVER load fonts via <link> in <head>
+
+# ============================================================================
+# 10. COMPONENT LIBRARY CONVENTIONS (packages/ui)
+# ============================================================================
+
+All shared components are in packages/ui. Build rules:
+
+COMPONENT STRUCTURE:
+  ComponentName/
+    index.ts            Re-export
+    ComponentName.tsx   Main component
+    ComponentName.test.tsx  Jest + React Testing Library tests
+    ComponentName.stories.tsx  Storybook story with axe() integration
+
+REQUIRED IN EVERY COMPONENT:
+  - TypeScript interface: ComponentNameProps (exported)
+  - displayName: ComponentName.displayName = 'ComponentName'
+  - forwardRef for all native element wrappers
+  - Proper ARIA roles, labels, states
+  - Keyboard interaction per ARIA Authoring Practices Guide
+  - Visible focus indicator (use focus-visible pseudo-class)
+  - 44×44px minimum touch target
+  - dark mode support (Tailwind dark: prefix)
+  - className prop for customisation via cva variants
+
+RADIX UI USAGE:
+  Import Radix primitives for: Select, Dialog, Tooltip, DropdownMenu,
+  Checkbox, RadioGroup, Switch, Tabs, Accordion, AlertDialog, Popover
+  NEVER build these from scratch — Radix handles accessibility correctly
+
+NEVER DO:
+  - onClick on non-interactive elements (div, span, p)
+  - Disable focus on interactive elements without replacement
+  - Use colour alone to convey state (error, active, selected)
+  - Create custom modal/dropdown without focus trap
+  - Use <div> when <button> or <a> is semantically correct
+  - Style :focus (use :focus-visible instead — prevents mouse focus rings)
+
+# ============================================================================
+# 11. WIDGET SDK CONVENTIONS (apps/widget)
+# ============================================================================
+
+The accessibility widget is compiled to a single JS file < 35KB gzipped.
+
+ARCHITECTURE:
+  - Shadow DOM: ALL widget styles must be inside Shadow DOM (no leakage)
+  - Module pattern: each feature module (visual, reading, navigation, language)
+    is a separate TypeScript class exported from its own file
+  - No external dependencies at runtime — everything bundled
+  - esbuild build: target es2018, bundle true, minify true, sourcemap true
+
+STYLE INJECTION:
+  - CSS is a TypeScript string injected into Shadow DOM via adoptedStyleSheets
+  - NEVER inject <style> into the host page's <head>
+  - Host page CSS MUST NOT affect widget appearance
+
+PREFERENCES:
+  - All preferences stored in localStorage key: 'as_widget_{token}'
+  - Format: { fontSize: 'sm'|'default'|'lg', dyslexia: boolean, ...  }
+  - Load preferences BEFORE first paint to avoid flash
+  - Post preferences to API (fire and forget, timeout 2s, no retry)
+
+CSS INJECTION TO HOST PAGE:
+  - Inject via document.head.appendChild(styleEl) for host page modifications
+  - Tag all injected styles: data-accessshield="true" for easy cleanup
+  - On widget close / reset: remove all data-accessshield elements
+  - NEVER modify host page inline styles (use CSS classes only)
+
+TOKEN VALIDATION:
+  - Validate token against GET /api/v1/widget/verify?token={token}
+  - Cache validation result in memory for session duration
+  - If invalid: do not render, console.warn only (not console.error)
+  - Timeout: 3 seconds. If timeout: render widget anyway (fail open)
+
+PERFORMANCE:
+  - First paint of launcher button: < 100ms
+  - Panel open: < 200ms
+  - No layout shift on host page (widget is position: fixed)
+  - Bundle size checked in CI: pnpm --filter widget build && ls -la dist/
+
+# ============================================================================
+# 12. PYTHON / FASTAPI CONVENTIONS (apps/ai-service)
+# ============================================================================
+
+PYDANTIC v2 (NOT v1):
+  - Use model_dump() NOT .dict()
+  - Use model_validate() NOT .parse_obj()
+  - Use @model_validator NOT @validator
+  - Type annotations: str | None NOT Optional[str]
+
+FASTAPI PATTERNS:
+  - Router per service: APIRouter(prefix="/ai", tags=["AI"])
+  - Dependency injection for: DB session, Redis client, rate limiter
+  - Background tasks for: async DB writes after response sent
+  - HTTPException for: client errors (400, 401, 403, 404, 422, 429)
+  - 500 errors: caught by global exception handler, logged, generic response
+
+ANTHROPIC API:
+  - Model: claude-sonnet-4-20250514 (do NOT use other models)
+  - Max tokens: 1024 for fix suggestions, 256 for alt text, 512 for advice
+  - Temperature: 0.1 for fix/code generation (deterministic), 0.3 for advice
+  - System prompt: define role and output format clearly
+  - Response: always expect JSON — parse with json.loads(), handle JSONDecodeError
+  - Retry: once on anthropic.APITimeoutError (30s timeout)
+
+DLP (Data Loss Prevention — MANDATORY before any Anthropic API call):
+  Apply dlp_scrub() from utils/dlp.py to ALL content sent to external APIs:
+  Patterns to redact (replace with [REDACTED]):
+    Aadhaar:     \b\d{4}\s\d{4}\s\d{4}\b  or  \b\d{12}\b
+    PAN:         \b[A-Z]{5}\d{4}[A-Z]\b
+    Phone IN:    \b(\+91|91|0)?[6-9]\d{9}\b
+    Email:       [a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}
+    Credit card: \b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b
+    IFSC:        \b[A-Z]{4}0[A-Z0-9]{6}\b
+
+REDIS CACHING:
+  Cache key: SHA-256(service_name + ":" + input_hash)
+  TTL: 86400 (24 hours) for alt text and fix suggestions
+  Pattern: check_cache() → call_api() → set_cache() → return
+  Never cache: compliance advice (context-sensitive), errors
+
+# ============================================================================
+# 13. SECURITY — NON-NEGOTIABLE RULES
+# ============================================================================
+
+SECRETS:
+  - NEVER hardcode secrets, API keys, or passwords in source code
+  - NEVER commit .env files (only .env.example with placeholder values)
+  - Load from: process.env (Node.js), os.environ (Python)
+  - In production: AWS Secrets Manager (not environment variables)
+  - Secret naming: SNAKE_UPPER_CASE (e.g., RAZORPAY_KEY_SECRET)
+
+MULTI-TENANCY ISOLATION:
+  - EVERY database query must filter by organisation_id from JWT
+  - NEVER trust organisation_id from request body or query params
+  - Extract org from JWT: const orgId = req.user.org (set by auth middleware)
+  - PostgreSQL RLS enforces this at DB level as a second layer
+
+INPUT VALIDATION:
+  - Validate ALL user input with Zod (Node.js) or Pydantic v2 (Python)
+  - Validate BEFORE accessing database or calling external APIs
+  - Never use raw user input in: SQL queries, shell commands, file paths, HTML
+
+XSS PREVENTION:
+  - React's JSX auto-escapes — never use dangerouslySetInnerHTML
+  - If rich text is needed, use DOMPurify to sanitise before rendering
+  - Content Security Policy headers on all pages
+
+CSRF:
+  - SameSite=Strict cookies for session tokens
+  - Auth.js session cookies (SameSite) for the web BFF
+
+WEBHOOK SECURITY:
+  - Razorpay: verify HMAC-SHA256 signature on every webhook
+  - Never process webhooks without signature verification
+
+RATE LIMITING:
+  - Apply on all public endpoints
+  - More aggressive on auth endpoints (5 req/min for login/register)
+  - Use Redis sliding window counter
+
+LOGGING:
+  - NEVER log: passwords, JWT tokens, API keys, full credit card numbers
+  - NEVER log: PII (Aadhaar, PAN, full name + address combination)
+  - DO log: request IDs, org IDs, user IDs (not emails), error types, durations
+
+# ============================================================================
+# 14. RAZORPAY AND BILLING CONVENTIONS
+# ============================================================================
+
+CURRENCY:
+  - ALL amounts stored as paise (integer): ₹3,999 = 399900
+  - NEVER store as float (floating point errors in money)
+  - Display: amount / 100, formatted with Intl.NumberFormat('en-IN')
+
+GST CALCULATION:
+  - GST rate: 18% (CGST 9% + SGST 9% for intra-state, IGST 18% inter-state)
+  - Base amount = total / 1.18  (reverse calculate)
+  - CGST = base × 0.09
+  - SGST = base × 0.09 (if customer state = company state = Karnataka)
+  - IGST = base × 0.18 (if customer state ≠ company state)
+  - Invoice number format: ASI-YYYY-NNNNNN (sequential, zero-padded to 6 digits)
+
+RAZORPAY INTEGRATION:
+  - Test mode: keys from RAZORPAY_KEY_ID_TEST / RAZORPAY_KEY_SECRET_TEST
+  - Production: RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET
+  - Webhook signature: HMAC-SHA256(razorpay_payment_id + "|" + razorpay_subscription_id, secret)
+  - Idempotency: check razorpay_payment_id uniqueness before processing any payment
+
+PLAN LIMITS (enforce in planLimits middleware):
+  starter:      max_assets: 1,  max_scans_month: 3,   ai_remediation: false, sebi_report: false
+  professional: max_assets: 10, max_scans_month: null, ai_remediation: true,  sebi_report: false
+  enterprise:   max_assets: null, max_scans_month: null, ai_remediation: true, sebi_report: true
+  government:   max_assets: null, max_scans_month: null, ai_remediation: true, sebi_report: true
+
+# ============================================================================
+# 15. TESTING CONVENTIONS
+# ============================================================================
+
+UNIT TESTS (Jest + React Testing Library):
+  - All utility functions: 100% coverage
+  - All API service functions: 80% coverage minimum
+  - React components: test behaviour, not implementation
+    ✓ Test: user interactions, ARIA attributes, visible text
+    ✗ Test: internal state, className values, snapshot diffs
+  - Mock: external APIs (Razorpay, Anthropic, Keycloak)
+  - File location: co-located with source: ComponentName.test.tsx
+
+ACCESSIBILITY TESTS (every component):
+  import { axe, toHaveNoViolations } from 'jest-axe'
+  expect.extend(toHaveNoViolations)
+  it('has no accessibility violations', async () => {
+    const { container } = render(<ComponentName {...props} />)
+    expect(await axe(container)).toHaveNoViolations()
+  })
+
+E2E TESTS (Playwright):
+  - Critical user journeys: signup, onboarding, scan, view issues, report download
+  - Keyboard navigation test on each journey
+  - Location: tests/e2e/*.spec.ts
+
+CI GATES (all must pass before merge):
+  - pnpm lint (ESLint with jsx-a11y — zero warnings)
+  - pnpm type-check (TypeScript strict — zero errors)
+  - pnpm test (Jest — no failures, 80%+ coverage)
+  - pnpm test:a11y (axe-core — zero violations on all components)
+  - pnpm build (zero build errors)
+  - Widget bundle size check (< 35KB gzipped)
+
+# ============================================================================
+# 16. CODE STYLE AND QUALITY
+# ============================================================================
+
+NAMING:
+  - Components: PascalCase (IssueDetailCard)
+  - Functions/variables: camelCase (getUserIssues)
+  - Constants: SCREAMING_SNAKE_CASE (MAX_SCAN_PAGES)
+  - CSS classes: Tailwind utility classes only (no custom CSS classes in JSX)
+  - Database tables/columns: snake_case (organisation_id)
+  - API endpoints: kebab-case (/api/v1/scan-results)
+  - Files: PascalCase for React components, camelCase for utilities
+
+TYPESCRIPT:
+  - strict: true in all tsconfig.json files
+  - NO any — use unknown and narrow with type guards
+  - NO ! non-null assertion — handle null explicitly
+  - NO as type casting — use type guards or Zod parsing
+  - Export interfaces, not types for component props
+  - Use satisfies operator for config objects (not as)
+
+IMPORTS (order, enforced by ESLint):
+  1. Node built-ins (fs, path, crypto)
+  2. External packages (react, next, drizzle-orm)
+  3. Internal packages (@/packages/ui, @/packages/db)
+  4. Internal app imports (../../components, ../utils)
+  5. Types (import type { ... })
+  Use absolute imports via tsconfig paths:
+    @ui/* → packages/ui/src/*
+    @db/* → packages/db/src/*
+    @types/* → packages/types/src/*
+
+COMMENTS:
+  - Comment WHY, not WHAT
+  - JSDoc on all exported functions and component props
+  - TODO format: // TODO(nilesh): description [JIRA-123]
+  - ACCESSIBILITY notes: // A11Y: explanation of accessibility decision
+
+ERROR HANDLING:
+  - NEVER silently swallow errors (no empty catch blocks)
+  - Node.js: use Result pattern or throw typed errors
+  - React: Error Boundary around every major section
+  - API: always return structured error response (RFC 7807)
+  - Log errors with context: logger.error({ err, orgId, userId }, 'Message')
+
+ASYNC:
+  - async/await everywhere (NOT .then().catch() chains)
+  - Handle promise rejections: try/catch in async functions
+  - No floating promises: await or void (with explicit comment)
+  - Parallel operations: Promise.all() not sequential awaits
+
+# ============================================================================
+# 17. GIT AND PR CONVENTIONS
+# ============================================================================
+
+COMMIT FORMAT (Conventional Commits):
+  feat(scanner): add IS 17802 custom rule IS-001
+  fix(widget): resolve keyboard trap in navigation module
+  a11y(portal): fix missing aria-label on score ring chart
+  perf(api): cache AI responses in Redis
+  test(ui): add axe accessibility tests to Button component
+  docs(api): add JSDoc to scan orchestrator endpoints
+  chore(deps): update axe-core to 4.9.1
+
+BRANCH NAMING:
+  feat/scanner-is17802-rules
+  fix/widget-keyboard-trap
+  a11y/portal-aria-improvements
+
+PR CHECKLIST (include in PR description):
+  - [ ] axe-core: zero violations on new/changed components
+  - [ ] Keyboard: all new interactions keyboard accessible
+  - [ ] Contrast: all new colours verified against WCAG 1.4.3
+  - [ ] TypeScript: zero errors, zero any
+  - [ ] Tests: new functionality has unit tests
+  - [ ] IS 17802: India-specific requirements met where applicable
+  - [ ] No secrets committed
+
+# ============================================================================
+# 18. ENVIRONMENT VARIABLES
+# ============================================================================
+
+Required environment variables (define in .env.local for dev,
+AWS Secrets Manager for prod). NEVER commit real values:
+
+# App
+NEXT_PUBLIC_APP_URL=https://accessshield.in
+NEXT_PUBLIC_API_URL=https://api.accessshield.in
+NEXT_PUBLIC_CDN_URL=https://cdn.accessshield.in
+
+# Keycloak / Auth.js
+NEXT_PUBLIC_AUTH_URL=http://localhost:8080
+NEXT_PUBLIC_AUTH_CLIENT_ID=accessshield-web
+AUTH_ISSUER_URL=http://localhost:8080/realms/accessshield
+AUTH_SECRET=
+NEXTAUTH_URL=http://localhost:3000
+KEYCLOAK_URL=http://localhost:8080
+KEYCLOAK_REALM=accessshield
+KEYCLOAK_ADMIN_CLIENT_ID=accessshield-api
+KEYCLOAK_ADMIN_CLIENT_SECRET=
+
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/accessshield
+
+# Redis
+REDIS_URL=redis://localhost:6379
+
+# RabbitMQ
+RABBITMQ_URL=amqp://guest:guest@localhost:5672
+
+# AWS / MinIO
+AWS_REGION=ap-south-1
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+S3_BUCKET_NAME=accessshield-data-dev
+S3_ENDPOINT=
+S3_FORCE_PATH_STYLE=
+CLOUDFRONT_URL=https://cdn.accessshield.in
+
+# Razorpay
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+RAZORPAY_WEBHOOK_SECRET=
+
+# Anthropic (AI Service)
+ANTHROPIC_API_KEY=
+
+# Zoho Books (GST invoicing)
+ZOHO_CLIENT_ID=
+ZOHO_CLIENT_SECRET=
+ZOHO_REFRESH_TOKEN=
+ZOHO_ORGANISATION_ID=
+
+# WhatsApp (Interakt)
+INTERAKT_API_KEY=
+
+# Email (Resend)
+RESEND_API_KEY=
+
+# SMS (MSG91)
+MSG91_AUTH_KEY=
+MSG91_TEMPLATE_ID_OTP=
+
+# Jira OAuth
+JIRA_CLIENT_ID=
+JIRA_CLIENT_SECRET=
+
+# Internal
+INTERNAL_AI_SERVICE_KEY=
+JWT_SECRET=
+
+# ============================================================================
+# 19. CURSOR COMPOSER USAGE TIPS
+# ============================================================================
+
+When using Cursor Composer for this project, follow these patterns:
+
+FOR BACKEND TASKS (multi-file modules):
+  1. Open Composer (Cmd+I)
+  2. @-reference the relevant schema file: @packages/db/schema.ts
+  3. @-reference related service files if they exist
+  4. Paste the relevant prompt from the MVP Plan document
+  5. Ask for ALL files in the module in one session
+  6. Review the diff carefully — check RBAC, org isolation, error handling
+
+FOR FRONTEND TASKS (screens and components):
+  1. @-reference the component library: @packages/ui/src/index.ts
+  2. @-reference the API types: @packages/types/src/index.ts
+  3. @-reference TanStack Query hooks if they exist: @apps/web/lib/api.ts
+  4. Generate the screen — Cursor Tab will autocomplete Tailwind classes
+  5. Run axe-core check before committing
+
+FOR DEBUGGING:
+  1. Select the problematic code block
+  2. Cmd+K → "Why is this failing the WCAG 1.4.3 contrast check?"
+  3. Or: "Fix the keyboard trap in this modal component"
+
+CONTEXT MANAGEMENT (compensates for Cursor's ~120k token limit):
+  - When working on scanner: always @packages/db/schema.ts + @apps/api/src/scanner/types.ts
+  - When working on portal: always @packages/ui/src + @packages/types/src
+  - When working on billing: always @apps/api/src/billing + @packages/db/schema.ts
+  - Start each major module in a fresh Composer session
+
+# ============================================================================
+# 20. QUICK REFERENCE — MOST COMMON PATTERNS
+# ============================================================================
+
+PROTECTED API ROUTE TEMPLATE:
+  router.get('/assets', authenticate, requireRole(['customer_admin', 'accessibility_officer']),
+    async (req: AuthRequest, res: Response) => {
+      const { orgId } = req.user
+      const assets = await db.select().from(assetsTable)
+        .where(and(eq(assetsTable.organisationId, orgId), isNull(assetsTable.deletedAt)))
+      res.json({ data: assets })
+    })
+
+ACCESSIBLE FORM FIELD TEMPLATE:
+  <div className="space-y-1.5">
+    <label htmlFor={id} className="text-sm font-medium text-gray-700">
+      {label}{required && <span aria-label="required" className="text-red-600 ml-0.5">*</span>}
+    </label>
+    <input
+      id={id} name={name} type={type}
+      aria-required={required} aria-invalid={!!error}
+      aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
+      className={cn("w-full rounded-md border px-3 py-2 text-base focus-visible:outline-none
+        focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2",
+        error ? "border-red-500" : "border-gray-300")}
+    />
+    {hint && <p id={`${id}-hint`} className="text-sm text-gray-500">{hint}</p>}
+    {error && <p id={`${id}-error`} role="alert" className="text-sm text-red-700">{error}</p>}
+  </div>
+
+MODAL WITH FOCUS TRAP TEMPLATE:
+  <Dialog.Root open={open} onOpenChange={setOpen}>
+    <Dialog.Portal>
+      <Dialog.Overlay className="fixed inset-0 bg-black/50" />
+      <Dialog.Content
+        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ..."
+        aria-labelledby="dialog-title"
+        aria-describedby="dialog-description">
+        <Dialog.Title id="dialog-title">{title}</Dialog.Title>
+        <Dialog.Description id="dialog-description" className="sr-only">{description}</Dialog.Description>
+        {children}
+        <Dialog.Close asChild>
+          <button aria-label="Close dialog" className="...">×</button>
+        </Dialog.Close>
+      </Dialog.Content>
+    </Dialog.Portal>
+  </Dialog.Root>
+
+SEVERITY BADGE TEMPLATE (never colour alone):
+  const severityConfig = {
+    critical: { label: 'Critical', icon: 'AlertCircle', bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-200' },
+    serious:  { label: 'Serious',  icon: 'AlertTriangle', bg: 'bg-amber-100', text: 'text-amber-800', border: 'border-amber-200' },
+    moderate: { label: 'Moderate', icon: 'Info', bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-200' },
+    minor:    { label: 'Minor',    icon: 'Minus', bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-200' },
+  }
+  // Usage: always renders icon + text + colour (WCAG 1.4.1 — not colour alone)
+  <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border',
+    severityConfig[severity].bg, severityConfig[severity].text, severityConfig[severity].border)}>
+    <Icon name={severityConfig[severity].icon} size={12} aria-hidden="true" />
+    {severityConfig[severity].label}
+  </span>
+
+INR AMOUNT FORMATTER:
+  const formatINR = (paise: number): string =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR',
+      maximumFractionDigits: 0 }).format(paise / 100)
+  // formatINR(399900) → "₹3,999"
+  // formatINR(12345678) → "₹1,23,457"
+
+PREFERS-REDUCED-MOTION CHECK:
+  // In React
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  // In Framer Motion
+  <motion.div animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }} />
+  // In CSS (always include)
+  @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; } }
+
+# ============================================================================
+# END OF .cursorrules
+# Generated for AccessShield India MVP — June 2026
+# This file is the single source of truth for all coding conventions.
+# Update this file when conventions change. Commit it with every major change.
+# ============================================================================

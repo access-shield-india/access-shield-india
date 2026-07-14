@@ -1,0 +1,35 @@
+{
+  "name": "accessshield-india",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-powered digital accessibility compliance SaaS for India",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "dev:web": "pnpm --filter @accessshield/web dev",
+    "dev:api": "pnpm --filter @accessshield/api dev",
+    "dev:stack": "pnpm --parallel --filter @accessshield/web --filter @accessshield/api dev",
+    "dev:stop": "bash scripts/dev-stop.sh",
+    "dev:clean": "pnpm dev:stop && rm -rf apps/web/.next apps/web/.turbo && echo 'Cleared Next.js cache. Run pnpm dev to start fresh.'",
+    "lint": "turbo lint",
+    "type-check": "turbo type-check",
+    "test": "turbo test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:generate": "turbo db:generate",
+    "db:migrate": "turbo db:migrate",
+    "db:seed": "pnpm --filter @accessshield/db db:seed",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.7",
+    "prettier": "^3.3.2",
+    "turbo": "^2.0.6"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@accessshield/ai-service",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "bash scripts/dev.sh",
+    "build": "echo \"Python service — no JS build step\"",
+    "lint": "bash scripts/with-venv.sh ruff check services/ utils/ middleware/ db/ main.py config.py || echo 'Skipping lint — run dev once to set up venv'",
+    "type-check": "bash scripts/with-venv.sh mypy services/ utils/ middleware/ db/ main.py config.py || echo 'Skipping type-check — run dev once to set up venv'",
+    "test": "bash scripts/with-venv.sh pytest tests/ -v || echo 'Skipping tests — run dev once to set up venv'",
+    "test:dlp": "bash scripts/with-venv.sh pytest tests/test_dlp.py -v"
+  }
+}

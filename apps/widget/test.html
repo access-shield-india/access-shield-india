@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>AccessShield Widget — Full Test Lab</title>
+  <style>
+    :root {
+      --text: #1a1a2e;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --primary: #1a56a0;
+      --bg: #f9fafb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, 'Segoe UI', system-ui, sans-serif;
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+    }
+    a { color: var(--primary); }
+    a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      top: auto;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+    .skip-link:focus {
+      position: fixed;
+      top: 8px;
+      left: 8px;
+      width: auto;
+      height: auto;
+      padding: 12px 16px;
+      background: var(--primary);
+      color: #fff;
+      z-index: 1;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+    header {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+    }
+    header nav ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      list-style: none;
+      margin: 0.75rem 0 0;
+      padding: 0;
+    }
+    .layout {
+      max-width: 56rem;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+    .test-guide {
+      background: #ebf3fb;
+      border: 1px solid #93c5fd;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .test-guide h2 { margin-top: 0; font-size: 1.125rem; }
+    .test-guide ul { margin: 0.5rem 0 0; padding-left: 1.25rem; }
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .card h2, .card h3 { margin-top: 0; color: #1a3a5c; }
+    .low-contrast {
+      background: #e5e7eb;
+      color: #9ca3af;
+      padding: 1rem;
+      border-radius: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9375rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+    }
+    th { background: #f3f4f6; }
+    form label { display: block; font-weight: 500; margin-bottom: 0.25rem; }
+    form .field { margin-bottom: 1rem; }
+    input, select, textarea {
+      width: 100%;
+      max-width: 24rem;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .host-btn {
+      min-height: 44px;
+      padding: 0.5rem 1rem;
+      border: 2px solid var(--primary);
+      border-radius: 6px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .host-btn-secondary {
+      background: #fff;
+      color: var(--primary);
+    }
+    figure { margin: 0; }
+    figcaption { font-size: 0.875rem; color: var(--muted); margin-top: 0.5rem; }
+    footer {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.875rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    .hindi-block { margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <header>
+    <strong>AccessShield</strong> Widget Test Lab
+    <nav aria-label="Sample site navigation">
+      <ul>
+        <li><a href="#visual">Visual</a></li>
+        <li><a href="#reading">Reading</a></li>
+        <li><a href="#speech">Speech</a></li>
+        <li><a href="#navigation">Navigation</a></li>
+        <li><a href="#forms">Forms</a></li>
+        <li><a href="#hindi">Hindi</a></li>
+        <li><a href="https://example.com" rel="noopener">External link</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="layout">
+    <main id="main-content">
+      <h1>Widget functionality test page</h1>
+      <p>
+        Use this page to verify every AccessShield widget feature. Open the blue accessibility
+        launcher (bottom-right), then work through the checklist below.
+      </p>
+
+      <aside class="test-guide" aria-labelledby="guide-title">
+        <h2 id="guide-title">Testing checklist</h2>
+        <ul>
+          <li><strong>Visual:</strong> font size, dyslexia font, dark/light mode, contrast, grayscale, saturation</li>
+          <li><strong>Reading:</strong> reading guide, reading mask, link highlight, focus indicator</li>
+          <li><strong>Speech:</strong> read selection, read page, read-on-hover, speed (slow/normal/fast), stop</li>
+          <li><strong>Navigation:</strong> keyboard nav mode, skip link, focus tracker</li>
+          <li><strong>Language:</strong> switch widget UI to Hindi (हिन्दी)</li>
+          <li><strong>Reset:</strong> “Reset All” restores defaults and clears host-page changes</li>
+        </ul>
+      </aside>
+
+      <section id="visual" class="card" aria-labelledby="visual-title">
+        <h2 id="visual-title">Visual adjustments</h2>
+        <p>
+          This paragraph tests font scaling and colour filters. The quick brown fox jumps over the
+          lazy dog. Numbers: 12,34,567 and date 18/06/2026 (DD/MM/YYYY).
+        </p>
+        <div class="low-contrast" role="region" aria-label="Low contrast sample">
+          <p>Low contrast text — use <strong>High Contrast</strong> in the widget to improve readability.</p>
+        </div>
+        <figure>
+          <img
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='120' viewBox='0 0 320 120'%3E%3Crect fill='%231A56A0' width='320' height='120'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='20' font-family='sans-serif'%3EDecorative chart%3C/text%3E%3C/svg%3E"
+            width="320"
+            height="120"
+            alt="Bar chart showing accessibility score of 78 percent"
+          />
+          <figcaption>Sample chart with accessible alt text for screen readers and speech.</figcaption>
+        </figure>
+      </section>
+
+      <section id="reading" class="card" aria-labelledby="reading-title">
+        <h2 id="reading-title">Reading tools</h2>
+        <p>Enable <strong>Reading Guide</strong> or <strong>Reading Mask</strong>, then move your mouse over this text.</p>
+        <ul>
+          <li>First bullet — link highlight should outline <a href="#forms">this form link</a>.</li>
+          <li>Second bullet — tab through items to test focus indicator.</li>
+          <li>Third bullet — longer line of text to follow with the reading guide bar.</li>
+        </ul>
+        <ol>
+          <li>Ordered step one</li>
+          <li>Ordered step two</li>
+        </ol>
+      </section>
+
+      <section id="speech" class="card" aria-labelledby="speech-title">
+        <h2 id="speech-title">Text to speech</h2>
+        <p id="speech-sample">
+          Select this sentence and press <strong>Read Selection</strong> in the widget. Or press
+          <strong>Read Page</strong> to hear the main content. Turn on <strong>Read on Hover</strong>
+          and hover (or tap on mobile) any paragraph to hear it aloud. Links and buttons still work.
+        </p>
+        <blockquote cite="https://accessshield.in">
+          “Digital accessibility is a right, not a privilege — RPwD Act 2016, India.”
+        </blockquote>
+      </section>
+
+      <section id="navigation" class="card" aria-labelledby="nav-title">
+        <h2 id="nav-title">Navigation &amp; keyboard</h2>
+        <p>Enable keyboard navigation mode and use Tab / Shift+Tab through these controls:</p>
+        <div class="btn-row">
+          <button type="button" class="host-btn">Primary action</button>
+          <button type="button" class="host-btn host-btn-secondary">Secondary</button>
+          <a href="#main-content" class="host-btn host-btn-secondary" style="display:inline-flex;align-items:center;text-decoration:none;">Jump to top</a>
+        </div>
+      </section>
+
+      <section id="forms" class="card" aria-labelledby="forms-title">
+        <h2 id="forms-title">Forms (IS 17802)</h2>
+        <form action="#" method="get" aria-label="Sample contact form">
+          <div class="field">
+            <label for="name">Full name</label>
+            <input id="name" name="name" type="text" autocomplete="name" required aria-required="true" />
+          </div>
+          <div class="field">
+            <label for="phone">Phone (+91)</label>
+            <input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="+91 98765 43210" pattern="^(\+91|91|0)?[6-9]\d{9}$" />
+          </div>
+          <div class="field">
+            <label for="topic">Topic</label>
+            <select id="topic" name="topic">
+              <option value="wcag">WCAG 2.2 AA</option>
+              <option value="is17802">IS 17802</option>
+              <option value="sebi">SEBI circular</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" rows="3" aria-describedby="message-hint"></textarea>
+            <span id="message-hint" style="font-size:0.875rem;color:var(--muted);">Describe your accessibility requirement.</span>
+          </div>
+          <button type="submit" class="host-btn">Submit enquiry</button>
+        </form>
+      </section>
+
+      <section class="card" aria-labelledby="table-title">
+        <h2 id="table-title">Data table</h2>
+        <table>
+          <caption>Scan results summary</caption>
+          <thead>
+            <tr>
+              <th scope="col">Page</th>
+              <th scope="col">Score</th>
+              <th scope="col">Issues</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Homepage</td>
+              <td>82</td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td>Contact</td>
+              <td>71</td>
+              <td>9</td>
+            </tr>
+            <tr>
+              <td>Login</td>
+              <td>65</td>
+              <td>12</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="hindi" class="card hindi-block" lang="hi" aria-labelledby="hindi-title">
+        <h2 id="hindi-title">हिन्दी सामग्री</h2>
+        <p>
+          यह अनुच्छेद हिन्दी भाषण परीक्षण के लिए है। विजेट में भाषा को हिन्दी पर सेट करें, फिर
+          <strong>पृष्ठ पढ़ें</strong> या <strong>पढ़ने के लिए क्लिक करें</strong> का उपयोग करें।
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+  <p>AccessShield Widget Test Lab — local development only</p>
+  </footer>
+
+  <!-- Fail-open verify in local dev (no API required) -->
+  <script
+    src="./dist/widget.min.js"
+    data-token="test-token-local"
+    data-api-url="http://127.0.0.1:1"
+    data-position="bottom-right"
+    data-lang="en"
+  ></script>
+</body>
+</html>

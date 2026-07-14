@@ -1,0 +1,45 @@
+{
+  "name": "@accessshield/mobile-scanner",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "worker": "tsx src/index.ts",
+    "test": "vitest run",
+    "test:apk": "tsx scripts/test-local-apk.ts",
+    "upload:apk": "tsx scripts/upload-apk.ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@accessshield/db": "workspace:*",
+    "@accessshield/types": "workspace:*",
+    "@aws-sdk/client-s3": "^3.600.0",
+    "@aws-sdk/s3-request-presigner": "^3.600.0",
+    "@wdio/appium-service": "^8.36.0",
+    "amqplib": "^0.10.4",
+    "dotenv": "^16.4.0",
+    "fast-xml-parser": "^4.5.6",
+    "ioredis": "^5.4.1",
+    "pg": "^8.12.0",
+    "pino": "^9.0.0",
+    "pino-pretty": "^11.0.0",
+    "plist": "^5.0.0",
+    "sharp": "^0.33.5",
+    "webdriverio": "^8.36.0",
+    "yauzl": "^3.4.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.5",
+    "@types/node": "^20.14.0",
+    "@types/pg": "^8.11.0",
+    "@types/plist": "^3.0.5",
+    "@types/yauzl": "^2.10.3",
+    "tsx": "^4.15.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}

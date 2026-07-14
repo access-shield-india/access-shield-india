@@ -1,0 +1,45 @@
+/**
+ * Button hover states — default colors are inline styles (getButtonStyle).
+ * !important on :hover only so it overrides inline styles on interaction.
+ */
+
+[data-as-btn='primary']:hover:not(:disabled):not([aria-disabled='true']) {
+  background-color: #1a3a5c !important;
+  border-color: #0d2e5a !important;
+  color: #ffffff !important;
+}
+
+[data-as-btn='secondary']:hover:not(:disabled):not([aria-disabled='true']) {
+  background-color: #ebf3fb !important;
+  border-color: #1a3a5c !important;
+  color: #1a3a5c !important;
+}
+
+[data-as-btn='outline']:hover:not(:disabled):not([aria-disabled='true']) {
+  background-color: #dde9f7 !important;
+  border-color: #1a3a5c !important;
+  color: #1a3a5c !important;
+}
+
+[data-as-btn='ghost']:hover:not(:disabled):not([aria-disabled='true']) {
+  background-color: #ebf3fb !important;
+  color: #1a3a5c !important;
+}
+
+[data-as-btn='danger']:hover:not(:disabled):not([aria-disabled='true']) {
+  background-color: #6b1414 !important;
+  border-color: #5c1111 !important;
+  color: #ffffff !important;
+}
+
+[data-as-btn='onDark']:hover:not(:disabled):not([aria-disabled='true']) {
+  background-color: #f4f8fd !important;
+  border-color: #ebf3fb !important;
+  color: #1a3a5c !important;
+}
+
+[data-as-btn]:disabled,
+[data-as-btn][aria-disabled='true'] {
+  cursor: not-allowed !important;
+  opacity: 0.5 !important;
+}
