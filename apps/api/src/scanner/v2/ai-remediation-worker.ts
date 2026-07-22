@@ -1,12 +1,12 @@
-/**
- * AI alt-text + fix consumers — call ai-service (Anthropic) and update violations.
+ * AI alt-text + fix consumers — call ai-service and update violations.
  * Consumes `ai.alt-text` / `ai.fix` and legacy `ai-alt-text` / `ai-fix`.
+ * Provider/model come from the organisation AI settings (anthropic | local).
  */
 
 import amqp from 'amqplib';
 import type { ConsumeMessage } from 'amqplib';
 import { and, eq } from 'drizzle-orm';
-import { createDb, violations, type Database } from '@accessshield/db';
+import { createDb, organisations, violations, type Database } from '@accessshield/db';
 import { z } from 'zod';
 import { logger } from '../../lib/logger';
 import { requestAiAltText, requestAiFix } from '../../lib/ai-client';
@@ -52,6 +52,25 @@ function getDatabase(): Database {
   return db;
 }
 
+async function loadOrgAiSettings(
+  database: Database,
+  orgId: string,
+): Promise<{ aiProvider: string; aiModel: string }> {
+  const [org] = await database
+    .select({
+      aiProvider: organisations.aiProvider,
+      aiModel: organisations.aiModel,
+    })
+    .from(organisations)
+    .where(eq(organisations.id, orgId))
+    .limit(1);
+
+  return {
+    aiProvider: org?.aiProvider ?? 'anthropic',
+    aiModel: org?.aiModel ?? 'claude-sonnet-4-5-20250929',
+  };
+}
+
 async function processAltText(raw: z.infer<typeof altTextSchema>): Promise<void> {
   const features = getPlanFeatures(raw.planTier);
   if (!features.aiRemediation) {
@@ -76,6 +95,7 @@ async function processAltText(raw: z.infer<typeof altTextSchema>): Promise<void>
   }
 
   try {
+    const { aiProvider, aiModel } = await loadOrgAiSettings(database, raw.orgId);
     const response = await requestAiAltText(
       {
         image_url: raw.pageUrl,
@@ -87,6 +107,8 @@ async function processAltText(raw: z.infer<typeof altTextSchema>): Promise<void>
       },
       raw.orgId,
       raw.planTier,
+      aiProvider,
+      aiModel,
     );
 
     const altText = response.alt_text?.trim() ?? '';
@@ -130,6 +152,7 @@ async function processFix(raw: z.infer<typeof fixSchema>): Promise<void> {
   }
 
   try {
+    const { aiProvider, aiModel } = await loadOrgAiSettings(database, raw.orgId);
     const response = await requestAiFix(
       {
         rule_id: raw.ruleId,
@@ -141,6 +164,8 @@ async function processFix(raw: z.infer<typeof fixSchema>): Promise<void> {
       },
       raw.orgId,
       raw.planTier,
+      aiProvider,
+      aiModel,
     );
 
     await database

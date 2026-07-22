@@ -66,7 +66,7 @@ function devPreviewResult(
 }
 
 function devPreviewExplanation(ruleId: string, wcagCriterion: string, detail: string): string {
-  return `${detail}\n\n${DEV_PREVIEW_MARKER} start apps/ai-service with ANTHROPIC_API_KEY for full Claude-generated fixes. Rule: ${ruleId} (WCAG ${wcagCriterion}).`;
+  return `${detail}\n\n${DEV_PREVIEW_MARKER} start apps/ai-service with ANTHROPIC_API_KEY (or switch org AI provider to local) for full AI-generated fixes. Rule: ${ruleId} (WCAG ${wcagCriterion}).`;
 }
 
 export function buildDevMockFix(

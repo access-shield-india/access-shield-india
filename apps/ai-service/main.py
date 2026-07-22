@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from prometheus_client import (
@@ -40,7 +40,12 @@ from services.statement_generator import (
 )
 from services.document_scanner.job_consumer import run_consumer
 from services.document_scanner.router import router as document_scanner_router
-
+from utils.model_router import (
+    get_local_warmup_status,
+    mark_local_warmup_skipped,
+    should_warmup_local_llm,
+    warmup_local_llm,
+)
 # Configure logging
 logging.basicConfig(
     level=logging.DEBUG if settings.environment == "development" else logging.INFO,
@@ -98,10 +103,25 @@ async def lifespan(app: FastAPI):
     load_knowledge_bases()
 
     logger.info(
-        "AI Service ready: model=%s, environment=%s",
+        "AI Service ready: default_provider=%s, claude_model=%s, local_model=%s, environment=%s",
+        settings.default_ai_provider,
         settings.claude_model,
+        settings.local_model,
         settings.environment,
     )
+
+    # Preload local GGUF in background so the first user request is not cold
+    warmup_task: asyncio.Task[None] | None = None
+    if should_warmup_local_llm():
+        logger.info(
+            "Scheduling local LLM warmup (LOCAL_LLM_WARMUP or DEFAULT_AI_PROVIDER=local)"
+        )
+        warmup_task = asyncio.create_task(warmup_local_llm())
+    else:
+        mark_local_warmup_skipped()
+        logger.info(
+            "Local LLM warmup skipped — set LOCAL_LLM_WARMUP=true or DEFAULT_AI_PROVIDER=local"
+        )
 
     doc_scanner_task = asyncio.create_task(run_consumer())
 
@@ -109,6 +129,12 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("Shutting down AI Service...")
+    if warmup_task and not warmup_task.done():
+        warmup_task.cancel()
+        try:
+            await warmup_task
+        except asyncio.CancelledError:
+            pass
     doc_scanner_task.cancel()
     try:
         await doc_scanner_task
@@ -185,7 +211,10 @@ async def health() -> dict[str, Any]:
 
     return {
         "status": "ok",
+        "default_provider": settings.default_ai_provider,
         "model": settings.claude_model,
+        "local_model": settings.local_model,
+        "local_llm_warmup": get_local_warmup_status(),
         "redis": redis_status,
         "environment": settings.environment,
     }
@@ -201,20 +230,28 @@ async def metrics() -> Response:
 
 
 @app.post("/ai/alt-text", response_model=AltTextResponse)
-async def alt_text_endpoint(request: AltTextRequest) -> AltTextResponse:
+async def alt_text_endpoint(
+    request: AltTextRequest,
+    x_ai_provider: str | None = Header(None, alias="X-AI-Provider"),
+    x_ai_model: str | None = Header(None, alias="X-AI-Model"),
+) -> AltTextResponse:
     """Generate AI alt text for an image.
 
     Requires headers:
     - X-Internal-Key: Internal service API key
     - X-Org-Id: Organisation ID for rate limiting
     - X-Org-Plan: Organisation plan tier
+    - X-AI-Provider: anthropic | local (optional)
+    - X-AI-Model: model id (optional)
     """
     import time
 
     start_time = time.time()
 
     try:
-        response = await generate_alt_text(request)
+        response = await generate_alt_text(
+            request, provider=x_ai_provider, model=x_ai_model
+        )
 
         # Track metrics
         ai_requests_total.labels(
@@ -236,20 +273,28 @@ async def alt_text_endpoint(request: AltTextRequest) -> AltTextResponse:
 
 
 @app.post("/ai/fix", response_model=FixResponse)
-async def fix_endpoint(request: FixRequest) -> FixResponse:
+async def fix_endpoint(
+    request: FixRequest,
+    x_ai_provider: str | None = Header(None, alias="X-AI-Provider"),
+    x_ai_model: str | None = Header(None, alias="X-AI-Model"),
+) -> FixResponse:
     """Generate AI fix suggestion for an accessibility violation.
 
     Requires headers:
     - X-Internal-Key: Internal service API key
     - X-Org-Id: Organisation ID for rate limiting
     - X-Org-Plan: Organisation plan tier
+    - X-AI-Provider: anthropic | local (optional)
+    - X-AI-Model: model id (optional)
     """
     import time
 
     start_time = time.time()
 
     try:
-        response = await generate_fix(request)
+        response = await generate_fix(
+            request, provider=x_ai_provider, model=x_ai_model
+        )
 
         ai_requests_total.labels(
             endpoint="/ai/fix",
@@ -270,20 +315,28 @@ async def fix_endpoint(request: FixRequest) -> FixResponse:
 
 
 @app.post("/ai/advise", response_model=AdviceResponse)
-async def advise_endpoint(request: AdviceRequest) -> AdviceResponse:
+async def advise_endpoint(
+    request: AdviceRequest,
+    x_ai_provider: str | None = Header(None, alias="X-AI-Provider"),
+    x_ai_model: str | None = Header(None, alias="X-AI-Model"),
+) -> AdviceResponse:
     """Get plain-English compliance advice for a violation.
 
     Requires headers:
     - X-Internal-Key: Internal service API key
     - X-Org-Id: Organisation ID for rate limiting
     - X-Org-Plan: Organisation plan tier
+    - X-AI-Provider: anthropic | local (optional)
+    - X-AI-Model: model id (optional)
     """
     import time
 
     start_time = time.time()
 
     try:
-        response = await get_advice(request)
+        response = await get_advice(
+            request, provider=x_ai_provider, model=x_ai_model
+        )
 
         ai_requests_total.labels(
             endpoint="/ai/advise",
@@ -306,6 +359,8 @@ async def advise_endpoint(request: AdviceRequest) -> AdviceResponse:
 @app.post("/ai/accessibility-statement", response_model=StatementResponse)
 async def accessibility_statement_endpoint(
     request: StatementRequest,
+    x_ai_provider: str | None = Header(None, alias="X-AI-Provider"),
+    x_ai_model: str | None = Header(None, alias="X-AI-Model"),
 ) -> StatementResponse:
     """Generate accessibility statement in English and Hindi.
 
@@ -313,13 +368,17 @@ async def accessibility_statement_endpoint(
     - X-Internal-Key: Internal service API key
     - X-Org-Id: Organisation ID for rate limiting
     - X-Org-Plan: Organisation plan tier
+    - X-AI-Provider: anthropic | local (optional)
+    - X-AI-Model: model id (optional)
     """
     import time
 
     start_time = time.time()
 
     try:
-        response = await generate_statement(request)
+        response = await generate_statement(
+            request, provider=x_ai_provider, model=x_ai_model
+        )
 
         ai_requests_total.labels(
             endpoint="/ai/accessibility-statement",

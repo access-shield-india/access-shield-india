@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from config import settings
 from utils.cache import cache, AICache
-from utils.claude_client import claude_client
+from utils.model_router import get_client, normalize_provider, resolve_model
 from utils.dlp import scrub, truncate
 from db.session import update_violation_alt_text
 
@@ -59,16 +59,24 @@ ALLOWED_MEDIA_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
 
 
-async def generate_alt_text(request: AltTextRequest) -> AltTextResponse:
+async def generate_alt_text(
+    request: AltTextRequest,
+    provider: str | None = None,
+    model: str | None = None,
+) -> AltTextResponse:
     """Generate AI alt text for an image.
 
     Args:
         request: Alt text generation request.
+        provider: AI provider (anthropic | local).
+        model: Optional model override.
 
     Returns:
         Generated alt text response.
     """
-    cache_key = AICache.make_key("alt_text", request.image_url)
+    resolved_provider = normalize_provider(provider)
+    resolved_model = resolve_model(resolved_provider, model)
+    cache_key = AICache.make_key("alt_text", resolved_provider, resolved_model, request.image_url)
 
     try:
         # Check cache
@@ -127,15 +135,30 @@ async def generate_alt_text(request: AltTextRequest) -> AltTextResponse:
             },
         ]
 
-        # Call Claude
-        response_text = await claude_client.complete(
-            system=system_prompt,
-            user="",
-            max_tokens=settings.max_tokens_alt_text,
-            temperature=0.1,
-            expect_json=True,
-            messages=[{"role": "user", "content": user_content}],
-        )
+        client = get_client(resolved_provider, resolved_model)
+        # Local models typically cannot see images — send text-only description fallback
+        if resolved_provider == "local":
+            response_text = await client.complete(
+                system=system_prompt,
+                user=(
+                    f"Page context: {clean_context}\n"
+                    f"Image element: {clean_html}\n"
+                    "No image bytes available for local models. "
+                    "Infer the most likely alt text from the HTML/context, or mark decorative."
+                ),
+                max_tokens=settings.max_tokens_alt_text,
+                temperature=0.1,
+                expect_json=True,
+            )
+        else:
+            response_text = await client.complete(
+                system=system_prompt,
+                user="",
+                max_tokens=settings.max_tokens_alt_text,
+                temperature=0.1,
+                expect_json=True,
+                messages=[{"role": "user", "content": user_content}],
+            )
 
         # Parse response
         import json

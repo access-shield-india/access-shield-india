@@ -4,7 +4,7 @@
 
 ## Executive Summary
 
-The **ai-service** (FastAPI) centralises Claude-powered features: alt-text, fix suggestions, compliance advice, accessibility statements, and document scan processing. External integrations span Supabase, Anthropic, Sanity, AWS, and BrowserStack — with several billing/comms integrations planned but not yet implemented.
+The **ai-service** (FastAPI) centralises AI-powered features: alt-text, fix suggestions, compliance advice, accessibility statements, and document scan processing. Inference is **configurable per organisation** — Anthropic Claude (cloud) or a local GGUF model via llama-cpp. External integrations span Supabase, Anthropic, Sanity, AWS, and BrowserStack — with several billing/comms integrations planned but not yet implemented.
 
 ---
 
@@ -69,17 +69,22 @@ Source: [`apps/ai-service/main.py`](../../apps/ai-service/main.py)
 | Accessibility statement | [`services/statement_generator.py`](../../apps/ai-service/services/statement_generator.py) |
 | Document scanner        | [`services/document_scanner/`](../../apps/ai-service/services/document_scanner/)           |
 
-### Claude configuration
+### Inference providers
 
-From [`apps/ai-service/config.py`](../../apps/ai-service/config.py):
+Configured per organisation (`organisations.ai_provider` / `ai_model`) and forwarded as `X-AI-Provider` / `X-AI-Model`. Defaults from [`apps/ai-service/config.py`](../../apps/ai-service/config.py):
 
-- Model: `claude-sonnet-4-5-20250929` (configurable via `CLAUDE_MODEL`)
-- Max tokens per endpoint (alt-text 256, fix 1024, advice 512, statement 2048)
-- Temperature: low for fix/code (0.1), higher for advice (0.3)
+| Provider | Env / model | Notes |
+| -------- | ----------- | ----- |
+| `anthropic` (default) | `ANTHROPIC_API_KEY`, `CLAUDE_MODEL` | Claude via Anthropic SDK |
+| `local` | `LOCAL_MODEL` (GGUF HF repo) | llama-cpp; install with `pip install '.[local]'` |
+
+Set `LOCAL_LLM_WARMUP=true` (or `DEFAULT_AI_PROVIDER=local`) to preload the GGUF at startup — download, load into memory, and run a tiny probe so the first user request is not cold. Check `GET /health` → `local_llm_warmup.status` (`loading` | `ready` | `error` | `skipped`).
+
+Router: [`utils/model_router.py`](../../apps/ai-service/utils/model_router.py). Max tokens: alt-text 256, fix 1024, advice 512, statement 2048.
 
 ### DLP (mandatory)
 
-All content sent to Anthropic passes through [`utils/dlp.py`](../../apps/ai-service/utils/dlp.py) — redacts Aadhaar, PAN, Indian phone numbers, email, credit card, IFSC.
+All content sent to external APIs (Anthropic) passes through [`utils/dlp.py`](../../apps/ai-service/utils/dlp.py) — redacts Aadhaar, PAN, Indian phone numbers, email, credit card, IFSC. Local inference still scrubbed before prompting.
 
 ---
 
@@ -101,7 +106,7 @@ Implementation: [`apps/ai-service/utils/cache.py`](../../apps/ai-service/utils/c
 [`apps/api/src/lib/ai-client.ts`](../../apps/api/src/lib/ai-client.ts)
 
 - Base URL: `AI_SERVICE_URL` (default `http://localhost:8001`)
-- Headers: `X-Internal-Key`, `X-Org-Id`, `X-Org-Plan`
+- Headers: `X-Internal-Key`, `X-Org-Id`, `X-Org-Plan`, `X-AI-Provider`, `X-AI-Model`
 - Used from: issues routes (AI fix panel), reporting, on-demand enrichment
 
 ### Scan Pipeline v2 (async)

@@ -1,11 +1,10 @@
 """
 AI-powered executive summary for document scan results.
-Uses the existing claude_client singleton from utils/claude_client.py.
 """
 import logging
 
 from services.document_scanner.base import DocumentViolation
-from utils.claude_client import claude_client
+from utils.model_router import get_client
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +34,10 @@ async def generate_document_summary(
     document_type: str,
     violations: list[DocumentViolation],
     compliance_score: int,
+    provider: str | None = None,
+    model: str | None = None,
 ) -> str:
-    """Generate a plain-English executive summary using Claude."""
+    """Generate a plain-English executive summary using the configured AI provider."""
 
     severity_counts = {
         s: sum(1 for v in violations if v.severity.value == s)
@@ -81,7 +82,8 @@ RPwD Act enforcement.
 Rules: Under 180 words total. No markdown. Start each paragraph on a new line."""
 
     try:
-        return await claude_client.complete(
+        client = get_client(provider, model)
+        return await client.complete(
             system=SYSTEM_PROMPT,
             user=user_message,
             max_tokens=400,

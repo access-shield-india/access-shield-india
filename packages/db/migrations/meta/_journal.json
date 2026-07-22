@@ -50,6 +50,13 @@
       "when": 1783517100000,
       "tag": "0006_violation_fingerprint",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783517400000,
+      "tag": "0007_org_ai_provider",
+      "breakpoints": true
     }
   ]
 }

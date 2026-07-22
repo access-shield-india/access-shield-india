@@ -41,19 +41,41 @@ export interface AiAltTextResponseBody {
   cached?: boolean;
 }
 
-function aiHeaders(orgId: string, planTier: string, internalKey: string): Record<string, string> {
-  return {
+export type AiProvider = 'anthropic' | 'local' | string;
+
+function aiHeaders(
+  orgId: string,
+  planTier: string,
+  internalKey: string,
+  aiProvider?: string,
+  aiModel?: string,
+): Record<string, string> {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'X-Internal-Key': internalKey,
     'X-Org-Id': orgId,
     'X-Org-Plan': planTier,
   };
+  if (aiProvider) {
+    headers['X-AI-Provider'] = aiProvider;
+  }
+  if (aiModel) {
+    headers['X-AI-Model'] = aiModel;
+  }
+  return headers;
+}
+
+/** Local models can take minutes on first download — allow longer timeout. */
+function requestTimeoutMs(aiProvider?: string): number {
+  return aiProvider === 'local' || aiProvider === 'local-mlx' ? 300_000 : 60_000;
 }
 
 export async function requestAiFix(
   body: AiFixRequestBody,
   orgId: string,
   planTier: string,
+  aiProvider?: string,
+  aiModel?: string,
 ): Promise<AiFixResponseBody> {
   const { url, internalKey } = getAiServiceConfig();
 
@@ -63,9 +85,9 @@ export async function requestAiFix(
 
   const response = await fetch(`${url}/ai/fix`, {
     method: 'POST',
-    headers: aiHeaders(orgId, planTier, internalKey),
+    headers: aiHeaders(orgId, planTier, internalKey, aiProvider, aiModel),
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(requestTimeoutMs(aiProvider)),
   });
 
   if (!response.ok) {
@@ -85,6 +107,8 @@ export async function requestAiAltText(
   body: AiAltTextRequestBody,
   orgId: string,
   planTier: string,
+  aiProvider?: string,
+  aiModel?: string,
 ): Promise<AiAltTextResponseBody> {
   const { url, internalKey } = getAiServiceConfig();
 
@@ -94,9 +118,9 @@ export async function requestAiAltText(
 
   const response = await fetch(`${url}/ai/alt-text`, {
     method: 'POST',
-    headers: aiHeaders(orgId, planTier, internalKey),
+    headers: aiHeaders(orgId, planTier, internalKey, aiProvider, aiModel),
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(requestTimeoutMs(aiProvider)),
   });
 
   if (!response.ok) {

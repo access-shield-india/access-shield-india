@@ -18,6 +18,8 @@ class TestHealthEndpoint:
             mock_settings.anthropic_api_key = "test-key"
             mock_settings.internal_ai_service_key = "test-internal-key"
             mock_settings.claude_model = "claude-sonnet-4-20250514"
+            mock_settings.default_ai_provider = "anthropic"
+            mock_settings.local_model = "bartowski/Qwen2.5-Coder-3B-Instruct-GGUF"
             
             # Import after mocking
             from main import app
@@ -36,6 +38,8 @@ class TestHealthEndpoint:
             mock_settings.anthropic_api_key = "test-key"
             mock_settings.internal_ai_service_key = "test-internal-key"
             mock_settings.claude_model = "claude-sonnet-4-20250514"
+            mock_settings.default_ai_provider = "anthropic"
+            mock_settings.local_model = "bartowski/Qwen2.5-Coder-3B-Instruct-GGUF"
             
             with patch("main.cache", None):
                 from main import app
@@ -46,10 +50,11 @@ class TestHealthEndpoint:
                         data = response.json()
                         assert "model" in data
                         assert "status" in data
+                        assert data.get("default_provider") == "anthropic"
 
 
 class TestMetricsEndpoint:
-    """Tests for /metrics endpoint."""
+    """Tests for metrics endpoint."""
 
     def test_metrics_no_auth_required(self):
         """Metrics endpoint works without auth."""
@@ -60,6 +65,8 @@ class TestMetricsEndpoint:
             mock_settings.anthropic_api_key = "test-key"
             mock_settings.internal_ai_service_key = "test-internal-key"
             mock_settings.claude_model = "claude-sonnet-4-20250514"
+            mock_settings.default_ai_provider = "anthropic"
+            mock_settings.local_model = "bartowski/Qwen2.5-Coder-3B-Instruct-GGUF"
             
             from main import app
             
@@ -81,6 +88,8 @@ class TestAuthMiddleware:
             mock_settings.anthropic_api_key = "test-key"
             mock_settings.internal_ai_service_key = "test-internal-key"
             mock_settings.claude_model = "claude-sonnet-4-20250514"
+            mock_settings.default_ai_provider = "anthropic"
+            mock_settings.local_model = "bartowski/Qwen2.5-Coder-3B-Instruct-GGUF"
             
             from main import app
             
@@ -106,6 +115,8 @@ class TestAuthMiddleware:
             mock_settings.anthropic_api_key = "test-key"
             mock_settings.internal_ai_service_key = "test-internal-key"
             mock_settings.claude_model = "claude-sonnet-4-20250514"
+            mock_settings.default_ai_provider = "anthropic"
+            mock_settings.local_model = "bartowski/Qwen2.5-Coder-3B-Instruct-GGUF"
             mock_settings.cache_ttl_seconds = 86400
             
             from main import app

@@ -338,6 +338,8 @@ export interface Organisation {
   billingEmail: string | null;
   isActive: boolean;
   planTier: 'trial' | 'starter' | 'professional' | 'enterprise' | 'government';
+  aiProvider: 'anthropic' | 'local';
+  aiModel: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -347,6 +349,8 @@ export interface UpdateOrganisationInput {
   gstin?: string;
   billingEmail?: string;
   billingAddress?: string;
+  aiProvider?: 'anthropic' | 'local';
+  aiModel?: string;
 }
 
 // ─── Integrations ────────────────────────────────────────────────────────

@@ -1,8 +1,10 @@
 # 11 — Deployment Guide (Dev & Prod)
 
-[← Docker volumes & backup](./10-docker-volumes-and-backup.md) | [Index](./README.md)
+[← Docker volumes & backup](./10-docker-volumes-and-backup.md) | [Index](./README.md) | [Linux server setup →](./12-linux-server-setup.md)
 
 Step-by-step setup for a **developer machine** and a **production / staging server**. Auth is Keycloak-only; object storage is MinIO (dev) or S3 (prod). See [09](./09-self-hosting-supabase-replacement.md) and [10](./10-docker-volumes-and-backup.md) for design and backup inventory.
+
+For a **single Linux box with Docker already installed**, prefer the copy-paste runbook: [12-linux-server-setup.md](./12-linux-server-setup.md).
 
 ---
 
@@ -366,5 +368,6 @@ Detail: [10-docker-volumes-and-backup.md](./10-docker-volumes-and-backup.md).
 - [08-operational-runbook.md](./08-operational-runbook.md) — daily local ops  
 - [09-self-hosting-supabase-replacement.md](./09-self-hosting-supabase-replacement.md) — auth cutover design  
 - [10-docker-volumes-and-backup.md](./10-docker-volumes-and-backup.md) — volume names & DB split  
+- [12-linux-server-setup.md](./12-linux-server-setup.md) — Linux server copy-paste runbook  
 - [`scripts/seed-sysadmin.sh`](../../scripts/seed-sysadmin.sh) — Keycloak + DB link  
 - [`docker-compose.yml`](../../docker-compose.yml) — local infra  

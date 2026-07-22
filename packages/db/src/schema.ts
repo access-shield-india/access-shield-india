@@ -108,6 +108,12 @@ export const organisations = pgTable(
     billingEmail: varchar('billing_email', { length: 255 }),
     isActive: boolean('is_active').notNull().default(true),
     planTier: varchar('plan_tier', { length: 50 }).notNull().default('starter'),
+    /** AI inference backend: anthropic | local */
+    aiProvider: varchar('ai_provider', { length: 50 }).notNull().default('anthropic'),
+    /** Model id for the selected provider */
+    aiModel: varchar('ai_model', { length: 150 })
+      .notNull()
+      .default('claude-sonnet-4-5-20250929'),
     ...timestamps,
   },
   (table) => ({

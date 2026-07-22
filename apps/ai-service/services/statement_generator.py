@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from config import settings
 from utils.cache import cache, AICache
-from utils.claude_client import claude_client
+from utils.model_router import get_client, normalize_provider, resolve_model
 from utils.dlp import scrub_dict
 
 logger = logging.getLogger(__name__)
@@ -78,17 +78,27 @@ Write entirely in Hindi using Devanagari Unicode script. This is required by IS 
 No jargon. Length: 400-600 words."""
 
 
-async def generate_statement(request: StatementRequest) -> StatementResponse:
+async def generate_statement(
+    request: StatementRequest,
+    provider: str | None = None,
+    model: str | None = None,
+) -> StatementResponse:
     """Generate accessibility statement in English and Hindi.
 
     Args:
         request: Statement generation request.
+        provider: AI provider (anthropic | local).
+        model: Optional model override.
 
     Returns:
         Generated statement response.
     """
+    resolved_provider = normalize_provider(provider)
+    resolved_model = resolve_model(resolved_provider, model)
     cache_key = AICache.make_key(
         "statement",
+        resolved_provider,
+        resolved_model,
         request.website_url,
         request.last_audit_date,
     )
@@ -133,9 +143,10 @@ async def generate_statement(request: StatementRequest) -> StatementResponse:
             f"Last audit: {scrubbed.get('last_audit_date', '')}"
         )
 
-        # Generate both statements concurrently
+        client = get_client(resolved_provider, resolved_model)
+
         en_task = asyncio.create_task(
-            claude_client.complete(
+            client.complete(
                 system=SYSTEM_PROMPT_EN,
                 user=user_message,
                 max_tokens=settings.max_tokens_statement,
@@ -143,7 +154,7 @@ async def generate_statement(request: StatementRequest) -> StatementResponse:
             )
         )
         hi_task = asyncio.create_task(
-            claude_client.complete(
+            client.complete(
                 system=SYSTEM_PROMPT_HI,
                 user=user_message,
                 max_tokens=settings.max_tokens_statement,

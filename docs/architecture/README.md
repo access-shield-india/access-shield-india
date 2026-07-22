@@ -22,6 +22,7 @@ Architecture reference for **Senior Architects** and **Technical Project Manager
 | [09-self-hosting-supabase-replacement.md](./09-self-hosting-supabase-replacement.md) | Self-hosting design: replace Supabase Auth/Realtime with Keycloak + SSE |
 | [10-docker-volumes-and-backup.md](./10-docker-volumes-and-backup.md) | Explicit Compose volume names, Keycloak DB on shared Postgres, backup priorities |
 | [11-deployment-guide.md](./11-deployment-guide.md) | Step-by-step setup for local/dev and production servers |
+| [12-linux-server-setup.md](./12-linux-server-setup.md) | Copy-paste Linux server setup (Docker installed; Compose infra + host apps) |
 | [v2/](./v2/README.md) — Scan Pipeline Architecture v2 *(implemented behind flags)* | Staged task-queue workers, Redis + MQ, multi-scan consistency, migration plan |
 
 **Suggested reading order:** 01 → 02 → 03 → 04, then 05–08 as needed for your role. Read 09 before any Supabase cutover work. For the **web-scan worker split (v2)**, read [v2/](./v2/README.md) after 05 — default deploy remains v1 until flags are enabled.

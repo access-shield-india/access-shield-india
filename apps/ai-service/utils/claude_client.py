@@ -17,9 +17,19 @@ class ClaudeClient:
     """Wrapper for Anthropic Claude API with retry logic."""
 
     def __init__(self) -> None:
-        """Initialize the Anthropic client."""
-        self.client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+        """Initialize lazily so local-only deployments need no Anthropic key at import."""
+        self._client: Optional[anthropic.Anthropic] = None
         self.model = settings.claude_model
+
+    @property
+    def client(self) -> anthropic.Anthropic:
+        if self._client is None:
+            if not settings.anthropic_api_key:
+                raise RuntimeError(
+                    "ANTHROPIC_API_KEY is not set — configure Anthropic or switch to local LLM"
+                )
+            self._client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+        return self._client
 
     async def complete(
         self,

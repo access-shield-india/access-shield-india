@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from config import settings
 from utils.cache import cache, AICache
-from utils.claude_client import claude_client
+from utils.model_router import get_client, normalize_provider, resolve_model
 from utils.dlp import scrub, truncate
 
 logger = logging.getLogger(__name__)
@@ -85,17 +85,27 @@ Respond ONLY with valid JSON:
 }}"""
 
 
-async def get_advice(request: AdviceRequest) -> AdviceResponse:
+async def get_advice(
+    request: AdviceRequest,
+    provider: str | None = None,
+    model: str | None = None,
+) -> AdviceResponse:
     """Get plain-English compliance advice for a violation.
 
     Args:
         request: Advice request.
+        provider: AI provider (anthropic | local).
+        model: Optional model override.
 
     Returns:
         Compliance advice response.
     """
+    resolved_provider = normalize_provider(provider)
+    resolved_model = resolve_model(resolved_provider, model)
     cache_key = AICache.make_key(
         "advice",
+        resolved_provider,
+        resolved_model,
         request.wcag_criterion,
         request.standard,
         request.industry,
@@ -132,8 +142,8 @@ async def get_advice(request: AdviceRequest) -> AdviceResponse:
             f"WCAG {request.wcag_criterion} — {request.severity}"
         )
 
-        # Call Claude with higher temperature for advice
-        response_text = await claude_client.complete(
+        client = get_client(resolved_provider, resolved_model)
+        response_text = await client.complete(
             system=system_prompt,
             user=user_message,
             max_tokens=settings.max_tokens_advice,

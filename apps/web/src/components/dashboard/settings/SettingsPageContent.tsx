@@ -9,6 +9,7 @@ import { JiraIntegrationCard } from '@/components/dashboard/settings/JiraIntegra
 import { BillingCard } from '@/components/dashboard/settings/BillingCard';
 import { NotificationSettings } from '@/components/dashboard/settings/NotificationSettings';
 import { WidgetSettings } from '@/components/dashboard/settings/WidgetSettings';
+import { AISettingsForm } from '@/components/dashboard/settings/AISettingsForm';
 
 const SETTINGS_TABS: TabItem[] = [
   {
@@ -76,6 +77,15 @@ const SETTINGS_TABS: TabItem[] = [
         fallback={<LoadingState message="Please wait, loading widget settings…" variant="card" />}
       >
         <WidgetSettings />
+      </Suspense>
+    ),
+  },
+  {
+    value: 'ai',
+    label: 'AI Configuration',
+    content: (
+      <Suspense fallback={<LoadingState message="Please wait, loading AI settings…" variant="card" />}>
+        <AISettingsForm />
       </Suspense>
     ),
   },

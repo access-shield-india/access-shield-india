@@ -60,6 +60,8 @@ async function loadIssueViolation(
   assetId: string;
   violationId: string;
   planTier: string;
+  aiProvider: string;
+  aiModel: string;
   ruleId: string;
   elementHtml: string;
   wcagCriterion: string;
@@ -75,6 +77,8 @@ async function loadIssueViolation(
       assetId: issues.assetId,
       violationId: violations.id,
       planTier: organisations.planTier,
+      aiProvider: organisations.aiProvider,
+      aiModel: organisations.aiModel,
       ruleId: violations.ruleId,
       elementHtml: violations.html,
       wcagCriterion: violations.wcagCriteria,
@@ -99,6 +103,8 @@ async function loadIssueViolation(
     assetId: row.assetId,
     violationId: row.violationId,
     planTier: row.planTier ?? 'starter',
+    aiProvider: row.aiProvider ?? 'anthropic',
+    aiModel: row.aiModel ?? 'claude-sonnet-4-5-20250929',
     ruleId: row.ruleId,
     elementHtml: row.elementHtml ?? '',
     wcagCriterion: row.wcagCriterion?.[0] ?? '2.4.4',
@@ -148,6 +154,8 @@ export async function generateIssueAiFix(
       },
       orgId,
       row.planTier,
+      row.aiProvider,
+      row.aiModel,
     );
     fixHtml = response.fix_html?.trim() ?? '';
     explanation = response.explanation?.trim() ?? '';
@@ -238,6 +246,8 @@ export async function generateIssueAiAltText(
       },
       orgId,
       row.planTier,
+      row.aiProvider,
+      row.aiModel,
     );
     altText = response.alt_text?.trim() ?? '';
   } catch (err) {

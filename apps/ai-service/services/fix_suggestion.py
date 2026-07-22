@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from config import settings
 from utils.cache import cache, AICache
-from utils.claude_client import claude_client
+from utils.model_router import get_client, normalize_provider, resolve_model
 from utils.dlp import scrub, truncate
 from db.session import update_violation_fix
 
@@ -60,17 +60,31 @@ Respond ONLY with valid JSON:
 }}"""
 
 
-async def generate_fix(request: FixRequest) -> FixResponse:
+async def generate_fix(
+    request: FixRequest,
+    provider: str | None = None,
+    model: str | None = None,
+) -> FixResponse:
     """Generate AI fix suggestion for an accessibility violation.
 
     Args:
         request: Fix suggestion request.
+        provider: AI provider (anthropic | local).
+        model: Optional model override.
 
     Returns:
         Generated fix response.
     """
+    resolved_provider = normalize_provider(provider)
+    resolved_model = resolve_model(resolved_provider, model)
     # Use first 100 chars of element HTML for cache key to avoid overly long keys
-    cache_key = AICache.make_key("fix", request.rule_id, request.element_html[:100])
+    cache_key = AICache.make_key(
+        "fix",
+        resolved_provider,
+        resolved_model,
+        request.rule_id,
+        request.element_html[:100],
+    )
 
     try:
         # Check cache
@@ -103,8 +117,8 @@ async def generate_fix(request: FixRequest) -> FixResponse:
             f"Page context: {clean_context}"
         )
 
-        # Call Claude
-        response_text = await claude_client.complete(
+        client = get_client(resolved_provider, resolved_model)
+        response_text = await client.complete(
             system=system_prompt,
             user=user_message,
             max_tokens=settings.max_tokens_fix,

@@ -277,11 +277,14 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(function Select
     );
   }
 
+  const [internalValue, setInternalValue] = useState(value ?? defaultValue ?? '');
+
   const hintId = hint ? `${id}-hint` : undefined;
   const errorId = error ? `${id}-error` : undefined;
   const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
 
   const handleValueChange = (newValue: string) => {
+    setInternalValue(newValue);
     onValueChange?.(newValue);
     onChange?.(newValue);
     const option = options.find((o) => o.value === newValue);
@@ -292,7 +295,14 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(function Select
 
   return (
     <div className={cn('space-y-1.5', className)}>
-      {name && <input type="hidden" name={name} value={value ?? defaultValue ?? ''} readOnly />}
+      {name && (
+        <input
+          type="hidden"
+          name={name}
+          value={value !== undefined ? value : internalValue}
+          readOnly
+        />
+      )}
       <label htmlFor={id} className="text-sm font-medium text-text-secondary">
         {resolvedLabel}
         {required && (

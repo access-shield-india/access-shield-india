@@ -22,6 +22,8 @@ const updateOrganisationSchema = z.object({
     .optional(),
   billingEmail: z.string().email().optional(),
   billingAddress: z.string().max(2000).optional(),
+  aiProvider: z.enum(['anthropic', 'local']).optional(),
+  aiModel: z.string().min(1).max(150).optional(),
 });
 
 export function createOrganisationRouter(db: Database): ExpressRouter {
@@ -43,6 +45,8 @@ export function createOrganisationRouter(db: Database): ExpressRouter {
             billingEmail: organisations.billingEmail,
             isActive: organisations.isActive,
             planTier: organisations.planTier,
+            aiProvider: organisations.aiProvider,
+            aiModel: organisations.aiModel,
             createdAt: organisations.createdAt,
             updatedAt: organisations.updatedAt,
           })
@@ -81,7 +85,7 @@ export function createOrganisationRouter(db: Database): ExpressRouter {
         }
 
         const orgId = req.user!.org_id;
-        const { name, gstin, billingEmail } = parseResult.data;
+        const { name, gstin, billingEmail, aiProvider, aiModel } = parseResult.data;
 
         const updates: Partial<typeof organisations.$inferInsert> = {
           updatedAt: new Date().toISOString(),
@@ -89,6 +93,8 @@ export function createOrganisationRouter(db: Database): ExpressRouter {
         if (name !== undefined) updates.name = name;
         if (gstin !== undefined) updates.gstin = gstin || null;
         if (billingEmail !== undefined) updates.billingEmail = billingEmail;
+        if (aiProvider !== undefined) updates.aiProvider = aiProvider;
+        if (aiModel !== undefined) updates.aiModel = aiModel;
 
         const [updated] = await db
           .update(organisations)
@@ -102,6 +108,8 @@ export function createOrganisationRouter(db: Database): ExpressRouter {
             billingEmail: organisations.billingEmail,
             isActive: organisations.isActive,
             planTier: organisations.planTier,
+            aiProvider: organisations.aiProvider,
+            aiModel: organisations.aiModel,
             createdAt: organisations.createdAt,
             updatedAt: organisations.updatedAt,
           });
