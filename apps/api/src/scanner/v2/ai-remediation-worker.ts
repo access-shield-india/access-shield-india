@@ -1,3 +1,4 @@
+/**
  * AI alt-text + fix consumers — call ai-service and update violations.
  * Consumes `ai.alt-text` / `ai.fix` and legacy `ai-alt-text` / `ai-fix`.
  * Provider/model come from the organisation AI settings (anthropic | local).
