@@ -19,6 +19,9 @@
     "db:generate": "turbo db:generate",
     "db:migrate": "turbo db:migrate",
     "db:seed": "pnpm --filter @accessshield/db db:seed",
+    "deploy": "bash scripts/deploy.sh",
+    "deploy:prod": "bash scripts/deploy.sh --mode=prod",
+    "deploy:migrate": "bash scripts/deploy.sh --migrate-only",
     "prepare": "husky"
   },
   "devDependencies": {

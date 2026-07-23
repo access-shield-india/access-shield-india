@@ -204,7 +204,35 @@ chmod +x scripts/set-test-user-claims.sh
 
 ## 5. Start application processes
 
-Use separate terminals (or `tmux` / `systemd`).
+### Option A — one-shot deploy script (recommended on a Linux box)
+
+After first-time env + infra (sections 2–3), routine updates:
+
+```bash
+chmod +x scripts/deploy.sh apps/ai-service/scripts/start.sh
+
+# Pull, install, build packages, migrate, restart API / web / worker / AI
+./scripts/deploy.sh
+
+# Same with production-style processes (build + start, no reload)
+./scripts/deploy.sh --mode=prod
+
+# Local LLM extras + warmup path
+./scripts/deploy.sh --with-local-llm
+
+# First box only (seed + sysadmin)
+./scripts/deploy.sh --bootstrap
+
+# Escape hatch — migrations only
+./scripts/deploy.sh --migrate-only
+# or: pnpm deploy:migrate
+```
+
+Logs/PIDs live under `.deploy/` (gitignored). Smoke: API `:4000/health`, AI `:8001/health`.
+
+**Dev vs prod on this script:** `--mode=dev|prod` only changes *how host apps run* (reload vs built). It is **not** full AWS production (RDS / Secrets Manager / Vercel) — that remains [11-deployment-guide.md](./11-deployment-guide.md) Part B. Use one script; don’t maintain two checklists for the Compose box.
+
+### Option B — manual terminals (or tmux / systemd)
 
 ```bash
 # Terminal 1 — API (:4000)
@@ -227,7 +255,7 @@ Or start web + API together:
 pnpm dev:stack
 ```
 
-> For long-running servers, wrap these in `systemd` units or a process manager (`pm2`). Dev scripts are not a production process supervisor.
+> For long-running servers, prefer `./scripts/deploy.sh` or wrap units in `systemd` / `pm2`. Dev scripts alone are not a production process supervisor.
 
 ---
 
@@ -310,7 +338,9 @@ Details: [10-docker-volumes-and-backup.md](./10-docker-volumes-and-backup.md).
 | `seed-sysadmin.sh` password grant fails | Check `KEYCLOAK_ADMIN_CLIENT_SECRET` matches realm (`accessshield-api-dev-secret` for local import) and Keycloak is up |
 | Web login redirect wrong host | Align `NEXTAUTH_URL`, `CORS_ORIGIN`, and Keycloak client redirect URIs with `YOUR_SERVER_IP` |
 | Scans stuck queued | Start the worker: `pnpm --filter @accessshield/api dev:worker` |
-| AI calls 401/503 | Match `INTERNAL_AI_SERVICE_KEY` in root `.env.local` and `apps/ai-service/.env`; set `ANTHROPIC_API_KEY` |
+| AI calls 401/503 | Match `INTERNAL_AI_SERVICE_KEY` in root `.env.local` and `apps/ai-service/.env`; set `ANTHROPIC_API_KEY` or use local LLM |
+| Local LLM slow first request | Set `LOCAL_LLM_WARMUP=true` (or `DEFAULT_AI_PROVIDER=local`); deploy with `--with-local-llm`; check `/health` → `local_llm_warmup` |
+| Deploy script won’t pull | Working tree dirty — commit/stash or `./scripts/deploy.sh --no-pull` |
 
 More ops detail: [08-operational-runbook.md](./08-operational-runbook.md).
 

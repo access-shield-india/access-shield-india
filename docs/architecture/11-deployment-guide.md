@@ -4,7 +4,7 @@
 
 Step-by-step setup for a **developer machine** and a **production / staging server**. Auth is Keycloak-only; object storage is MinIO (dev) or S3 (prod). See [09](./09-self-hosting-supabase-replacement.md) and [10](./10-docker-volumes-and-backup.md) for design and backup inventory.
 
-For a **single Linux box with Docker already installed**, prefer the copy-paste runbook: [12-linux-server-setup.md](./12-linux-server-setup.md).
+For a **single Linux box with Docker already installed**, prefer the copy-paste runbook: [12-linux-server-setup.md](./12-linux-server-setup.md). Routine updates on that box: `./scripts/deploy.sh` (see section 5 in doc 12). Use `--mode=prod` for built processes on the same machine; full AWS topology remains Part B below.
 
 ---
 

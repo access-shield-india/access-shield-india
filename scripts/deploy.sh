@@ -1,0 +1,433 @@
+#!/usr/bin/env bash
+# AccessShield India — single-box deploy (Docker infra + host apps)
+#
+# One script for routine updates. Migrations run by default (before app restart).
+# Full AWS / multi-region prod is still the checklist in docs/architecture/11-deployment-guide.md
+# Part B — this script targets the Compose + host model in 12-linux-server-setup.md.
+#
+# Modes (same machine, different process style):
+#   --mode=dev   (default)  tsx/next/uvicorn --reload  — developer / staging box
+#   --mode=prod             build + start (no reload) — still single-box, not ECS/Vercel
+#
+# Usage:
+#   ./scripts/deploy.sh
+#   ./scripts/deploy.sh --mode=prod --with-local-llm
+#   ./scripts/deploy.sh --migrate-only
+#   ./scripts/deploy.sh --bootstrap --no-pull
+#
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
+DEPLOY_DIR="$ROOT/.deploy"
+LOG_DIR="$DEPLOY_DIR/logs"
+PID_DIR="$DEPLOY_DIR/pids"
+INFRA_SERVICES=(postgres redis rabbitmq tika keycloak minio minio-init mailpit)
+
+MODE="dev"
+DO_PULL=1
+DO_INFRA=1
+DO_INSTALL=1
+DO_BUILD=1
+DO_MIGRATE=1
+DO_RESTART=1
+DO_BOOTSTRAP=0
+WITH_LOCAL_LLM=0
+SKIP_AI=0
+SKIP_WORKER=0
+SKIP_WEB=0
+SKIP_API=0
+MIGRATE_ONLY=0
+INFRA_ONLY=0
+
+RED=$'\033[0;31m'
+GREEN=$'\033[0;32m'
+YELLOW=$'\033[0;33m'
+NC=$'\033[0m'
+
+log()  { printf '%s\n' "$*"; }
+ok()   { printf '%s✓%s %s\n' "$GREEN" "$NC" "$*"; }
+warn() { printf '%s!%s %s\n' "$YELLOW" "$NC" "$*"; }
+die()  { printf '%s✗%s %s\n' "$RED" "$NC" "$*" >&2; exit 1; }
+
+usage() {
+  cat <<'EOF'
+AccessShield deploy — pull, build, migrate, restart (single Linux box)
+
+Usage: ./scripts/deploy.sh [options]
+
+Modes:
+  --mode=dev|prod     Process style (default: dev). prod = build + start, no reload.
+
+Steps (toggle):
+  --no-pull           Skip git pull
+  --infra-only        Only docker compose up + wait healthy
+  --migrate-only      Only run DB migrations (requires Postgres up)
+  --no-restart        Pull/build/migrate but do not stop/start apps
+  --bootstrap         Also run db:seed + scripts/seed-sysadmin.sh (first box only)
+
+Apps:
+  --with-local-llm    Ensure ai-service venv has pip install '.[local]'
+  --skip-ai           Do not restart AI service
+  --skip-worker       Do not restart scan worker
+  --skip-web          Do not restart web
+  --skip-api          Do not restart API
+
+Other:
+  -h, --help          Show this help
+
+Env:
+  DEPLOY_BRANCH       If set, git checkout / pull that branch (default: current)
+  AI_SERVICE_PORT     Default 8001
+
+Examples:
+  ./scripts/deploy.sh
+  ./scripts/deploy.sh --mode=prod --with-local-llm
+  ./scripts/deploy.sh --migrate-only
+  ./scripts/deploy.sh --bootstrap
+EOF
+}
+
+for arg in "$@"; do
+  case "$arg" in
+    --mode=dev) MODE=dev ;;
+    --mode=prod) MODE=prod ;;
+    --mode=*) die "Unknown mode: $arg (use --mode=dev or --mode=prod)" ;;
+    --no-pull) DO_PULL=0 ;;
+    --infra-only) INFRA_ONLY=1 ;;
+    --migrate-only) MIGRATE_ONLY=1 ;;
+    --no-restart) DO_RESTART=0 ;;
+    --bootstrap) DO_BOOTSTRAP=1 ;;
+    --with-local-llm) WITH_LOCAL_LLM=1 ;;
+    --skip-ai) SKIP_AI=1 ;;
+    --skip-worker) SKIP_WORKER=1 ;;
+    --skip-web) SKIP_WEB=1 ;;
+    --skip-api) SKIP_API=1 ;;
+    -h|--help) usage; exit 0 ;;
+    *) die "Unknown option: $arg (try --help)" ;;
+  esac
+done
+
+if [[ "$MIGRATE_ONLY" -eq 1 ]]; then
+  DO_PULL=0
+  DO_INFRA=0
+  DO_INSTALL=0
+  DO_BUILD=0
+  DO_RESTART=0
+  DO_BOOTSTRAP=0
+  DO_MIGRATE=1
+fi
+
+if [[ "$INFRA_ONLY" -eq 1 ]]; then
+  DO_PULL=0
+  DO_INSTALL=0
+  DO_BUILD=0
+  DO_MIGRATE=0
+  DO_RESTART=0
+  DO_BOOTSTRAP=0
+  DO_INFRA=1
+fi
+
+mkdir -p "$LOG_DIR" "$PID_DIR"
+
+require_cmd() {
+  command -v "$1" >/dev/null 2>&1 || die "Missing required command: $1"
+}
+
+wait_for_postgres() {
+  local tries=60
+  log "Waiting for Postgres…"
+  for ((i = 1; i <= tries; i++)); do
+    if docker compose exec -T postgres pg_isready -U postgres >/dev/null 2>&1; then
+      ok "Postgres ready"
+      return 0
+    fi
+    sleep 2
+  done
+  die "Postgres did not become ready in time"
+}
+
+wait_for_keycloak() {
+  local tries=90
+  log "Waiting for Keycloak (may take a minute)…"
+  for ((i = 1; i <= tries; i++)); do
+    if curl -sf "http://127.0.0.1:8080/health/ready" >/dev/null 2>&1 \
+      || curl -sf "http://127.0.0.1:8080/" >/dev/null 2>&1; then
+      ok "Keycloak responding"
+      return 0
+    fi
+    sleep 2
+  done
+  warn "Keycloak not ready yet — continue; login may fail until it is"
+}
+
+kill_pidfile() {
+  local name="$1"
+  local pidfile="$PID_DIR/$name.pid"
+  if [[ -f "$pidfile" ]]; then
+    local pid
+    pid="$(cat "$pidfile" 2>/dev/null || true)"
+    if [[ -n "${pid:-}" ]] && kill -0 "$pid" 2>/dev/null; then
+      log "Stopping $name (pid $pid)…"
+      kill "$pid" 2>/dev/null || true
+      sleep 1
+      kill -9 "$pid" 2>/dev/null || true
+    fi
+    rm -f "$pidfile"
+  fi
+}
+
+free_port() {
+  local port="$1"
+  if command -v lsof >/dev/null 2>&1; then
+    local pids
+    pids="$(lsof -ti ":$port" 2>/dev/null || true)"
+    if [[ -n "$pids" ]]; then
+      log "Freeing port $port (pids: $pids)…"
+      # shellcheck disable=SC2086
+      kill $pids 2>/dev/null || true
+      sleep 1
+      # shellcheck disable=SC2086
+      kill -9 $pids 2>/dev/null || true
+    fi
+  fi
+}
+
+start_bg() {
+  local name="$1"
+  shift
+  local logfile="$LOG_DIR/$name.log"
+  local pidfile="$PID_DIR/$name.pid"
+  log "Starting $name → $logfile"
+  (
+    cd "$ROOT"
+    nohup "$@" >>"$logfile" 2>&1 &
+    echo $! >"$pidfile"
+  )
+  sleep 1
+  local pid
+  pid="$(cat "$pidfile")"
+  if kill -0 "$pid" 2>/dev/null; then
+    ok "$name started (pid $pid)"
+  else
+    warn "$name may have exited — check $logfile"
+  fi
+}
+
+ensure_ai_venv() {
+  local ai_root="$ROOT/apps/ai-service"
+  local venv="$ai_root/.venv"
+  local py=""
+  for cmd in python3.12 python3.11 python3.13 python3; do
+    if command -v "$cmd" >/dev/null 2>&1; then
+      local ver
+      ver="$("$cmd" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+      local major="${ver%%.*}"
+      local minor="${ver#*.}"
+      if (( major == 3 && minor >= 11 && minor <= 13 )); then
+        py="$cmd"
+        break
+      fi
+    fi
+  done
+  [[ -n "$py" ]] || die "Python 3.11–3.13 required for ai-service"
+
+  if [[ ! -d "$venv" ]]; then
+    log "Creating ai-service venv ($py)…"
+    "$py" -m venv "$venv"
+  fi
+
+  # shellcheck source=/dev/null
+  source "$venv/bin/activate"
+  if ! python -c "import uvicorn" >/dev/null 2>&1; then
+    log "Installing ai-service dependencies…"
+    pip install -q --upgrade pip
+    pip install -q -e "$ai_root[dev]"
+  fi
+
+  if [[ "$WITH_LOCAL_LLM" -eq 1 ]] || should_install_local_llm; then
+    log "Ensuring local LLM extras (llama-cpp)…"
+    pip install -q -e "$ai_root[local]"
+  fi
+  deactivate 2>/dev/null || true
+}
+
+should_install_local_llm() {
+  local envf="$ROOT/apps/ai-service/.env"
+  [[ -f "$envf" ]] || return 1
+  if grep -qiE '^[[:space:]]*LOCAL_LLM_WARMUP[[:space:]]*=[[:space:]]*true' "$envf"; then
+    return 0
+  fi
+  if grep -qiE '^[[:space:]]*DEFAULT_AI_PROVIDER[[:space:]]*=[[:space:]]*local' "$envf"; then
+    return 0
+  fi
+  return 1
+}
+
+run_pull() {
+  require_cmd git
+  if [[ -n "$(git status --porcelain 2>/dev/null || true)" ]]; then
+    die "Working tree is dirty — commit/stash first, or use --no-pull"
+  fi
+  if [[ -n "${DEPLOY_BRANCH:-}" ]]; then
+    log "Checking out $DEPLOY_BRANCH…"
+    git fetch origin
+    git checkout "$DEPLOY_BRANCH"
+    git pull --ff-only origin "$DEPLOY_BRANCH"
+  else
+    local branch
+    branch="$(git rev-parse --abbrev-ref HEAD)"
+    log "Pulling $branch (ff-only)…"
+    git pull --ff-only
+  fi
+  ok "Git up to date ($(git rev-parse --short HEAD))"
+}
+
+run_infra() {
+  require_cmd docker
+  docker compose version >/dev/null 2>&1 || die "Docker Compose v2 required (docker compose)"
+  log "Starting infra: ${INFRA_SERVICES[*]}"
+  docker compose up -d "${INFRA_SERVICES[@]}"
+  wait_for_postgres
+  wait_for_keycloak
+}
+
+run_install() {
+  require_cmd pnpm
+  log "pnpm install…"
+  pnpm install
+  ok "Dependencies installed"
+}
+
+run_build_packages() {
+  log "Building shared packages…"
+  pnpm --filter @accessshield/types build
+  pnpm --filter @accessshield/db build
+  pnpm --filter @accessshield/ui build
+  ok "Packages built"
+
+  if [[ "$MODE" == "prod" ]]; then
+    log "Building API + Web (prod mode)…"
+    pnpm --filter @accessshield/api build
+    pnpm --filter @accessshield/web build
+    ok "API + Web built"
+  fi
+}
+
+run_migrate() {
+  [[ -f "$ROOT/.env.local" ]] || die "Missing .env.local at repo root (needed for DATABASE_URL)"
+  log "Running DB migrations…"
+  pnpm --filter @accessshield/db exec drizzle-kit migrate
+  ok "Migrations applied"
+}
+
+run_bootstrap() {
+  warn "Bootstrap: seeding DB + Keycloak sysadmin (first-time only)"
+  pnpm db:seed
+  if [[ -x "$ROOT/scripts/seed-sysadmin.sh" ]]; then
+    "$ROOT/scripts/seed-sysadmin.sh"
+  else
+    bash "$ROOT/scripts/seed-sysadmin.sh"
+  fi
+  ok "Bootstrap complete"
+}
+
+stop_apps() {
+  log "Stopping app processes…"
+  kill_pidfile api
+  kill_pidfile web
+  kill_pidfile worker
+  kill_pidfile ai
+  free_port 3000
+  free_port 4000
+  free_port 8001
+}
+
+start_apps() {
+  [[ -f "$ROOT/.env.local" ]] || die "Missing .env.local"
+
+  if [[ "$SKIP_API" -eq 0 ]]; then
+    if [[ "$MODE" == "prod" ]]; then
+      start_bg api pnpm --filter @accessshield/api start
+    else
+      start_bg api pnpm --filter @accessshield/api dev
+    fi
+  fi
+
+  if [[ "$SKIP_WEB" -eq 0 ]]; then
+    if [[ "$MODE" == "prod" ]]; then
+      start_bg web bash -c 'cd apps/web && node --env-file="../../.env.local" ./node_modules/next/dist/bin/next start --port 3000'
+    else
+      start_bg web pnpm --filter @accessshield/web dev
+    fi
+  fi
+
+  if [[ "$SKIP_WORKER" -eq 0 ]]; then
+    if [[ "$MODE" == "prod" ]]; then
+      start_bg worker pnpm --filter @accessshield/api start:worker
+    else
+      start_bg worker pnpm --filter @accessshield/api dev:worker
+    fi
+  fi
+
+  if [[ "$SKIP_AI" -eq 0 ]]; then
+    if [[ ! -f "$ROOT/apps/ai-service/.env" ]]; then
+      warn "apps/ai-service/.env missing — skipping AI (copy from .env.example)"
+    else
+      ensure_ai_venv
+      chmod +x "$ROOT/apps/ai-service/scripts/start.sh" 2>/dev/null || true
+      if [[ "$MODE" == "prod" ]]; then
+        start_bg ai "$ROOT/apps/ai-service/scripts/start.sh"
+      else
+        # Prefer start.sh --reload so deploy-managed PID matches; falls back to package script
+        start_bg ai "$ROOT/apps/ai-service/scripts/start.sh" --reload
+      fi
+    fi
+  fi
+}
+
+smoke() {
+  log "Smoke checks…"
+  sleep 2
+  if curl -sf "http://127.0.0.1:4000/health" >/dev/null 2>&1; then
+    ok "API /health OK"
+  else
+    warn "API /health not ready yet — see $LOG_DIR/api.log"
+  fi
+  if [[ "$SKIP_AI" -eq 0 ]] && [[ -f "$ROOT/apps/ai-service/.env" ]]; then
+    if curl -sf "http://127.0.0.1:${AI_SERVICE_PORT:-8001}/health" >/dev/null 2>&1; then
+      ok "AI /health OK"
+      curl -s "http://127.0.0.1:${AI_SERVICE_PORT:-8001}/health" | head -c 400 || true
+      echo
+    else
+      warn "AI /health not ready (warmup may still be running) — see $LOG_DIR/ai.log"
+    fi
+  fi
+  log "Logs: $LOG_DIR"
+  log "PIDs: $PID_DIR"
+}
+
+# ─── main ───────────────────────────────────────────────────────────────────
+
+log "=== AccessShield deploy (mode=$MODE) ==="
+
+[[ "$DO_PULL" -eq 1 ]] && run_pull
+[[ "$DO_INFRA" -eq 1 ]] && run_infra
+[[ "$DO_INSTALL" -eq 1 ]] && run_install
+[[ "$DO_BUILD" -eq 1 ]] && run_build_packages
+[[ "$DO_MIGRATE" -eq 1 ]] && run_migrate
+[[ "$DO_BOOTSTRAP" -eq 1 ]] && run_bootstrap
+
+if [[ "$DO_RESTART" -eq 1 ]]; then
+  stop_apps
+  start_apps
+  smoke
+fi
+
+ok "Deploy finished"
+log "Tip: routine updates → ./scripts/deploy.sh"
+log "     migrate only   → ./scripts/deploy.sh --migrate-only"
+log "     first box      → ./scripts/deploy.sh --bootstrap"
+log "     local LLM      → ./scripts/deploy.sh --with-local-llm"
+log "     prod processes → ./scripts/deploy.sh --mode=prod"
