@@ -162,35 +162,130 @@ wait_for_keycloak() {
   warn "Keycloak not ready yet — continue; login may fail until it is"
 }
 
+kill_tree() {
+  # Kill a PID and its descendants (pnpm → node/tsx children often hold the port).
+  local pid="$1"
+  [[ -n "$pid" ]] || return 0
+  if ! kill -0 "$pid" 2>/dev/null; then
+    return 0
+  fi
+
+  local children
+  children="$(pgrep -P "$pid" 2>/dev/null || true)"
+  local c
+  for c in $children; do
+    kill_tree "$c"
+  done
+
+  # Prefer killing the process group if this PID is a session/group leader
+  kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
+  sleep 0.3
+  kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+}
+
 kill_pidfile() {
   local name="$1"
   local pidfile="$PID_DIR/$name.pid"
   if [[ -f "$pidfile" ]]; then
     local pid
-    pid="$(cat "$pidfile" 2>/dev/null || true)"
-    if [[ -n "${pid:-}" ]] && kill -0 "$pid" 2>/dev/null; then
-      log "Stopping $name (pid $pid)…"
-      kill "$pid" 2>/dev/null || true
-      sleep 1
-      kill -9 "$pid" 2>/dev/null || true
+    pid="$(tr -d '[:space:]' <"$pidfile" 2>/dev/null || true)"
+    if [[ -n "${pid:-}" ]]; then
+      log "Stopping $name (pid $pid + children)…"
+      kill_tree "$pid"
     fi
     rm -f "$pidfile"
   fi
 }
 
+pids_on_port() {
+  local port="$1"
+  local pids=""
+
+  if command -v lsof >/dev/null 2>&1; then
+    pids="$(lsof -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)"
+    if [[ -z "$pids" ]]; then
+      pids="$(lsof -ti ":$port" 2>/dev/null || true)"
+    fi
+  fi
+
+  if [[ -z "$pids" ]] && command -v fuser >/dev/null 2>&1; then
+    # fuser prints "1234" or "1234 5678" on stdout when using -v differently; -k returns PIDs on some systems
+    pids="$(fuser "${port}/tcp" 2>/dev/null | tr -s ' ' '\n' | grep -E '^[0-9]+$' || true)"
+  fi
+
+  if [[ -z "$pids" ]] && command -v ss >/dev/null 2>&1; then
+    pids="$(
+      ss -lptn "sport = :$port" 2>/dev/null \
+        | grep -oE 'pid=[0-9]+' \
+        | cut -d= -f2 \
+        | sort -u \
+        || true
+    )"
+  fi
+
+  # Deduplicate
+  printf '%s\n' $pids | awk 'NF && !seen[$0]++' | tr '\n' ' '
+}
+
 free_port() {
   local port="$1"
-  if command -v lsof >/dev/null 2>&1; then
-    local pids
-    pids="$(lsof -ti ":$port" 2>/dev/null || true)"
-    if [[ -n "$pids" ]]; then
-      log "Freeing port $port (pids: $pids)…"
-      # shellcheck disable=SC2086
-      kill $pids 2>/dev/null || true
-      sleep 1
-      # shellcheck disable=SC2086
-      kill -9 $pids 2>/dev/null || true
+  local tries=15
+  local i pids
+
+  for ((i = 1; i <= tries; i++)); do
+    pids="$(pids_on_port "$port")"
+    if [[ -z "${pids// /}" ]]; then
+      return 0
     fi
+    log "Freeing port $port (attempt $i/$tries, pids: $pids)…"
+    local p
+    for p in $pids; do
+      kill_tree "$p"
+    done
+    if command -v fuser >/dev/null 2>&1; then
+      fuser -k -TERM "${port}/tcp" 2>/dev/null || true
+      sleep 0.5
+      fuser -k -KILL "${port}/tcp" 2>/dev/null || true
+    fi
+    sleep 0.5
+  done
+
+  pids="$(pids_on_port "$port")"
+  if [[ -n "${pids// /}" ]]; then
+    die "Port $port still in use after kill attempts (pids: $pids). Stop them manually, then re-run."
+  fi
+}
+
+kill_stray_app_procs() {
+  # Catch processes started outside deploy (no pidfile) or orphaned after parent died.
+  log "Stopping stray AccessShield app processes…"
+  # Patterns scoped to this repo path where possible
+  local patterns=(
+    "tsx watch src/index.ts"
+    "tsx watch src/scanner/worker-entry"
+    "dist/scanner/worker-entry"
+    "next dist/bin/next dev --port 3000"
+    "next dist/bin/next start --port 3000"
+    "uvicorn main:app"
+    "apps/ai-service/scripts/start.sh"
+  )
+  local pat
+  for pat in "${patterns[@]}"; do
+    pkill -f "$pat" 2>/dev/null || true
+  done
+  # pnpm filter wrappers that may linger
+  pkill -f "pnpm --filter @accessshield/api" 2>/dev/null || true
+  pkill -f "pnpm --filter @accessshield/web" 2>/dev/null || true
+  pkill -f "pnpm --filter @accessshield/ai-service" 2>/dev/null || true
+  sleep 1
+}
+
+assert_port_free() {
+  local port="$1"
+  local pids
+  pids="$(pids_on_port "$port")"
+  if [[ -n "${pids// /}" ]]; then
+    die "Port $port still busy (pids: $pids) before start"
   fi
 }
 
@@ -200,14 +295,16 @@ start_bg() {
   local logfile="$LOG_DIR/$name.log"
   local pidfile="$PID_DIR/$name.pid"
   log "Starting $name → $logfile"
+  : >"$logfile"
   (
     cd "$ROOT"
-    nohup "$@" >>"$logfile" 2>&1 &
+    # New session so we can kill the whole tree with kill -TERM -$pid later
+    setsid nohup "$@" >>"$logfile" 2>&1 </dev/null &
     echo $! >"$pidfile"
   )
   sleep 1
   local pid
-  pid="$(cat "$pidfile")"
+  pid="$(tr -d '[:space:]' <"$pidfile")"
   if kill -0 "$pid" 2>/dev/null; then
     ok "$name started (pid $pid)"
   else
@@ -339,9 +436,17 @@ stop_apps() {
   kill_pidfile web
   kill_pidfile worker
   kill_pidfile ai
+  kill_stray_app_procs
   free_port 3000
   free_port 4000
-  free_port 8001
+  free_port "${AI_SERVICE_PORT:-8001}"
+  free_port 8000
+  assert_port_free 3000
+  assert_port_free 4000
+  if [[ "$SKIP_AI" -eq 0 ]]; then
+    assert_port_free "${AI_SERVICE_PORT:-8001}"
+  fi
+  ok "Ports free"
 }
 
 start_apps() {
