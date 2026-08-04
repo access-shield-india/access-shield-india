@@ -109,11 +109,11 @@ export const organisations = pgTable(
     isActive: boolean('is_active').notNull().default(true),
     planTier: varchar('plan_tier', { length: 50 }).notNull().default('starter'),
     /** AI inference backend: anthropic | local */
-    aiProvider: varchar('ai_provider', { length: 50 }).notNull().default('anthropic'),
+    aiProvider: varchar('ai_provider', { length: 50 }).notNull().default('local'),
     /** Model id for the selected provider */
     aiModel: varchar('ai_model', { length: 150 })
       .notNull()
-      .default('claude-sonnet-4-5-20250929'),
+      .default('Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF'),
     ...timestamps,
   },
   (table) => ({

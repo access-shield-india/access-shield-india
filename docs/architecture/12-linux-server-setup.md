@@ -133,7 +133,7 @@ TIKA_SERVER_URL=http://localhost:9998
 DEFAULT_AI_PROVIDER=anthropic
 CLAUDE_MODEL=claude-sonnet-4-20250514
 # Optional local LLM (Settings → AI Configuration → Local)
-# LOCAL_MODEL=bartowski/Qwen2.5-Coder-3B-Instruct-GGUF
+# LOCAL_MODEL=Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF
 # LOCAL_LLM_WARMUP=true   # preload GGUF at startup (also auto if DEFAULT_AI_PROVIDER=local)
 # Then: cd apps/ai-service && pip install '.[local]'
 ```
