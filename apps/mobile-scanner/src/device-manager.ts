@@ -24,7 +24,7 @@ import {
   DEFAULT_IOS_VERSION,
 } from './types.js';
 import { downloadAppFile, getPresignedAppUrl, uploadScreenshot } from './s3-client.js';
-import { ensureAndroidSdkEnv } from './lib/android-env.js';
+import { ensureAndroidSdkEnv, listOnlineAdbSerials, readAdbOsVersion } from './lib/android-env.js';
 import {
   assertAndroidDeviceOnline,
   ensureLocalAppium,
@@ -337,8 +337,11 @@ export class DeviceManager {
 
     await ensureLocalAppium();
 
+    const onlineSerials = platform === 'android' ? listOnlineAdbSerials() : [];
     const deviceName =
-      deviceModel ?? (platform === 'android' ? 'emulator-5554' : 'iPhone 15 Simulator');
+      deviceModel ??
+      onlineSerials[0] ??
+      (platform === 'android' ? 'emulator-5554' : 'iPhone 15 Simulator');
 
     if (platform === 'android') {
       await assertAndroidDeviceOnline(deviceName);
@@ -346,18 +349,38 @@ export class DeviceManager {
 
     const appPath = await this.resolveLocalSessionAppPath(appS3Key, platform);
 
-    const platformVersion =
-      osVersion ?? (platform === 'android' ? DEFAULT_ANDROID_VERSION : DEFAULT_IOS_VERSION);
+    // Local Appium must match the connected emulator. Hardcoded 13.0 fails on Android 17 AVDs.
+    let platformVersion = osVersion;
+    if (platform === 'android') {
+      const liveVersion = readAdbOsVersion(deviceName);
+      if (liveVersion) {
+        if (platformVersion && platformVersion !== liveVersion) {
+          logger.warn(
+            { requested: platformVersion, liveVersion, deviceName },
+            'Ignoring requested OS version — using the connected emulator version',
+          );
+        }
+        platformVersion = liveVersion;
+      }
+    } else if (!platformVersion) {
+      platformVersion = DEFAULT_IOS_VERSION;
+    }
 
     const capabilities: WebdriverIO.Capabilities & Record<string, unknown> = {
       'appium:platformName': platform === 'android' ? 'Android' : 'iOS',
-      'appium:platformVersion': platformVersion,
       'appium:deviceName': deviceName,
       'appium:automationName': platform === 'android' ? 'UiAutomator2' : 'XCUITest',
       'appium:app': appPath,
       'appium:newCommandTimeout': 300,
       'appium:noReset': false,
     };
+
+    if (platformVersion) {
+      capabilities['appium:platformVersion'] = platformVersion;
+    }
+    if (platform === 'android') {
+      capabilities['appium:udid'] = deviceName;
+    }
 
     if (platform === 'android') {
       capabilities['appium:autoGrantPermissions'] = true;

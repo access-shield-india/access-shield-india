@@ -98,3 +98,38 @@ export function ensureAndroidSdkEnv(): string {
   logger.info({ ANDROID_HOME: sdkPath }, 'Android SDK environment ready');
   return sdkPath;
 }
+
+function adbBin(): string {
+  const fromSdk = process.env.ANDROID_HOME
+    ? join(process.env.ANDROID_HOME, 'platform-tools', 'adb')
+    : '';
+  return fromSdk && existsSync(fromSdk) ? fromSdk : 'adb';
+}
+
+/** Online emulator/device serials (`adb devices`). */
+export function listOnlineAdbSerials(): string[] {
+  try {
+    const stdout = execFileSync(adbBin(), ['devices'], { encoding: 'utf8', timeout: 10_000 });
+    return stdout
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => /\tdevice$/.test(line))
+      .map((line) => line.split(/\s+/)[0] ?? '')
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+/** Android release version on a device, e.g. `17` or `13`. */
+export function readAdbOsVersion(serial: string): string | null {
+  try {
+    const stdout = execFileSync(adbBin(), ['-s', serial, 'shell', 'getprop', 'ro.build.version.release'], {
+      encoding: 'utf8',
+      timeout: 10_000,
+    }).trim();
+    return stdout.length > 0 ? stdout : null;
+  } catch {
+    return null;
+  }
+}
