@@ -1,4 +1,4 @@
-import { getSession } from 'next-auth/react';
+import { getSession, signOut } from 'next-auth/react';
 import { apiUrl, getApiBase } from './base';
 import type {
   ApiResponse,
@@ -46,6 +46,11 @@ export async function getAccessToken(): Promise<string> {
     tokenPromise = (async () => {
       const session = await getSession();
       if (!session?.accessToken) {
+        const redirectTo =
+          typeof window !== 'undefined'
+            ? `${window.location.pathname}${window.location.search}`
+            : '/dashboard';
+        await signOut({ callbackUrl: `/login?redirectTo=${encodeURIComponent(redirectTo)}` });
         throw new Error('Not authenticated — please sign in again.');
       }
       return session.accessToken;

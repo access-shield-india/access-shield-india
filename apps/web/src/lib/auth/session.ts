@@ -1,5 +1,8 @@
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/auth-options';
+import { isAccessTokenExpired } from '@/lib/auth/claims';
 
 export interface AppSession {
   accessToken: string | null;
@@ -25,5 +28,25 @@ export async function getAppSession(): Promise<AppSession> {
 
 export async function getServerAccessToken(): Promise<string | null> {
   const session = await getAppSession();
+  if (!session.accessToken || isAccessTokenExpired(session.accessToken)) {
+    return null;
+  }
   return session.accessToken;
+}
+
+function loginRedirectTarget(): string {
+  const pathname = headers().get('x-as-pathname') ?? '/dashboard';
+  if (!pathname.startsWith('/') || pathname.startsWith('//')) {
+    return '/dashboard';
+  }
+  return pathname;
+}
+
+/** Dashboard RSC gate — send expired/missing sessions to login instead of throwing. */
+export async function requireServerAccessToken(): Promise<string> {
+  const token = await getServerAccessToken();
+  if (token) {
+    return token;
+  }
+  redirect(`/login?redirectTo=${encodeURIComponent(loginRedirectTarget())}`);
 }

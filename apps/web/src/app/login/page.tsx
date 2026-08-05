@@ -2,12 +2,21 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { Button } from '@accessshield/ui';
 
+function safeRedirectPath(value: string | null): string {
+  if (!value || !value.startsWith('/') || value.startsWith('//')) {
+    return '/dashboard';
+  }
+  return value;
+}
+
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = safeRedirectPath(searchParams.get('redirectTo'));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -28,12 +37,12 @@ export default function LoginPage() {
       setIsLoading(false);
       return;
     }
-    router.push('/dashboard');
+    router.push(redirectTo);
     router.refresh();
   }
 
   async function handleGoogleSignIn() {
-    await signIn('keycloak', { callbackUrl: '/dashboard' });
+    await signIn('keycloak', { callbackUrl: redirectTo });
   }
 
   return (

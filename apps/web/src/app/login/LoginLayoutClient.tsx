@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { AuthSessionProvider } from '@/providers/AuthSessionProvider';
 import { LocaleProvider } from '@/lib/i18n/locale-context';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
@@ -21,7 +22,9 @@ export function LoginLayoutClient({
         <div className="flex justify-end p-4">
           <LanguageSwitcher />
         </div>
-        {children}
+        <Suspense fallback={<div className="px-4 py-24 text-center text-text-secondary">Loading…</div>}>
+          {children}
+        </Suspense>
       </LocaleProvider>
     </AuthSessionProvider>
   );

@@ -6,16 +6,12 @@ import {
   type DashboardStats,
 } from '@/lib/api/client';
 import { getApiBase } from '@/lib/api/base';
-import { getServerAccessToken } from '@/lib/auth/session';
+import { requireServerAccessToken } from '@/lib/auth/session';
 import { makeQueryClient } from '@/lib/query-client';
 import type { Asset } from '@/lib/api/types';
 
 async function serverToken(): Promise<string> {
-  const token = await getServerAccessToken();
-  if (!token) {
-    throw new Error('Not authenticated');
-  }
-  return token;
+  return requireServerAccessToken();
 }
 
 /** Prefetch dashboard home queries in parallel (one auth read). */

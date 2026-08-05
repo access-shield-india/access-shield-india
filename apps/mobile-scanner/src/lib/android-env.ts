@@ -1,6 +1,8 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { logger } from './logger.js';
 
 const SDK_MARKERS = ['platform-tools', 'build-tools'] as const;
 
@@ -8,49 +10,91 @@ function isValidSdkRoot(path: string): boolean {
   return SDK_MARKERS.some((dir) => existsSync(join(path, dir)));
 }
 
-/** Common Android SDK install locations on macOS/Linux. */
+function sdkFromAdbOnPath(): string | null {
+  try {
+    const adbPath = execFileSync('sh', ['-lc', 'command -v adb'], {
+      encoding: 'utf8',
+      timeout: 5_000,
+    }).trim();
+    if (!adbPath) {
+      return null;
+    }
+    const platformTools = dirname(adbPath);
+    if (platformTools.endsWith('platform-tools')) {
+      const sdkRoot = dirname(platformTools);
+      return isValidSdkRoot(sdkRoot) ? sdkRoot : null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 function candidateSdkPaths(): string[] {
   return [
     process.env.ANDROID_HOME,
     process.env.ANDROID_SDK_ROOT,
-    join(homedir(), 'Library/Android/sdk'),
+    sdkFromAdbOnPath(),
     join(homedir(), 'Android/Sdk'),
-    '/opt/homebrew/share/android-commandlinetools',
+    join(homedir(), 'android-sdk'),
+    join(homedir(), 'Library/Android/sdk'),
+    '/opt/android-sdk',
+    '/usr/lib/android-sdk',
     '/usr/local/share/android-sdk',
+    '/opt/homebrew/share/android-commandlinetools',
   ].filter((p): p is string => typeof p === 'string' && p.length > 0);
 }
 
 /** Returns the first detected Android SDK root, or null. */
 export function detectAndroidSdkPath(): string | null {
   for (const candidate of candidateSdkPaths()) {
-    if (isValidSdkRoot(candidate)) {
-      return candidate;
+    const resolved = resolve(candidate);
+    if (isValidSdkRoot(resolved)) {
+      return resolved;
     }
   }
   return null;
 }
 
-/**
- * Ensures ANDROID_HOME / ANDROID_SDK_ROOT are set before local Appium sessions.
- * Throws a clear error when the SDK is missing.
- */
-export function ensureAndroidSdkEnv(): void {
-  if (
-    process.env.ANDROID_HOME &&
-    process.env.ANDROID_SDK_ROOT &&
-    isValidSdkRoot(process.env.ANDROID_HOME)
-  ) {
+function prependPath(entry: string): void {
+  if (!existsSync(entry)) {
     return;
   }
+  const current = process.env.PATH ?? '';
+  const parts = current.split(':').filter(Boolean);
+  if (parts.includes(entry)) {
+    return;
+  }
+  process.env.PATH = `${entry}:${current}`;
+}
 
-  const sdkPath = detectAndroidSdkPath();
+/**
+ * Ensures ANDROID_HOME / ANDROID_SDK_ROOT / PATH for local Appium + adb.
+ * Returns the SDK root.
+ */
+export function ensureAndroidSdkEnv(): string {
+  let sdkPath =
+    process.env.ANDROID_HOME && isValidSdkRoot(process.env.ANDROID_HOME)
+      ? process.env.ANDROID_HOME
+      : process.env.ANDROID_SDK_ROOT && isValidSdkRoot(process.env.ANDROID_SDK_ROOT)
+        ? process.env.ANDROID_SDK_ROOT
+        : detectAndroidSdkPath();
+
   if (!sdkPath) {
     throw new Error(
-      'Android SDK not found. Install Android Studio (or command-line tools) and set ANDROID_HOME in apps/mobile-scanner/.env, ' +
-        'or configure BROWSERSTACK_USERNAME + BROWSERSTACK_ACCESS_KEY for cloud scanning without a local SDK.',
+      'Android SDK not found. Set ANDROID_HOME in root .env.local (or apps/mobile-scanner/.env), ' +
+        'e.g. ANDROID_HOME=/home/accessshield-india/Android/Sdk — then restart mobile-scanner and Appium.',
     );
   }
 
+  sdkPath = resolve(sdkPath);
   process.env.ANDROID_HOME = sdkPath;
   process.env.ANDROID_SDK_ROOT = sdkPath;
+  prependPath(join(sdkPath, 'platform-tools'));
+  prependPath(join(sdkPath, 'emulator'));
+  prependPath(join(sdkPath, 'cmdline-tools', 'latest', 'bin'));
+  prependPath(join(sdkPath, 'tools', 'bin'));
+
+  logger.info({ ANDROID_HOME: sdkPath }, 'Android SDK environment ready');
+  return sdkPath;
 }

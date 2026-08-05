@@ -6,7 +6,9 @@
  */
 
 import { existsSync, readFileSync } from 'node:fs';
-import { basename } from 'node:path';
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { basename, join } from 'node:path';
 import { remote, type Browser } from 'webdriverio';
 import yauzl from 'yauzl';
 import * as plist from 'plist';
@@ -21,14 +23,19 @@ import {
   DEFAULT_ANDROID_VERSION,
   DEFAULT_IOS_VERSION,
 } from './types.js';
-import { getPresignedAppUrl, uploadScreenshot } from './s3-client.js';
+import { downloadAppFile, getPresignedAppUrl, uploadScreenshot } from './s3-client.js';
 import { ensureAndroidSdkEnv } from './lib/android-env.js';
+import {
+  assertAndroidDeviceOnline,
+  ensureLocalAppium,
+  getAppiumHost,
+  getAppiumPort,
+} from './lib/appium.js';
 import { resolveLocalAppPath } from './lib/paths.js';
 import { logger } from './lib/logger.js';
 
 const BROWSERSTACK_HUB_URL = 'https://hub.browserstack.com/wd/hub';
 const BROWSERSTACK_UPLOAD_URL = 'https://api-cloud.browserstack.com/app-automate/upload';
-const LOCAL_APPIUM_URL = 'http://localhost:4723';
 
 /**
  * Extract bundleId from an IPA file buffer.
@@ -126,6 +133,14 @@ export class DeviceManager {
       logger.info('DeviceManager: Using BrowserStack App Automate');
     } else {
       logger.info('DeviceManager: Using local Appium (BrowserStack credentials not set)');
+      try {
+        ensureAndroidSdkEnv();
+      } catch (err) {
+        logger.warn(
+          { err },
+          'Android SDK env not ready at startup — will retry on the first local scan',
+        );
+      }
     }
   }
 
@@ -289,6 +304,30 @@ export class DeviceManager {
     return this.parseBrowserStackUploadResponse(response);
   }
 
+  private async resolveLocalSessionAppPath(
+    appS3Key: string,
+    platform: MobilePlatform,
+  ): Promise<string> {
+    if (appS3Key.startsWith('local:')) {
+      const localPath = resolveLocalAppPath(appS3Key);
+      if (!existsSync(localPath)) {
+        throw new Error(`Local ${platform === 'ios' ? 'IPA' : 'APK'} not found: ${localPath}`);
+      }
+      return localPath;
+    }
+
+    if (existsSync(appS3Key)) {
+      return appS3Key;
+    }
+
+    const buffer = await downloadAppFile(appS3Key);
+    const dir = await mkdtemp(join(tmpdir(), 'as-mobile-'));
+    const dest = join(dir, platform === 'ios' ? 'app.ipa' : 'app.apk');
+    await writeFile(dest, buffer);
+    logger.info({ dest, appS3Key }, 'Downloaded app from object storage for local Appium');
+    return dest;
+  }
+
   private async createLocalAppiumSession(params: CreateSessionParams): Promise<Browser> {
     const { platform, appS3Key, osVersion, deviceModel, bundleId } = params;
 
@@ -296,10 +335,17 @@ export class DeviceManager {
       ensureAndroidSdkEnv();
     }
 
-    const appPath = resolveLocalAppPath(appS3Key);
+    await ensureLocalAppium();
 
     const deviceName =
       deviceModel ?? (platform === 'android' ? 'emulator-5554' : 'iPhone 15 Simulator');
+
+    if (platform === 'android') {
+      await assertAndroidDeviceOnline(deviceName);
+    }
+
+    const appPath = await this.resolveLocalSessionAppPath(appS3Key, platform);
+
     const platformVersion =
       osVersion ?? (platform === 'android' ? DEFAULT_ANDROID_VERSION : DEFAULT_IOS_VERSION);
 
@@ -342,8 +388,8 @@ export class DeviceManager {
 
     const driver = await remote({
       protocol: 'http',
-      hostname: 'localhost',
-      port: 4723,
+      hostname: getAppiumHost(),
+      port: getAppiumPort(),
       path: '/',
       capabilities,
       connectionRetryTimeout: 120000,

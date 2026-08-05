@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { config } from 'dotenv';
 
-/** Walk up from cwd to find the monorepo root (pnpm-workspace.yaml). */
+
 export function findMonorepoRoot(startDir = process.cwd()): string {
   let dir = startDir;
   while (dir !== dirname(dir)) {
