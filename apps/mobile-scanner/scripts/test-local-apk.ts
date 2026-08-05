@@ -6,7 +6,7 @@
  * Usage: tsx scripts/test-local-apk.ts /path/to/your/app.apk
  */
 
-import 'dotenv/config';
+import '../src/lib/env.js';
 import { writeFileSync } from 'node:fs';
 import { remote } from 'webdriverio';
 import { MobileRuleEngine, calculateScore, countBySeverity } from '../src/rule-engine.js';

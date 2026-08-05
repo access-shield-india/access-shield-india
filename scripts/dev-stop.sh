@@ -35,6 +35,9 @@ pids_on_port() {
 echo "Stopping stray app process patterns…"
 pkill -f "tsx watch src/index.ts" 2>/dev/null || true
 pkill -f "tsx watch src/scanner/worker-entry" 2>/dev/null || true
+pkill -f "mobile-scanner/src/index.ts" 2>/dev/null || true
+pkill -f "mobile-scanner/dist/index.js" 2>/dev/null || true
+pkill -f "pnpm --filter @accessshield/mobile-scanner" 2>/dev/null || true
 pkill -f "uvicorn main:app" 2>/dev/null || true
 pkill -f "next dist/bin/next" 2>/dev/null || true
 sleep 1

@@ -6,7 +6,7 @@
  * Usage: tsx scripts/upload-apk.ts /path/to/app.apk <org-id> <asset-id>
  */
 
-import 'dotenv/config';
+import '../src/lib/env.js';
 import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
