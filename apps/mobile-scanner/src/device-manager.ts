@@ -24,7 +24,7 @@ import {
   DEFAULT_IOS_VERSION,
 } from './types.js';
 import { downloadAppFile, getPresignedAppUrl, uploadScreenshot } from './s3-client.js';
-import { ensureAndroidSdkEnv, listOnlineAdbSerials, readAdbOsVersion } from './lib/android-env.js';
+import { ensureAndroidSdkEnv, listOnlineAdbSerials } from './lib/android-env.js';
 import {
   assertAndroidDeviceOnline,
   ensureLocalAppium,
@@ -338,10 +338,9 @@ export class DeviceManager {
     await ensureLocalAppium();
 
     const onlineSerials = platform === 'android' ? listOnlineAdbSerials() : [];
+    const udid = platform === 'android' ? (onlineSerials[0] ?? 'emulator-5554') : undefined;
     const deviceName =
-      deviceModel ??
-      onlineSerials[0] ??
-      (platform === 'android' ? 'emulator-5554' : 'iPhone 15 Simulator');
+      udid ?? deviceModel ?? (platform === 'android' ? 'emulator-5554' : 'iPhone 15 Simulator');
 
     if (platform === 'android') {
       await assertAndroidDeviceOnline(deviceName);
@@ -349,25 +348,8 @@ export class DeviceManager {
 
     const appPath = await this.resolveLocalSessionAppPath(appS3Key, platform);
 
-    // Local Appium must match the connected emulator. Hardcoded 13.0 fails on Android 17 AVDs.
-    let platformVersion = osVersion;
-    if (platform === 'android') {
-      const liveVersion = readAdbOsVersion(deviceName);
-      if (liveVersion) {
-        if (platformVersion && platformVersion !== liveVersion) {
-          logger.warn(
-            { requested: platformVersion, liveVersion, deviceName },
-            'Ignoring requested OS version — using the connected emulator version',
-          );
-        }
-        platformVersion = liveVersion;
-      }
-    } else if (!platformVersion) {
-      platformVersion = DEFAULT_IOS_VERSION;
-    }
-
     const capabilities: WebdriverIO.Capabilities & Record<string, unknown> = {
-      'appium:platformName': platform === 'android' ? 'Android' : 'iOS',
+      platformName: platform === 'android' ? 'Android' : 'iOS',
       'appium:deviceName': deviceName,
       'appium:automationName': platform === 'android' ? 'UiAutomator2' : 'XCUITest',
       'appium:app': appPath,
@@ -375,13 +357,14 @@ export class DeviceManager {
       'appium:noReset': false,
     };
 
-    if (platformVersion) {
-      capabilities['appium:platformVersion'] = platformVersion;
+    // Never send platformVersion for local Android — Appium filters on it and
+    // rejects Android 17 AVDs when the job/default still says 13.0.
+    if (platform === 'ios') {
+      capabilities['appium:platformVersion'] = osVersion ?? DEFAULT_IOS_VERSION;
     }
-    if (platform === 'android') {
-      capabilities['appium:udid'] = deviceName;
+    if (udid) {
+      capabilities['appium:udid'] = udid;
     }
-
     if (platform === 'android') {
       capabilities['appium:autoGrantPermissions'] = true;
     }
@@ -405,7 +388,14 @@ export class DeviceManager {
     }
 
     logger.info(
-      { platform, deviceName, platformVersion, appPath },
+      {
+        platform,
+        deviceName,
+        udid,
+        appPath,
+        capabilities,
+        requestedOsVersion: osVersion ?? null,
+      },
       'Creating local Appium session',
     );
 
