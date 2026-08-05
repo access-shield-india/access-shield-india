@@ -36,6 +36,7 @@ DO_BOOTSTRAP=0
 WITH_LOCAL_LLM=0
 SKIP_AI=0
 SKIP_WORKER=0
+SKIP_MOBILE=0
 SKIP_WEB=0
 SKIP_API=0
 MIGRATE_ONLY=0
@@ -70,7 +71,8 @@ Steps (toggle):
 Apps:
   --with-local-llm    Ensure ai-service venv has pip install '.[local]'
   --skip-ai           Do not restart AI service
-  --skip-worker       Do not restart scan worker
+  --skip-worker       Do not restart web scan worker
+  --skip-mobile       Do not restart mobile-scanner worker
   --skip-web          Do not restart web
   --skip-api          Do not restart API
 
@@ -102,6 +104,7 @@ for arg in "$@"; do
     --with-local-llm) WITH_LOCAL_LLM=1 ;;
     --skip-ai) SKIP_AI=1 ;;
     --skip-worker) SKIP_WORKER=1 ;;
+    --skip-mobile) SKIP_MOBILE=1 ;;
     --skip-web) SKIP_WEB=1 ;;
     --skip-api) SKIP_API=1 ;;
     -h|--help) usage; exit 0 ;;
@@ -264,6 +267,8 @@ kill_stray_app_procs() {
     "tsx watch src/index.ts"
     "tsx watch src/scanner/worker-entry"
     "dist/scanner/worker-entry"
+    "mobile-scanner/src/index.ts"
+    "mobile-scanner/dist/index.js"
     "next dist/bin/next dev --port 3000"
     "next dist/bin/next start --port 3000"
     "uvicorn main:app"
@@ -277,6 +282,7 @@ kill_stray_app_procs() {
   pkill -f "pnpm --filter @accessshield/api" 2>/dev/null || true
   pkill -f "pnpm --filter @accessshield/web" 2>/dev/null || true
   pkill -f "pnpm --filter @accessshield/ai-service" 2>/dev/null || true
+  pkill -f "pnpm --filter @accessshield/mobile-scanner" 2>/dev/null || true
   sleep 1
 }
 
@@ -408,7 +414,8 @@ run_build_packages() {
     log "Building API + Web (prod mode)…"
     pnpm --filter @accessshield/api build
     pnpm --filter @accessshield/web build
-    ok "API + Web built"
+    pnpm --filter @accessshield/mobile-scanner build
+    ok "API + Web + mobile-scanner built"
   fi
 }
 
@@ -435,6 +442,7 @@ stop_apps() {
   kill_pidfile api
   kill_pidfile web
   kill_pidfile worker
+  kill_pidfile mobile
   kill_pidfile ai
   kill_stray_app_procs
   free_port 3000
@@ -476,6 +484,14 @@ start_apps() {
     fi
   fi
 
+  if [[ "$SKIP_MOBILE" -eq 0 ]]; then
+    if [[ "$MODE" == "prod" ]]; then
+      start_bg mobile pnpm --filter @accessshield/mobile-scanner start
+    else
+      start_bg mobile pnpm --filter @accessshield/mobile-scanner dev
+    fi
+  fi
+
   if [[ "$SKIP_AI" -eq 0 ]]; then
     if [[ ! -f "$ROOT/apps/ai-service/.env" ]]; then
       warn "apps/ai-service/.env missing — skipping AI (copy from .env.example)"
@@ -509,6 +525,18 @@ smoke() {
       warn "AI /health not ready (warmup may still be running) — see $LOG_DIR/ai.log"
     fi
   fi
+  if [[ "$SKIP_MOBILE" -eq 0 ]]; then
+    local mobile_pid=""
+    if [[ -f "$PID_DIR/mobile.pid" ]]; then
+      mobile_pid="$(tr -d '[:space:]' <"$PID_DIR/mobile.pid")"
+    fi
+    if [[ -n "$mobile_pid" ]] && kill -0 "$mobile_pid" 2>/dev/null \
+      && grep -qE 'Mobile scanner worker (started successfully|listening on queue)' "$LOG_DIR/mobile.log" 2>/dev/null; then
+      ok "Mobile scanner worker OK"
+    else
+      warn "Mobile scanner not ready — see $LOG_DIR/mobile.log"
+    fi
+  fi
   log "Logs: $LOG_DIR"
   log "PIDs: $PID_DIR"
 }
@@ -535,4 +563,5 @@ log "Tip: routine updates → ./scripts/deploy.sh"
 log "     migrate only   → ./scripts/deploy.sh --migrate-only"
 log "     first box      → ./scripts/deploy.sh --bootstrap"
 log "     local LLM      → ./scripts/deploy.sh --with-local-llm"
+log "     skip mobile    → ./scripts/deploy.sh --skip-mobile"
 log "     prod processes → ./scripts/deploy.sh --mode=prod"

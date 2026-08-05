@@ -5,7 +5,7 @@
  * accessibility scan jobs using Appium/BrowserStack.
  */
 
-import 'dotenv/config';
+import './lib/env.js';
 import { MobileWorker } from './worker.js';
 import { logger } from './lib/logger.js';
 
