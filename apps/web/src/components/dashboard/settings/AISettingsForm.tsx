@@ -9,13 +9,11 @@ import { Button, Input, Select } from '@accessshield/ui';
 import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const AI_PROVIDER_OPTIONS = [
-  { value: 'anthropic', label: 'Anthropic Claude (cloud API)' },
   { value: 'local', label: 'Local LLM (llama.cpp / GGUF on this machine)' },
 ];
 
-const DEFAULT_MODELS: Record<'anthropic' | 'local', string> = {
-  anthropic: 'claude-sonnet-4-5-20250929',
-  local: 'bartowski/Qwen2.5-Coder-3B-Instruct-GGUF',
+const DEFAULT_MODELS: Record<'local', string> = {
+  local: 'Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF',
 };
 
 async function fetchOrganisation(token: string): Promise<Organisation> {
@@ -42,8 +40,8 @@ async function updateOrganisation(token: string, input: UpdateOrganisationInput)
 
 export function AISettingsForm() {
   const queryClient = useQueryClient();
-  const [provider, setProvider] = useState<'anthropic' | 'local'>('anthropic');
-  const [model, setModel] = useState(DEFAULT_MODELS.anthropic);
+  const [provider, setProvider] = useState<'local'>('local');
+  const [model, setModel] = useState(DEFAULT_MODELS.local);
 
   const { data: org, isLoading } = useQuery({
     queryKey: ['organisation'],
@@ -55,8 +53,7 @@ export function AISettingsForm() {
 
   useEffect(() => {
     if (!org) return;
-    const nextProvider =
-      org.aiProvider === 'local' || org.aiProvider === 'anthropic' ? org.aiProvider : 'anthropic';
+    const nextProvider = 'local';
     setProvider(nextProvider);
     setModel(org.aiModel || DEFAULT_MODELS[nextProvider]);
   }, [org]);
@@ -101,18 +98,15 @@ export function AISettingsForm() {
           options={AI_PROVIDER_OPTIONS}
           value={provider}
           onValueChange={(value) => {
-            const next = value === 'local' ? 'local' : 'anthropic';
+            const next = 'local';
             setProvider(next);
             setModel((current) => {
-              const wasDefault =
-                current === DEFAULT_MODELS.anthropic || current === DEFAULT_MODELS.local;
+              const wasDefault = current === DEFAULT_MODELS.local;
               return wasDefault ? DEFAULT_MODELS[next] : current;
             });
           }}
           hint={
-            provider === 'local'
-              ? 'Requires llama-cpp-python on the AI service host (pip install ".[local]"). Set LOCAL_LLM_WARMUP=true to preload at startup.'
-              : 'Requires ANTHROPIC_API_KEY in apps/ai-service/.env.'
+            'Requires llama-cpp-python on the AI service host (pip install ".[local]"). Set LOCAL_LLM_WARMUP=true to preload at startup.'
           }
         />
 
@@ -123,9 +117,7 @@ export function AISettingsForm() {
           onChange={(e) => setModel(e.target.value)}
           required
           hint={
-            provider === 'local'
-              ? "Hugging Face GGUF repo, e.g. bartowski/Qwen2.5-Coder-3B-Instruct-GGUF"
-              : 'Anthropic model id, e.g. claude-sonnet-4-5-20250929'
+            "Hugging Face GGUF repo, e.g. Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF"
           }
         />
 

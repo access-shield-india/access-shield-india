@@ -121,8 +121,9 @@ export class KeycloakAdminService implements IdentityAdmin {
       username: email,
       enabled: true,
       emailVerified: input.emailConfirm ?? true,
-      firstName: nameParts[0],
-      lastName: nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined,
+      firstName: nameParts[0] || 'User',
+      lastName: nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'Name',
+      requiredActions: [],
       credentials: [
         {
           type: 'password',

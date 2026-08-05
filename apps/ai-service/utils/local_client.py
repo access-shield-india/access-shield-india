@@ -50,9 +50,11 @@ class LocalClient:
             start = time.time()
 
             def _load_model() -> Any:
+                # Qwen models typically use lowercase for quantization in filename
+                filename_glob = "*q4_k_m.gguf" if "qwen" in self.model_name.lower() else "*Q4_K_M.gguf"
                 return Llama.from_pretrained(
                     repo_id=self.model_name,
-                    filename="*Q4_K_M.gguf",
+                    filename=filename_glob,
                     n_ctx=4096,
                     n_gpu_layers=-1,
                     verbose=False,

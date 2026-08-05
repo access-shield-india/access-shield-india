@@ -181,21 +181,7 @@ function AIFixTab({
 
     return (
       <div className="space-y-4">
-        {devPreview && <DevPreviewBanner />}
 
-        {devPreview && status === 'success' && !isRegenerating && (
-          <p className="text-sm text-error-700" role="alert">
-            Regeneration completed but the AI service was not used. Ensure{' '}
-            <code className="rounded bg-error-100 px-1 text-xs">INTERNAL_AI_SERVICE_KEY</code> is
-            set in the repo root{' '}
-            <code className="rounded bg-error-100 px-1 text-xs">.env.local</code> and restart the
-            API, then run{' '}
-            <code className="rounded bg-error-100 px-1 text-xs">
-              pnpm --filter @accessshield/ai-service dev
-            </code>
-            .
-          </p>
-        )}
 
         {beforeAfter ? (
           <FixBeforeAfter beforeHtml={beforeAfter.beforeHtml} afterHtml={beforeAfter.afterHtml} />
@@ -221,17 +207,16 @@ function AIFixTab({
         )}
 
         <div className="flex flex-wrap gap-3">
-          {devPreview && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onRetry}
-              disabled={isRegenerating}
-              aria-busy={isRegenerating}
-            >
-              {isRegenerating ? 'Regenerating…' : 'Regenerate AI fix'}
-            </Button>
-          )}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onRetry}
+            disabled={isRegenerating}
+            aria-busy={isRegenerating}
+          >
+            {isRegenerating ? 'Regenerating…' : 'Regenerate AI fix'}
+          </Button>
+
           {issue.jiraIssueKey ? (
             <Button variant="outline" size="sm" disabled>
               Already synced to Jira

@@ -10,6 +10,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",
     )
 
     # Anthropic API (required when provider=anthropic)
@@ -27,7 +28,7 @@ class Settings(BaseSettings):
     # Default provider/model when request headers omit them
     default_ai_provider: str = "anthropic"
     claude_model: str = "claude-sonnet-4-5-20250929"
-    local_model: str = "bartowski/Qwen2.5-Coder-3B-Instruct-GGUF"
+    local_model: str = "Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF"
     # Preload local GGUF at startup (download + load + tiny inference).
     # Also auto-enabled when DEFAULT_AI_PROVIDER=local unless set false.
     local_llm_warmup: bool = False
