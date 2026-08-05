@@ -11,6 +11,7 @@ export interface ParsedAccessShieldClaims {
 interface JwtPayload {
   sub?: string;
   email?: string;
+  exp?: number;
   app_metadata?: Record<string, unknown>;
   user_metadata?: Record<string, unknown>;
   user_role?: unknown;
@@ -32,6 +33,23 @@ export function decodeJwtPayload(accessToken: string): JwtPayload {
     typeof atob === 'function' ? atob(padded) : Buffer.from(padded, 'base64').toString('utf8');
 
   return JSON.parse(json) as JwtPayload;
+}
+
+/** True when the access token is missing, malformed, or past `exp`. */
+export function isAccessTokenExpired(accessToken: string | null | undefined, skewMs = 5_000): boolean {
+  if (!accessToken) {
+    return true;
+  }
+
+  try {
+    const payload = decodeJwtPayload(accessToken);
+    if (typeof payload.exp !== 'number') {
+      return false;
+    }
+    return payload.exp * 1000 <= Date.now() + skewMs;
+  } catch {
+    return true;
+  }
 }
 
 function readString(value: unknown): string | undefined {

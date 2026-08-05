@@ -1,6 +1,6 @@
 import { getToken } from 'next-auth/jwt';
 import { type NextRequest, NextResponse } from 'next/server';
-import { parseAccessShieldClaims } from './src/lib/auth/claims';
+import { isAccessTokenExpired, parseAccessShieldClaims } from './src/lib/auth/claims';
 import {
   defaultLocale,
   isLocale,
@@ -112,8 +112,11 @@ export async function middleware(request: NextRequest) {
     secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   });
 
-  const isAuthenticated = Boolean(token?.accessToken || token?.sub);
   const accessToken = typeof token?.accessToken === 'string' ? token.accessToken : null;
+  const isAuthenticated =
+    Boolean(accessToken) &&
+    token?.error !== 'RefreshAccessTokenError' &&
+    !isAccessTokenExpired(accessToken);
   const appMetadata = {
     user_role: token?.user_role,
     org_id: token?.org_id,

@@ -125,7 +125,14 @@ export const authOptions: NextAuthOptions = {
       return refreshAccessToken(token);
     },
     async session({ session, token }) {
-      session.accessToken = typeof token.accessToken === 'string' ? token.accessToken : undefined;
+      if (token.error === 'RefreshAccessTokenError' || typeof token.accessToken !== 'string') {
+        session.accessToken = undefined;
+        session.error = typeof token.error === 'string' ? token.error : 'NotAuthenticated';
+        return session;
+      }
+
+      session.accessToken = token.accessToken;
+      session.error = undefined;
       session.user = {
         ...session.user,
         id: token.sub,
@@ -144,7 +151,12 @@ async function refreshAccessToken(token: Record<string, unknown>) {
     const clientId = process.env.NEXT_PUBLIC_AUTH_CLIENT_ID ?? 'accessshield-web';
     const refreshToken = token.refreshToken;
     if (typeof refreshToken !== 'string') {
-      return { ...token, error: 'RefreshAccessTokenError' };
+      return {
+        ...token,
+        accessToken: undefined,
+        refreshToken: undefined,
+        error: 'RefreshAccessTokenError',
+      };
     }
 
     const response = await fetch(`${issuer.replace(/\/$/, '')}/protocol/openid-connect/token`, {
@@ -164,7 +176,12 @@ async function refreshAccessToken(token: Record<string, unknown>) {
     };
 
     if (!response.ok || !refreshed.access_token) {
-      return { ...token, error: 'RefreshAccessTokenError' };
+      return {
+        ...token,
+        accessToken: undefined,
+        refreshToken: undefined,
+        error: 'RefreshAccessTokenError',
+      };
     }
 
     return {
@@ -175,6 +192,11 @@ async function refreshAccessToken(token: Record<string, unknown>) {
       error: undefined,
     };
   } catch {
-    return { ...token, error: 'RefreshAccessTokenError' };
+    return {
+      ...token,
+      accessToken: undefined,
+      refreshToken: undefined,
+      error: 'RefreshAccessTokenError',
+    };
   }
 }
