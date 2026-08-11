@@ -137,7 +137,7 @@ Step-by-step plan to move from the monolithic web-scan worker to Architecture v2
 - [ ] Decide RabbitMQ stay vs SQS in AWS
 - [ ] Load test publish/consume latency
 
-**Exit:** Documented decision in [11-deployment-guide.md](../11-deployment-guide.md).
+**Exit:** Documented decision in [deployment guide](../../deployment/README.md).
 
 ---
 

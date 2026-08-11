@@ -83,10 +83,10 @@ ON CONFLICT (id) DO UPDATE SET
 INSERT INTO organisations (id, name, slug, plan_tier, billing_email, is_active)
 VALUES (
   '44444444-4444-4444-4444-444444444444',
-  'AccessShield Platform',
+  'AccessibleNow Platform',
   'platform',
   'enterprise',
-  'sysadmin@accessshield.in',
+  'sysadmin@accessiblenow.in',
   true
 )
 ON CONFLICT (id) DO UPDATE SET
@@ -110,7 +110,7 @@ VALUES (
   '55555555-5555-5555-5555-555555555555',
   '44444444-4444-4444-4444-444444444444',
   '00000000-0000-0000-0000-000000000099',
-  'sysadmin@accessshield.in',
+  'sysadmin@accessiblenow.in',
   'System Administrator',
   'super_admin',
   true

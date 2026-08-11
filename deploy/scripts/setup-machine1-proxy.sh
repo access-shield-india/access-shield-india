@@ -29,7 +29,7 @@ SITE_ENABLED=/etc/nginx/sites-enabled/accessiblenow-proxy
 echo "Checking LAN reachability to machine3 ${MACHINE3_IP}:80 ..."
 if ! timeout 3 bash -c "echo >/dev/tcp/${MACHINE3_IP}/80" 2>/dev/null; then
   echo "ERROR: cannot connect to ${MACHINE3_IP}:80 from this host."
-  echo "Fix Sophos/ufw LAN rules (note: m3 is on 172.31.2.x, m1 on 172.31.3.x)."
+  echo "Fix firewall/ufw LAN rules so machine1 can reach machine3:80."
   exit 1
 fi
 

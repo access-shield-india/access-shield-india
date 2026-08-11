@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Install AccessibleNow host nginx on machine3 (app host).
-# Run as root on 172.31.2.3 (or whatever MACHINE3_IP is).
+# Run as root on machine3 (MACHINE3_IP from env.sh).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

@@ -6,7 +6,7 @@
 
 Architecture v2 replaces the **monolithic web-scan worker** with a **staged task-queue pipeline**. Work is handed off as jobs across specialized workers (crawler, page scanners, persister, finalizer, AI, reports). **Redis** handles coordination (progress, cancel, barriers, rate limits, AI cache). **MQ** (RabbitMQ now; SQS later if needed) carries durable task messages.
 
-**Status:** Implemented in `apps/api/src/scanner/v2/` behind feature flags (default = v1). Enable with `SCAN_PIPELINE_V2_SCAN_JOBS=true` on API + worker. See [PROGRESS.md](./PROGRESS.md) and [11 — Deployment](../11-deployment-guide.md).
+**Status:** Implemented in `apps/api/src/scanner/v2/` behind feature flags (default = v1). Enable with `SCAN_PIPELINE_V2_SCAN_JOBS=true` on API + worker. See [PROGRESS.md](./PROGRESS.md) and [deployment guide](../../deployment/README.md).
 
 **Approach:** staged task queues (pipeline of jobs) — **not** event streaming / Kafka.
 
@@ -468,5 +468,5 @@ Requires: PostgreSQL, Redis, MQ, (optional) S3/MinIO.
 - Change plan: [02 — Scan Pipeline v2 Change Plan](./02-scan-pipeline-change-plan.md)
 - v1 pipelines: [05 — Scan Pipelines](../05-scan-pipelines.md)
 - AI service: [06 — AI and Integrations](../06-ai-and-integrations.md)
-- Deployment: [11 — Deployment Guide](../11-deployment-guide.md)
+- Deployment: [deployment guide](../../deployment/README.md)
 - `.cursorrules` — API, multi-tenancy, DLP, plan limits

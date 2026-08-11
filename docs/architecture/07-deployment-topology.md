@@ -2,7 +2,7 @@
 
 [← AI & Integrations](./06-ai-and-integrations.md) | [Index](./README.md) | [Next: Operational Runbook →](./08-operational-runbook.md)
 
-For step-by-step setup, use **[11-deployment-guide.md](./11-deployment-guide.md)**.
+For step-by-step setup, use **[../deployment/README.md](../deployment/README.md)**.
 
 ## Executive Summary
 
@@ -179,7 +179,7 @@ Orchestration: [`turbo.json`](../../turbo.json)
 | mobile-scanner | `tsc` → `dist/`                                 | ECS task / Docker Compose    |
 | widget         | `widget.min.js`                                 | S3 + CloudFront invalidation |
 
-Scan Pipeline **v2** runs as additional consumers inside the same api worker process (feature-flagged). Keep `SCAN_PIPELINE_V2_*` identical on **api** and **api worker**. Details: [v2/](./v2/README.md), [11 — Deployment](./11-deployment-guide.md).
+Scan Pipeline **v2** runs as additional consumers inside the same api worker process (feature-flagged). Keep `SCAN_PIPELINE_V2_*` identical on **api** and **api worker**. Details: [v2/](./v2/README.md), [deployment guide](../deployment/README.md).
 
 ---
 

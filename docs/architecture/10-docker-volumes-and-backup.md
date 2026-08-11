@@ -1,8 +1,8 @@
 # Docker volumes & databases (backup inventory)
 
-[← Self-hosting design](./09-self-hosting-supabase-replacement.md) | [Index](./README.md) | [Next: Deployment guide →](./11-deployment-guide.md)
+[← Self-hosting design](./09-self-hosting-supabase-replacement.md) | [Index](./README.md) | [Next: Deployment →](../deployment/README.md)
 
-Local Compose and the intended prod backup surface. Full setup steps: [11-deployment-guide.md](./11-deployment-guide.md).
+Local Compose and the intended prod backup surface. Full setup steps: [../deployment/README.md](../deployment/README.md).
 
 ## Rule
 

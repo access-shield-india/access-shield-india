@@ -34,4 +34,4 @@ Target architecture for **staged web-scan task queues** (specialized workers, Re
 - [← Architecture index](../README.md)
 - [05 — Scan Pipelines (v1)](../05-scan-pipelines.md)
 - [06 — AI and Integrations](../06-ai-and-integrations.md)
-- [11 — Deployment Guide](../11-deployment-guide.md)
+- [Deployment guide](../../deployment/README.md)
