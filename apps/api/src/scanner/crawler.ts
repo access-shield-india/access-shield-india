@@ -3,6 +3,10 @@
  *
  * Discovers URLs for scanning via sitemap.xml parsing or page link crawling.
  * Filters URLs based on domain, exclusion patterns, and page limits.
+ *
+ * Handles sitemap indexes (common on Wix / WordPress / Shopify) by recursively
+ * fetching child sitemaps. Falls back to homepage link crawl when no HTML page
+ * URLs are found.
  */
 
 import { logger } from '../lib/logger';
@@ -17,6 +21,11 @@ async function getChromium() {
   const { chromium } = await import('playwright');
   return chromium;
 }
+
+/** Cap nested sitemap fetches (indexes → child sitemaps). */
+const MAX_SITEMAP_DEPTH = 3;
+/** Cap total child sitemap documents fetched per discovery run. */
+const MAX_SITEMAP_DOCS = 25;
 
 /**
  * Check if a URL belongs to the same domain as the base URL.
@@ -117,7 +126,7 @@ function normalizeUrl(url: string): string {
 /**
  * Check if URL is a PDF or other non-HTML resource.
  */
-function isNonHtmlResource(url: string): boolean {
+export function isNonHtmlResource(url: string): boolean {
   try {
     const parsed = new URL(url);
     const pathname = parsed.pathname.toLowerCase();
@@ -161,6 +170,20 @@ function isNonHtmlResource(url: string): boolean {
 }
 
 /**
+ * True when a <loc> points at another sitemap document (index children, Wix pages-sitemap.xml).
+ */
+export function isSitemapDocumentUrl(url: string): boolean {
+  try {
+    const pathname = new URL(url).pathname.toLowerCase();
+    if (pathname.endsWith('.xml')) return true;
+    if (pathname.includes('sitemap') && !pathname.endsWith('/')) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Check if URL has pagination query params we should skip.
  */
 function hasPaginationParams(url: string): boolean {
@@ -173,67 +196,221 @@ function hasPaginationParams(url: string): boolean {
   }
 }
 
+/** Extract <loc> values from sitemap / sitemapindex XML. */
+export function parseSitemapLocs(xml: string): string[] {
+  const locMatches = xml.match(/<loc>([^<]+)<\/loc>/gi);
+  if (!locMatches || locMatches.length === 0) {
+    return [];
+  }
+
+  return locMatches
+    .map((match) => {
+      const urlMatch = match.match(/<loc>([^<]+)<\/loc>/i);
+      return urlMatch?.[1]?.trim() ?? null;
+    })
+    .filter((url): url is string => url !== null && url.length > 0);
+}
+
+function isSitemapIndexXml(xml: string): boolean {
+  return /<sitemapindex[\s>]/i.test(xml);
+}
+
+async function fetchText(url: string, accept: string, timeoutMs: number): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'AccessShield-Scanner/1.0',
+        Accept: accept,
+      },
+      redirect: 'follow',
+    });
+
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return await response.text();
+  } catch (err) {
+    logger.debug({ url, err }, 'Failed to fetch URL for discovery');
+    return null;
+  }
+}
+
 /**
- * Fetch and parse sitemap.xml to extract URLs.
- *
- * @param baseUrl - The website's base URL
- * @returns Array of URLs from sitemap, empty if sitemap not found
+ * Read robots.txt Sitemap: directives (Wix and many CMS hosts list the real index here).
  */
-async function fetchSitemap(baseUrl: string): Promise<string[]> {
-  const sitemapUrls = [
-    new URL('/sitemap.xml', baseUrl).href,
-    new URL('/sitemap_index.xml', baseUrl).href,
-    new URL('/sitemap/sitemap.xml', baseUrl).href,
-  ];
+export async function discoverSitemapsFromRobots(baseUrl: string): Promise<string[]> {
+  const robotsUrl = new URL('/robots.txt', baseUrl).href;
+  const text = await fetchText(robotsUrl, 'text/plain, */*', 8000);
+  if (!text) return [];
 
-  for (const sitemapUrl of sitemapUrls) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000);
+  const sitemaps: string[] = [];
+  for (const line of text.split(/\r?\n/)) {
+    const match = line.match(/^\s*Sitemap:\s*(\S+)/i);
+    if (match?.[1]) {
+      sitemaps.push(match[1].trim());
+    }
+  }
+  return sitemaps;
+}
 
-      const response = await fetch(sitemapUrl, {
-        signal: controller.signal,
-        headers: {
-          'User-Agent': 'AccessShield-Scanner/1.0',
-          Accept: 'application/xml, text/xml, */*',
-        },
-      });
+/**
+ * Fetch one sitemap document and recurse into child sitemaps when this is an index.
+ * Returns page (non-sitemap) URLs only.
+ */
+async function collectUrlsFromSitemapDoc(
+  sitemapUrl: string,
+  baseUrl: string,
+  visited: Set<string>,
+  depth: number,
+  counters: { docs: number },
+): Promise<string[]> {
+  const normalized = normalizeUrl(sitemapUrl);
+  if (visited.has(normalized)) {
+    return [];
+  }
+  if (depth > MAX_SITEMAP_DEPTH || counters.docs >= MAX_SITEMAP_DOCS) {
+    logger.warn(
+      { sitemapUrl, depth, docs: counters.docs },
+      'Sitemap recursion limit reached',
+    );
+    return [];
+  }
 
-      clearTimeout(timeout);
+  visited.add(normalized);
+  counters.docs += 1;
 
-      if (!response.ok) {
-        continue;
-      }
+  const text = await fetchText(sitemapUrl, 'application/xml, text/xml, */*', 15000);
+  if (!text) {
+    return [];
+  }
 
-      const text = await response.text();
+  const locs = parseSitemapLocs(text);
+  if (locs.length === 0) {
+    return [];
+  }
 
-      const locMatches = text.match(/<loc>([^<]+)<\/loc>/gi);
-      if (!locMatches || locMatches.length === 0) {
-        continue;
-      }
+  const pageUrls: string[] = [];
+  const childSitemaps: string[] = [];
 
-      const urls = locMatches
-        .map((match) => {
-          const urlMatch = match.match(/<loc>([^<]+)<\/loc>/i);
-          return urlMatch?.[1]?.trim() ?? null;
-        })
-        .filter((url): url is string => url !== null);
-
-      if (urls.length > 0) {
-        logger.info({ sitemapUrl, urlCount: urls.length }, 'Parsed sitemap successfully');
-        return urls;
-      }
-    } catch (err) {
-      logger.debug({ sitemapUrl, err }, 'Failed to fetch sitemap');
+  for (const loc of locs) {
+    if (!isSameDomain(baseUrl, loc)) {
+      continue;
+    }
+    if (isSitemapDocumentUrl(loc)) {
+      childSitemaps.push(loc);
+    } else {
+      pageUrls.push(loc);
     }
   }
 
-  return [];
+  // Sitemap index (Wix/WP) or mixed: follow child .xml docs
+  if (childSitemaps.length > 0 && (isSitemapIndexXml(text) || pageUrls.length === 0)) {
+    logger.info(
+      { sitemapUrl, childCount: childSitemaps.length, depth },
+      'Following sitemap index children',
+    );
+    for (const child of childSitemaps) {
+      const nested = await collectUrlsFromSitemapDoc(
+        child,
+        baseUrl,
+        visited,
+        depth + 1,
+        counters,
+      );
+      pageUrls.push(...nested);
+    }
+  } else if (childSitemaps.length > 0) {
+    // Mixed urlset: keep pages and also expand nested sitemap refs
+    for (const child of childSitemaps) {
+      const nested = await collectUrlsFromSitemapDoc(
+        child,
+        baseUrl,
+        visited,
+        depth + 1,
+        counters,
+      );
+      pageUrls.push(...nested);
+    }
+  }
+
+  logger.info(
+    { sitemapUrl, urlCount: pageUrls.length, depth },
+    'Parsed sitemap document successfully',
+  );
+  return pageUrls;
+}
+
+/**
+ * Fetch and parse sitemap(s) to extract HTML page URLs.
+ * Follows sitemap indexes (Wix `pages-sitemap.xml`, WP nested indexes, etc.).
+ *
+ * @param baseUrl - The website's base URL
+ * @returns Array of page URLs from sitemaps, empty if none found
+ */
+export async function fetchSitemap(baseUrl: string): Promise<string[]> {
+  const candidates: string[] = [];
+  const seenCandidate = new Set<string>();
+
+  const addCandidate = (url: string) => {
+    const key = normalizeUrl(url);
+    if (seenCandidate.has(key)) return;
+    seenCandidate.add(key);
+    candidates.push(url);
+  };
+
+  for (const fromRobots of await discoverSitemapsFromRobots(baseUrl)) {
+    addCandidate(fromRobots);
+  }
+
+  for (const path of ['/sitemap.xml', '/sitemap_index.xml', '/sitemap/sitemap.xml']) {
+    addCandidate(new URL(path, baseUrl).href);
+  }
+
+  const visited = new Set<string>();
+  const counters = { docs: 0 };
+  const allPageUrls: string[] = [];
+  const seenPage = new Set<string>();
+
+  for (const sitemapUrl of candidates) {
+    const urls = await collectUrlsFromSitemapDoc(
+      sitemapUrl,
+      baseUrl,
+      visited,
+      0,
+      counters,
+    );
+    for (const url of urls) {
+      const key = normalizeUrl(url);
+      if (seenPage.has(key)) continue;
+      seenPage.add(key);
+      allPageUrls.push(url);
+    }
+    // Prefer first seed that yields pages (robots Sitemap or /sitemap.xml)
+    if (allPageUrls.length > 0) {
+      break;
+    }
+  }
+
+  if (allPageUrls.length > 0) {
+    logger.info(
+      { baseUrl, urlCount: allPageUrls.length, sitemapDocs: counters.docs },
+      'Sitemap discovery complete',
+    );
+  }
+
+  return allPageUrls;
 }
 
 /**
  * Crawl homepage to discover linked pages.
- * Uses Playwright to render JavaScript-heavy pages.
+ * Uses Playwright to render JavaScript-heavy pages (Wix, SPAs).
  *
  * @param browser - Playwright browser instance
  * @param baseUrl - The website's base URL
@@ -256,7 +433,30 @@ async function crawlHomepage(browser: Browser, baseUrl: string): Promise<string[
       timeout: 30000,
     });
 
-    await page.waitForTimeout(2000);
+    // Wix / SPA nav often hydrates after first paint — give it time, then try networkidle.
+    await page.waitForTimeout(2500);
+    try {
+      await page.waitForLoadState('networkidle', { timeout: 8000 });
+    } catch {
+      // Heavy sites never go idle; continue with whatever DOM we have.
+    }
+
+    // Expand common disclosure menus so hidden nav links enter the DOM.
+    await page.evaluate(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const doc = (globalThis as any).document as Document;
+      const toggles = doc.querySelectorAll(
+        'button[aria-expanded="false"], [aria-haspopup="true"], [data-testid*="menu"], .menu-button',
+      );
+      toggles.forEach((el) => {
+        try {
+          (el as HTMLElement).click();
+        } catch {
+          // ignore
+        }
+      });
+    });
+    await page.waitForTimeout(500);
 
     const hrefs = await page.evaluate(() => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -284,11 +484,50 @@ async function crawlHomepage(browser: Browser, baseUrl: string): Promise<string[
 }
 
 /**
+ * Resolve and filter a discovered href. Does not mutate seen set.
+ */
+function filterDiscoveredHref(
+  baseUrl: string,
+  href: string,
+  config: ScanJobConfig,
+): string | null {
+  const absoluteUrl = buildAbsoluteUrl(baseUrl, href);
+  if (!absoluteUrl) return null;
+  if (!isSameDomain(baseUrl, absoluteUrl)) return null;
+  if (isNonHtmlResource(absoluteUrl)) return null;
+  if (hasPaginationParams(absoluteUrl)) return null;
+  if (isExcluded(absoluteUrl, config.excludePaths)) return null;
+  return absoluteUrl;
+}
+
+/**
+ * After sitemap parse, count candidate page URLs that would pass filters.
+ * Used to decide whether homepage crawl fallback is needed.
+ */
+function countAcceptablePages(
+  baseUrl: string,
+  discoveredUrls: string[],
+  config: ScanJobConfig,
+): number {
+  const seen = new Set<string>([normalizeUrl(baseUrl)]);
+  let count = 0;
+  for (const href of discoveredUrls) {
+    const absoluteUrl = filterDiscoveredHref(baseUrl, href, config);
+    if (!absoluteUrl) continue;
+    const normalized = normalizeUrl(absoluteUrl);
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
+    count += 1;
+  }
+  return count;
+}
+
+/**
  * Discover URLs for scanning.
  *
  * Strategy:
- * 1. Try to fetch sitemap.xml
- * 2. If no sitemap, crawl homepage for links
+ * 1. Try sitemap(s) — follow indexes / child sitemaps
+ * 2. If no usable page URLs, crawl homepage for links
  * 3. Filter to same domain only
  * 4. Apply exclusion patterns
  * 5. Remove duplicates
@@ -307,49 +546,7 @@ export async function discoverUrls(baseUrl: string, config: ScanJobConfig): Prom
   });
 
   try {
-    const seenNormalized = new Set<string>();
-    const urls: string[] = [];
-
-    const normalizedBase = normalizeUrl(baseUrl);
-    seenNormalized.add(normalizedBase);
-    urls.push(baseUrl);
-
-    let discoveredUrls = await fetchSitemap(baseUrl);
-
-    if (discoveredUrls.length === 0) {
-      logger.info({ baseUrl }, 'No sitemap found, crawling homepage');
-      discoveredUrls = await crawlHomepage(browser, baseUrl);
-    }
-
-    for (const href of discoveredUrls) {
-      const absoluteUrl = buildAbsoluteUrl(baseUrl, href);
-      if (!absoluteUrl) continue;
-
-      if (!isSameDomain(baseUrl, absoluteUrl)) continue;
-
-      if (isNonHtmlResource(absoluteUrl)) continue;
-
-      if (hasPaginationParams(absoluteUrl)) continue;
-
-      if (isExcluded(absoluteUrl, config.excludePaths)) continue;
-
-      const normalized = normalizeUrl(absoluteUrl);
-      if (seenNormalized.has(normalized)) continue;
-
-      seenNormalized.add(normalized);
-      urls.push(absoluteUrl);
-
-      if (urls.length >= config.maxPages) {
-        break;
-      }
-    }
-
-    logger.info(
-      { baseUrl, totalUrls: urls.length, maxPages: config.maxPages },
-      'URL discovery complete',
-    );
-
-    return urls.slice(0, config.maxPages);
+    return await discoverUrlsWithBrowser(browser, baseUrl, config);
   } finally {
     await browser.close();
   }
@@ -378,26 +575,17 @@ export async function discoverUrlsWithBrowser(
 
   let discoveredUrls = await fetchSitemap(baseUrl);
 
-  if (discoveredUrls.length === 0) {
-    logger.info({ baseUrl }, 'No sitemap found, crawling homepage');
+  if (countAcceptablePages(baseUrl, discoveredUrls, config) === 0) {
+    logger.info({ baseUrl }, 'No usable sitemap page URLs, crawling homepage');
     discoveredUrls = await crawlHomepage(browser, baseUrl);
   }
 
   for (const href of discoveredUrls) {
-    const absoluteUrl = buildAbsoluteUrl(baseUrl, href);
+    const absoluteUrl = filterDiscoveredHref(baseUrl, href, config);
     if (!absoluteUrl) continue;
-
-    if (!isSameDomain(baseUrl, absoluteUrl)) continue;
-
-    if (isNonHtmlResource(absoluteUrl)) continue;
-
-    if (hasPaginationParams(absoluteUrl)) continue;
-
-    if (isExcluded(absoluteUrl, config.excludePaths)) continue;
 
     const normalized = normalizeUrl(absoluteUrl);
     if (seenNormalized.has(normalized)) continue;
-
     seenNormalized.add(normalized);
     urls.push(absoluteUrl);
 
@@ -448,8 +636,8 @@ export async function discoverUrlsStreaming(
 
   let discoveredUrls = await fetchSitemap(baseUrl);
 
-  if (discoveredUrls.length === 0) {
-    logger.info({ baseUrl }, 'No sitemap found, crawling homepage (streaming)');
+  if (countAcceptablePages(baseUrl, discoveredUrls, config) === 0) {
+    logger.info({ baseUrl }, 'No usable sitemap page URLs, crawling homepage (streaming)');
     discoveredUrls = await crawlHomepage(browser, baseUrl);
   } else {
     logger.info({ baseUrl, sitemapCount: discoveredUrls.length }, 'Streaming from sitemap');
@@ -460,12 +648,8 @@ export async function discoverUrlsStreaming(
       break;
     }
 
-    const absoluteUrl = buildAbsoluteUrl(baseUrl, href);
+    const absoluteUrl = filterDiscoveredHref(baseUrl, href, config);
     if (!absoluteUrl) continue;
-    if (!isSameDomain(baseUrl, absoluteUrl)) continue;
-    if (isNonHtmlResource(absoluteUrl)) continue;
-    if (hasPaginationParams(absoluteUrl)) continue;
-    if (isExcluded(absoluteUrl, config.excludePaths)) continue;
 
     const keepGoing = await emit(absoluteUrl);
     if (!keepGoing) {

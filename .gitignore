@@ -76,6 +76,7 @@ apps/web/public/widget.js
 apps/web/public/widget.js.map
 packages/*/dist/
 packages/ui/storybook-static/
+infra/keycloak/accessshield-realm.json
 
 # Source maps from builds
 *.js.map
