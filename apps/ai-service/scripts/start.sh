@@ -8,7 +8,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VENV="$ROOT/.venv"
 MONOREPO_ROOT="$(cd "$ROOT/../.." && pwd)"
-PORT="${AI_SERVICE_PORT:-8001}"
 RELOAD=0
 
 for arg in "$@"; do
@@ -32,6 +31,9 @@ if [[ -f "$MONOREPO_ROOT/.env.local" ]]; then
   source "$MONOREPO_ROOT/.env.local"
   set +a
 fi
+
+# After sourcing .env.local — that file sets PORT=4000 for the API and must not steal the AI port.
+PORT="${AI_SERVICE_PORT:-8001}"
 
 if [[ -n "${DATABASE_URL:-}" && "$DATABASE_URL" == postgresql://* ]]; then
   export DATABASE_URL="postgresql+asyncpg://${DATABASE_URL#postgresql://}"

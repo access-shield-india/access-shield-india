@@ -304,8 +304,13 @@ start_bg() {
   : >"$logfile"
   (
     cd "$ROOT"
-    # New session so we can kill the whole tree with kill -TERM -$pid later
-    setsid nohup "$@" >>"$logfile" 2>&1 </dev/null &
+    # New session so we can kill the whole tree with kill -TERM -$pid later.
+    # setsid is Linux-only; on macOS fall back to nohup (kill_tree still kills the pid).
+    if command -v setsid >/dev/null 2>&1; then
+      setsid nohup "$@" >>"$logfile" 2>&1 </dev/null &
+    else
+      nohup "$@" >>"$logfile" 2>&1 </dev/null &
+    fi
     echo $! >"$pidfile"
   )
   sleep 1
@@ -387,56 +392,11 @@ run_pull() {
   ok "Git up to date ($(git rev-parse --short HEAD))"
 }
 
-# Returns 0 if compose service has a running container.
-infra_service_running() {
-  local svc="$1"
-  local id
-  id="$(docker compose ps -q --status running "$svc" 2>/dev/null | head -n1 || true)"
-  [[ -n "$id" ]]
-}
-
-# One-shot jobs (minio-init): skip re-run if last exit was 0.
-infra_oneshot_succeeded() {
-  local svc="$1"
-  local id exit_code
-  id="$(docker compose ps -aq "$svc" 2>/dev/null | head -n1 || true)"
-  [[ -n "$id" ]] || return 1
-  exit_code="$(docker inspect -f '{{.State.ExitCode}}' "$id" 2>/dev/null || echo 1)"
-  local status
-  status="$(docker inspect -f '{{.State.Status}}' "$id" 2>/dev/null || echo unknown)"
-  [[ "$status" == "exited" && "$exit_code" == "0" ]]
-}
-
 run_infra() {
   require_cmd docker
   docker compose version >/dev/null 2>&1 || die "Docker Compose v2 required (docker compose)"
-
-  local to_start=()
-  local svc
-  for svc in "${INFRA_SERVICES[@]}"; do
-    if [[ "$svc" == "minio-init" ]]; then
-      if infra_oneshot_succeeded "$svc"; then
-        ok "$svc already completed — skip"
-        continue
-      fi
-      if infra_service_running "$svc"; then
-        ok "$svc already running — skip"
-        continue
-      fi
-    elif infra_service_running "$svc"; then
-      ok "$svc already running — skip"
-      continue
-    fi
-    to_start+=("$svc")
-  done
-
-  if [[ ${#to_start[@]} -eq 0 ]]; then
-    ok "All infra containers already up — nothing to start"
-  else
-    log "Starting infra: ${to_start[*]}"
-    docker compose up -d "${to_start[@]}"
-  fi
-
+  log "Starting infra: ${INFRA_SERVICES[*]}"
+  docker compose up -d "${INFRA_SERVICES[@]}"
   wait_for_postgres
   wait_for_keycloak
 }
