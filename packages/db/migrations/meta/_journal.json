@@ -57,6 +57,27 @@
       "when": 1783517400000,
       "tag": "0007_org_ai_provider",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1783517700000,
+      "tag": "0008_widget_analytics_daily",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1783518000000,
+      "tag": "0009_scan_asset_standards",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1783518300000,
+      "tag": "0010_violation_standard",
+      "breakpoints": true
     }
   ]
 }

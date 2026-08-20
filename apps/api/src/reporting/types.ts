@@ -28,6 +28,8 @@ export interface GenerateReportParams {
   format: ReportFormat;
   /** User ID who triggered generation */
   generatedBy: string;
+  /** Include anonymous widget usage table (Executive + SEBI). */
+  widgetAnalytics?: boolean;
 }
 
 /** Organisation data for report header */
@@ -90,6 +92,16 @@ export interface AuditorSignOff {
   date: string;
 }
 
+/** Anonymous widget usage for Executive / SEBI evidence tables */
+export interface WidgetUsageForReport {
+  panelOpens: number;
+  topProfiles: Array<{ id: string; label: string; count: number }>;
+  topSettings: Array<{ id: string; label: string; count: number }>;
+  languageSplit: Array<{ id: string; label: string; count: number }>;
+  hindiUsagePercent: number;
+  periodLabel: string;
+}
+
 /** Complete data structure for report template rendering */
 export interface ReportTemplateData {
   organisation: ReportOrganisation;
@@ -106,6 +118,8 @@ export interface ReportTemplateData {
   reportType: ReportType;
   /** Auditor sign-off for SEBI and formal compliance reports */
   auditorSignOff?: AuditorSignOff;
+  /** Present when widgetAnalytics was requested */
+  widgetUsage?: WidgetUsageForReport;
 }
 
 /** Puppeteer PDF generation options */

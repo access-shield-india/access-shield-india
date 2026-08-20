@@ -35,7 +35,7 @@ export async function generateMetadata({
       description: post.seoDescription || post.excerpt,
       type: 'article',
       publishedTime: post.publishedAt,
-      authors: [post.author?.name || 'AccessShield India'],
+      authors: [post.author?.name || 'AccessibleNow'],
     },
   };
 }

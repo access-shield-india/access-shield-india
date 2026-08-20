@@ -24,7 +24,7 @@ export function BadgeEmbedCode({ certificate }: BadgeEmbedCodeProps) {
   const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify/${certificate.certificateNumber}`;
 
   const embedCode = `<a href="${verifyUrl}" target="_blank" rel="noopener noreferrer" aria-label="View ${certificate.asset?.name} accessibility certificate">
-  <img src="${badgeUrl}" alt="AccessShield India Accessibility Certificate - ${certificate.level ?? 'WCAG 2.2 AA'}" width="${variant.width}" height="${variant.height}" />
+  <img src="${badgeUrl}" alt="AccessibleNow Accessibility Certificate - ${certificate.level ?? 'WCAG 2.2 AA'}" width="${variant.width}" height="${variant.height}" />
 </a>`;
 
   return (

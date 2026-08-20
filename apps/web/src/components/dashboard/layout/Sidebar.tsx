@@ -84,7 +84,7 @@ export function Sidebar({ userRole }: SidebarProps) {
             href="/dashboard"
             className="text-base font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
           >
-            AccessShield
+            AccessibleNow
           </Link>
         )}
         <button

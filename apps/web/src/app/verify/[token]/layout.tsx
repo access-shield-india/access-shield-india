@@ -11,7 +11,7 @@ export default function VerifyLayout({ children }: { children: ReactNode }) {
               href="/"
               className="text-xl font-bold text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
             >
-              AccessShield India
+              AccessibleNow
             </Link>
           </div>
         </header>

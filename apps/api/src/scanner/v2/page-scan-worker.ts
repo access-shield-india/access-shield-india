@@ -16,6 +16,7 @@ import {
   isScanCancelledInRedis,
   tryFinalizeScanFromPageJobs,
   updateProgressFromPageJobs,
+  waitWhileScanPaused,
 } from './finalize-from-page-jobs';
 import { pageScanQueueMessageSchema } from './message-schemas';
 import { markScanPageJobStatus } from './page-jobs';
@@ -67,6 +68,19 @@ async function maybeFinalizeAndSync(
 async function processPageScanMessage(raw: PageScanQueueMessage): Promise<void> {
   const database = getDatabase();
   const { scanId, orgId, assetId, pageJobId, url, config } = raw;
+
+  if (await isScanCancelledInRedis(scanId)) {
+    await markScanPageJobStatus(database, {
+      pageJobId,
+      organisationId: orgId,
+      status: 'cancelled',
+      errorMessage: 'Cancelled by user',
+    });
+    await maybeFinalizeAndSync(database, { scanId, orgId, assetId });
+    return;
+  }
+
+  await waitWhileScanPaused(scanId);
 
   if (await isScanCancelledInRedis(scanId)) {
     await markScanPageJobStatus(database, {

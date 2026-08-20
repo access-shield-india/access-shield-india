@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     'See who your website excludes — scan for barriers affecting people with disabilities. WCAG 2.2, IS 17802, and RPwD checks in 60–90 seconds. No credit card.',
   openGraph: {
-    title: 'Free Website Accessibility Scan | AccessShield India',
+    title: 'Free Website Accessibility Scan | AccessibleNow',
     description:
       'Find accessibility barriers for blind, deaf, and motor-impaired users in 60–90 seconds. Free scan, no credit card.',
     type: 'website',

@@ -150,7 +150,7 @@ export function ScanToolWidget() {
   };
 
   const handleShare = () => {
-    const message = `My website scored ${scanResult?.score}/100 for accessibility on AccessShield India. Check yours: https://accessshield.in/scan`;
+    const message = `My website scored ${scanResult?.score}/100 for accessibility on AccessibleNow. Check yours: https://accessshield.in/scan`;
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
   };
 

@@ -32,6 +32,7 @@ import { discoverUrlsWithBrowser } from './crawler';
 import { createBrowser, scanPage, closeScanContext, closeBrowser } from './playwright-runner';
 import { runGIGWChecks } from './rules/gigw';
 import { runIS17802Rules } from './rules/is17802';
+import { runSebiChecks } from './rules/sebi';
 import { buildScanScoreResult } from './score';
 import type { RawViolation, ScanJobMessage, ScanProgress, ScanCancelMessage } from './types';
 import { syncIssuesFromViolations } from '../services/issue-sync';
@@ -41,6 +42,12 @@ import { publishPageScanJob } from './v2/publish';
 import { pageScanIdempotencyKey, normalizeScanPageUrl } from './v2/url';
 import { resolveScanConcurrency } from './v2/auto-concurrency';
 import { setScanBarrier } from './v2/barrier';
+import {
+  isScanCancelledInRedis,
+  isScanPausedInRedis,
+  waitWhileScanPaused,
+} from './v2/finalize-from-page-jobs';
+import { ScanRedisKeys, SCAN_PROGRESS_TTL_SECONDS } from './v2/redis-keys';
 
 /** Concurrent page scan limit — SCAN_CONCURRENT_PAGES or auto from CPU/RAM */
 const CONCURRENT_PAGES = resolveScanConcurrency();
@@ -53,9 +60,6 @@ const SCANS_QUEUE = 'scans';
 const CANCEL_QUEUE = 'scan_cancellations';
 const AI_ALT_TEXT_QUEUE = 'ai.alt-text';
 const AI_FIX_QUEUE = 'ai.fix';
-
-/** Redis key TTL in seconds */
-const PROGRESS_TTL = 3600;
 
 /** Max retries for RabbitMQ connection */
 const MAX_CONNECTION_RETRIES = 10;
@@ -165,13 +169,25 @@ async function updateProgress(
   pagesScanned: number,
   pagesTotal: number,
   currentUrl: string,
+  extra?: { phase?: string; currentStandard?: ScanProgress['currentStandard'] },
 ): Promise<void> {
   const redis = getRedisClient();
-  const progress: ScanProgress = { pagesScanned, pagesTotal, currentUrl };
+  const paused = await isScanPausedInRedis(scanId);
+  const progress: ScanProgress = {
+    pagesScanned,
+    pagesTotal,
+    currentUrl,
+    paused,
+    ...extra,
+  };
 
   try {
-    await redis.setex(`scan:progress:${scanId}`, PROGRESS_TTL, JSON.stringify(progress));
-    const { publishRealtime } = await import('../lib/realtime/publish');
+    await redis.setex(
+      ScanRedisKeys.progress(scanId),
+      SCAN_PROGRESS_TTL_SECONDS,
+      JSON.stringify(progress),
+    );
+    const { publishRealtime } = await import('../lib/realtime/publish.js');
     await publishRealtime(
       `scan:${scanId}`,
       'UPDATE',
@@ -246,10 +262,11 @@ function urlToSlug(url: string): string {
 }
 
 /**
- * Check if scan has been cancelled.
+ * Check if scan has been cancelled (in-memory queue or Redis flag).
  */
-function isScanCancelled(scanId: string): boolean {
-  return cancelledScans.has(scanId);
+async function isScanCancelled(scanId: string): Promise<boolean> {
+  if (cancelledScans.has(scanId)) return true;
+  return isScanCancelledInRedis(scanId);
 }
 
 /**
@@ -345,9 +362,9 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
       return;
     }
 
-    await updateProgress(scanId, 0, urls.length, '');
+    await updateProgress(scanId, 0, urls.length, '', { phase: 'Scanning pages' });
 
-    if (isScanCancelled(scanId)) {
+    if (await isScanCancelled(scanId)) {
       logger.info({ scanId }, 'Scan cancelled before page scanning');
       return;
     }
@@ -360,7 +377,8 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
 
     const scanPromises = urls.map((url, index) =>
       limit(async () => {
-        if (isScanCancelled(scanId)) {
+        await waitWhileScanPaused(scanId);
+        if (await isScanCancelled(scanId)) {
           return;
         }
 
@@ -379,7 +397,10 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
             });
           }
 
-          await updateProgress(scanId, pagesScanned, urls.length, url);
+          await updateProgress(scanId, pagesScanned, urls.length, url, {
+            phase: 'WCAG checks',
+            currentStandard: 'WCAG22',
+          });
 
           const { page, context, desktopScreenshot, mobileScreenshot } = await scanPage(
             browser!,
@@ -390,13 +411,30 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
           const pageViolations = await runAxeWithRetry(page, config, assetId, url);
 
           if (config.standards.includes('IS17802')) {
+            await updateProgress(scanId, pagesScanned, urls.length, url, {
+              phase: 'IS 17802 checks',
+              currentStandard: 'IS17802',
+            });
             const isViolations = await runIS17802Rules(page, url, assetId);
             pageViolations.push(...isViolations);
           }
 
           if (config.standards.includes('GIGW3')) {
+            await updateProgress(scanId, pagesScanned, urls.length, url, {
+              phase: 'GIGW 3.0 checks',
+              currentStandard: 'GIGW3',
+            });
             const gigwViolations = await runGIGWChecks(page, url, assetId, config);
             pageViolations.push(...gigwViolations);
+          }
+
+          if (config.standards.includes('SEBI')) {
+            await updateProgress(scanId, pagesScanned, urls.length, url, {
+              phase: 'SEBI checks',
+              currentStandard: 'SEBI',
+            });
+            const sebiViolations = await runSebiChecks(page, url, assetId);
+            pageViolations.push(...sebiViolations);
           }
 
           await closeScanContext(context);
@@ -435,6 +473,10 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
               pageIndex: index + 1,
               totalPages: urls.length,
               violationCount: pageViolations.length,
+              wcagCount: pageViolations.filter((v) => v.standard === 'WCAG22').length,
+              is17802Count: pageViolations.filter((v) => v.standard === 'IS17802').length,
+              gigwCount: pageViolations.filter((v) => v.standard === 'GIGW3').length,
+              sebiCount: pageViolations.filter((v) => v.standard === 'SEBI').length,
             },
             'Page scan complete',
           );
@@ -463,7 +505,7 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
     await closeBrowser(browser);
     browser = null;
 
-    if (isScanCancelled(scanId)) {
+    if (await isScanCancelled(scanId)) {
       logger.info({ scanId }, 'Scan cancelled after page scanning');
       return;
     }
@@ -527,6 +569,7 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
             html: v.elementHtml,
             pageUrl: v.pageUrl,
             fingerprint: v.fingerprint,
+            standard: v.standard,
           })),
         )
         .onConflictDoNothing({
@@ -722,7 +765,7 @@ export async function startWorker(): Promise<void> {
         try {
           const message = JSON.parse(msg.content.toString()) as ScanJobMessage;
 
-          if (isScanCancelled(message.scanId)) {
+          if (await isScanCancelled(message.scanId)) {
             logger.info({ scanId: message.scanId }, 'Skipping cancelled scan job');
             if (rabbitChannel) rabbitChannel.ack(msg);
             return;

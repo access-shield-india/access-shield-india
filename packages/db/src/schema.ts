@@ -2,6 +2,7 @@ import { relations } from 'drizzle-orm';
 import {
   bigint,
   boolean,
+  date,
   doublePrecision,
   index,
   integer,
@@ -158,6 +159,11 @@ export const assets = pgTable(
     description: text('description'),
     isActive: boolean('is_active').notNull().default(true),
     lastScannedAt: timestamp('last_scanned_at', { withTimezone: true, mode: 'string' }),
+    /** Compliance standards selected when the asset was added */
+    standards: text('standards')
+      .array()
+      .notNull()
+      .default(['WCAG22', 'IS17802']),
     ...timestamps,
   },
   (table) => ({
@@ -186,6 +192,11 @@ export const scans = pgTable(
     startedAt: timestamp('started_at', { withTimezone: true, mode: 'string' }),
     completedAt: timestamp('completed_at', { withTimezone: true, mode: 'string' }),
     errorMessage: text('error_message'),
+    /** Standards this scan was run against (copied from the request / asset) */
+    standards: text('standards')
+      .array()
+      .notNull()
+      .default(['WCAG22', 'IS17802']),
     ...timestamps,
   },
   (table) => ({
@@ -248,6 +259,8 @@ export const violations = pgTable(
     selector: text('selector'),
     html: text('html'),
     pageUrl: text('page_url'),
+    /** WCAG22 | IS17802 | GIGW3 | SEBI */
+    standard: varchar('standard', { length: 20 }).notNull().default('WCAG22'),
     /** Dedup key within a scan — SHA-based fingerprint from scanner */
     fingerprint: varchar('fingerprint', { length: 64 }),
     aiFix: text('ai_fix'),
@@ -432,6 +445,30 @@ export interface WidgetFeatures {
   pauseAnimations: boolean;
 }
 
+// ─── Widget Analytics (daily aggregates) ─────────────────────────────────────
+
+export const widgetAnalyticsDaily = pgTable(
+  'widget_analytics_daily',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organisationId: orgId(),
+    date: date('date', { mode: 'string' }).notNull(),
+    eventType: varchar('event_type', { length: 40 }).notNull(),
+    feature: varchar('feature', { length: 60 }).notNull().default(''),
+    count: integer('count').notNull().default(0),
+  },
+  (table) => ({
+    orgIdx: index('widget_analytics_daily_org_idx').on(table.organisationId),
+    dateIdx: index('widget_analytics_daily_date_idx').on(table.date),
+    orgDateTypeFeatureUnique: uniqueIndex('widget_analytics_daily_uidx').on(
+      table.organisationId,
+      table.date,
+      table.eventType,
+      table.feature,
+    ),
+  }),
+);
+
 // ─── Audit Logs ──────────────────────────────────────────────────────────────
 
 export const auditLogs = pgTable(
@@ -588,6 +625,7 @@ export const organisationsRelations = relations(organisations, ({ many }) => ({
   documentScanJobs: many(documentScanJobs),
   documentScanResults: many(documentScanResults),
   documentViolations: many(documentViolations),
+  widgetAnalyticsDaily: many(widgetAnalyticsDaily),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -678,5 +716,12 @@ export const documentViolationsRelations = relations(documentViolations, ({ one 
   job: one(documentScanJobs, {
     fields: [documentViolations.jobId],
     references: [documentScanJobs.id],
+  }),
+}));
+
+export const widgetAnalyticsDailyRelations = relations(widgetAnalyticsDaily, ({ one }) => ({
+  organisation: one(organisations, {
+    fields: [widgetAnalyticsDaily.organisationId],
+    references: [organisations.id],
   }),
 }));

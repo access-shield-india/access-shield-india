@@ -18,7 +18,7 @@ export async function generateMetadata({
     title: pages.about.meta.title,
     description: pages.about.meta.description,
     openGraph: {
-      title: `${pages.about.meta.title} | AccessShield India`,
+      title: `${pages.about.meta.title} | AccessibleNow`,
       description: pages.about.meta.description,
     },
   };

@@ -28,7 +28,7 @@ async function fetchIssueDetail(token: string, issueId: string): Promise<IssueDe
 
 async function requestAiFix(token: string, issueId: string): Promise<IssueDetail> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 90_000);
+  const timeout = setTimeout(() => controller.abort(), 300_000);
 
   try {
     const response = await fetch(apiUrl(`/api/v1/issues/${issueId}/ai-fix`), {
@@ -236,8 +236,8 @@ function AIFixTab({
       <div className="py-8 text-center" role="alert">
         <p className="text-base text-error-700">{errorMessage}</p>
         <p className="mt-2 text-sm text-text-secondary">
-          Check that the API and AI service are running. For full AI fixes, set ANTHROPIC_API_KEY in
-          apps/ai-service/.env.
+          Check that the API and AI service are running. First local-LLM request can take a few
+          minutes while the model loads.
         </p>
         <Button variant="primary" size="md" className="mt-6" onClick={onRetry}>
           Try again

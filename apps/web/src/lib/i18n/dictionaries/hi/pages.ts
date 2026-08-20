@@ -5,21 +5,21 @@ export const pages: PagesDict = {
     meta: {
       title: 'हमारे बारे में',
       description:
-        'AccessShield India Pune-based company है जो Indian organisations को RPwD, IS 17802, GIGW, WCAG 2.2 AA और SEBI digital accessibility compliance में मदद करती है।',
+        'AccessibleNow Pune-based company है जो Indian organisations को RPwD, IS 17802, GIGW, WCAG 2.2 AA और SEBI digital accessibility compliance में मदद करती है।',
     },
-    title: 'AccessShield India के बारे में',
+    title: 'AccessibleNow के बारे में',
     description:
       'Pune-based company जो Indian businesses, government vendors और regulated industries के लिए digital accessibility compliance practical बनाती है।',
     sections: [
       {
         id: 'mission',
         heading: 'हमारा mission',
-        body: 'हर कोई banking, healthcare, government portals और investor platforms जैसी digital services तक बराबर पहुँच का हक़दार है। AccessShield India India के accessibility laws और tight deadlines व budgets पर teams जो actually ship कर सकती हैं, उनके बीच का gap कम करता है।',
+        body: 'हर कोई banking, healthcare, government portals और investor platforms जैसी digital services तक बराबर पहुँच का हक़दार है। AccessibleNow India के accessibility laws और tight deadlines व budgets पर teams जो actually ship कर सकती हैं, उनके बीच का gap कम करता है।',
       },
       {
         id: 'what-we-do',
         heading: 'हम क्या करते हैं',
-        body: 'हम continuous accessibility compliance के लिए AI-powered SaaS platform हैं। Teams AccessShield से websites scan करती हैं, issues prioritise करती हैं, remediation track करती हैं, audit-ready reports बनाती हैं, और RPwD Act 2016, IS 17802, GIGW 3.0, WCAG 2.2 AA और SEBI requirements की तरफ progress दिखाती हैं।',
+        body: 'हम continuous accessibility compliance के लिए AI-powered SaaS platform हैं। Teams AccessibleNow से websites scan करती हैं, issues prioritise करती हैं, remediation track करती हैं, audit-ready reports बनाती हैं, और RPwD Act 2016, IS 17802, GIGW 3.0, WCAG 2.2 AA और SEBI requirements की तरफ progress दिखाती हैं।',
         list: [
           'India-specific rules (IS 17802, GIGW) के साथ automated scanning',
           'Dev और compliance teams के लिए issue tracking और remediation workflows',
@@ -49,7 +49,7 @@ export const pages: PagesDict = {
     meta: {
       title: 'Contact',
       description:
-        'Demos, enterprise pricing और compliance सवालों के लिए AccessShield India से संपर्क करें।',
+        'Demos, enterprise pricing और compliance सवालों के लिए AccessibleNow से संपर्क करें।',
     },
     title: 'हमसे contact करें',
     description: 'RPwD, SEBI, pricing या demo के सवाल? हम एक business day में जवाब देते हैं।',
@@ -101,7 +101,7 @@ export const pages: PagesDict = {
   docs: {
     meta: {
       title: 'Documentation',
-      description: 'AccessShield India के लिए install guides, API reference और widget setup।',
+      description: 'AccessibleNow के लिए install guides, API reference और widget setup।',
     },
     title: 'Documentation',
     description: 'Widget embed, scanning API और dashboard workflows के setup guides।',
@@ -110,7 +110,7 @@ export const pages: PagesDict = {
     meta: {
       title: 'Careers',
       description:
-        'AccessShield India में शामिल हों — Pune में accessibility, sales और compliance roles।',
+        'AccessibleNow में शामिल हों — Pune में accessibility, sales और compliance roles।',
     },
     title: 'Careers',
     description: 'India की digital services सभी के लिए accessible बनाने में मदद करें।',
@@ -118,7 +118,7 @@ export const pages: PagesDict = {
   waitlist: {
     meta: {
       title: 'Waitlist',
-      description: 'Early access के लिए AccessShield India waitlist में जुड़ें।',
+      description: 'Early access के लिए AccessibleNow waitlist में जुड़ें।',
     },
     title: 'Waitlist में जुड़ें',
     description: 'नई features launch होते ही सबसे पहले जानें।',
@@ -126,7 +126,7 @@ export const pages: PagesDict = {
   privacy: {
     meta: {
       title: 'Privacy Policy',
-      description: 'AccessShield India आपका data कैसे collect और protect करता है।',
+      description: 'AccessibleNow आपका data कैसे collect और protect करता है।',
     },
     title: 'Privacy Policy',
     description: 'Last updated June 2026. हम India के DPDP Act principles follow करते हैं।',
@@ -134,7 +134,7 @@ export const pages: PagesDict = {
   terms: {
     meta: {
       title: 'Terms of Service',
-      description: 'AccessShield India platform और services use करने की terms।',
+      description: 'AccessibleNow platform और services use करने की terms।',
     },
     title: 'Terms of Service',
     description: 'Platform use करने से पहले ये terms पढ़ें।',
@@ -142,7 +142,7 @@ export const pages: PagesDict = {
   refund: {
     meta: {
       title: 'Refund Policy',
-      description: 'AccessShield India refund और cancellation policy।',
+      description: 'AccessibleNow refund और cancellation policy।',
     },
     title: 'Refund Policy',
     description: '14-day trial और subscription refund terms।',
@@ -150,7 +150,7 @@ export const pages: PagesDict = {
   accessibilityStatement: {
     meta: {
       title: 'Accessibility Statement',
-      description: 'AccessShield platform के लिए WCAG 2.2 AA commitment।',
+      description: 'AccessibleNow platform के लिए WCAG 2.2 AA commitment।',
     },
     title: 'Accessibility Statement',
     description: 'हम खुद उन्हीं standards पर खरे उतरते हैं जो customers को meet करवाते हैं।',

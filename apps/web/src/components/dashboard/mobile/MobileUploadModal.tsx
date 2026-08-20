@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Modal, Input, Button, Checkbox, Progress } from '@accessshield/ui';
+import { Modal, Input, Button, Progress } from '@accessshield/ui';
 import { Upload, Smartphone, AlertCircle, CheckCircle } from 'lucide-react';
 import { useTriggerMobileScan } from '@/lib/hooks/useApi';
 import type { Asset } from '@/lib/api/types';
+import { RhfCheckbox } from '@/components/dashboard/forms/RhfCheckbox';
 
 const uploadSchema = z.object({
   osVersion: z.string().optional(),
@@ -244,9 +245,9 @@ export function MobileUploadModal({ open, onClose, asset, platform }: MobileUplo
             Compliance Standards
           </legend>
           <div className="space-y-2">
-            <Checkbox {...form.register('standards.wcag22')} label="WCAG 2.2 AA" />
-            <Checkbox {...form.register('standards.is17802')} label="IS 17802 (India)" />
-            <Checkbox {...form.register('standards.sebi')} label="SEBI Guidelines" />
+            <RhfCheckbox control={form.control} name="standards.wcag22" label="WCAG 2.2 AA" />
+            <RhfCheckbox control={form.control} name="standards.is17802" label="IS 17802 (India)" />
+            <RhfCheckbox control={form.control} name="standards.sebi" label="SEBI Guidelines" />
           </div>
         </fieldset>
 

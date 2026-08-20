@@ -39,9 +39,16 @@ import {
   startReportGenerateWorker,
 } from './v2/report-generate-worker';
 
+import { startWidgetAnalyticsRollupJob } from '../jobs/widget-analytics-rollup';
+import { createDb } from '@accessshield/db';
+import Redis from 'ioredis';
+
 logger.info('Starting AccessShield scan worker...');
 
+let stopAnalyticsRollup: (() => void) | null = null;
+
 const gracefulShutdown = async () => {
+  stopAnalyticsRollup?.();
   if (isScanPipelineV2Enabled()) {
     await shutdownCrawlerWorker();
     await shutdownPageScanWorker();
@@ -59,6 +66,15 @@ process.on('SIGTERM', () => void gracefulShutdown());
 process.on('SIGINT', () => void gracefulShutdown());
 
 async function main(): Promise<void> {
+  const databaseUrl = process.env.DATABASE_URL;
+  const redisUrl = process.env.REDIS_URL;
+  if (databaseUrl && redisUrl) {
+    const db = createDb(databaseUrl);
+    const redis = new Redis(redisUrl, { maxRetriesPerRequest: 3, lazyConnect: true });
+    await redis.connect();
+    stopAnalyticsRollup = startWidgetAnalyticsRollupJob(db, redis);
+  }
+
   if (isScanPipelineV2Enabled()) {
     logger.info(
       {

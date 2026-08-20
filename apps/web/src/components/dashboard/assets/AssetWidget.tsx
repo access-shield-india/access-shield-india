@@ -11,6 +11,7 @@ import { LoadingState } from '@/components/dashboard/common/LoadingState';
 const POSITION_OPTIONS = [
   { value: 'bottom-right' as const, label: 'Bottom Right' },
   { value: 'bottom-left' as const, label: 'Bottom Left' },
+  { value: 'middle-right' as const, label: 'Middle Right' },
   { value: 'top-right' as const, label: 'Top Right' },
   { value: 'top-left' as const, label: 'Top Left' },
 ];

@@ -5,7 +5,7 @@ import { CareersIllustration } from '@/components/marketing/visuals';
 
 export const metadata: Metadata = {
   title: 'Careers',
-  description: 'Join AccessShield India and help make the web accessible for everyone in India.',
+  description: 'Join AccessibleNow and help make the web accessible for everyone in India.',
 };
 
 export default function CareersPage() {

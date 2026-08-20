@@ -6,6 +6,7 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import Redis from 'ioredis';
+import pino from 'pino';
 import pinoHttp from 'pino-http';
 import { createDb } from '@accessshield/db';
 import { loadSecrets } from './config/secrets';
@@ -32,6 +33,7 @@ import { createPublicSignupRouter } from './routes/public-signup';
 import { createAdminRouter } from './routes/admin';
 import { createDocumentScansRouter } from './routes/document-scans';
 import { createRealtimeRouter } from './routes/realtime';
+import { startWidgetAnalyticsRollupJob } from './jobs/widget-analytics-rollup';
 
 const PORT = Number(process.env.PORT ?? 4000);
 
@@ -51,13 +53,44 @@ async function bootstrap() {
           : true,
     }),
   );
+  // Widget ingest runs on customer origins — token-validated, no cookies.
+  app.use('/api/v1/widget', cors({ origin: true }));
   app.use(express.json({ limit: '1mb' }));
+  app.use('/api/v1/widget/analytics', express.text({ type: 'text/plain', limit: '32kb' }));
   app.use(requestIdMiddleware);
   app.use(
     pinoHttp({
       logger,
       genReqId: (req) => req.id,
       customProps: (req) => ({ requestId: req.id }),
+      autoLogging: {
+        ignore: (req) => {
+          const path = (req.url ?? '').split('?')[0] ?? '';
+          return req.method === 'POST' && path.endsWith('/widget/analytics');
+        },
+      },
+      serializers: {
+        req(req) {
+          const serialized = pino.stdSerializers.req(req) as {
+            remoteAddress?: string;
+            remotePort?: number;
+            headers?: Record<string, string | string[] | undefined>;
+            url?: string;
+            method?: string;
+          };
+          const path = (req.url ?? '').split('?')[0] ?? '';
+          if (path.includes('/widget/analytics')) {
+            serialized.remoteAddress = undefined;
+            serialized.remotePort = undefined;
+            if (serialized.headers) {
+              delete serialized.headers['x-forwarded-for'];
+              delete serialized.headers['x-real-ip'];
+              delete serialized.headers['cf-connecting-ip'];
+            }
+          }
+          return serialized;
+        },
+      },
     }),
   );
 
@@ -106,7 +139,7 @@ async function bootstrap() {
   const documentScansRouter = createDocumentScansRouter(db, redis);
   app.use('/api/v1/document-scans', documentScansRouter);
 
-  const reportingRouter = createReportingRouter(db);
+  const reportingRouter = createReportingRouter(db, redis);
   app.use('/api/v1/reports', reportingRouter);
 
   // Certification routes: /api/v1/certificates AND public /verify/:token
@@ -150,6 +183,8 @@ async function bootstrap() {
 
   await redis.connect();
 
+  const stopAnalyticsRollup = startWidgetAnalyticsRollupJob(db, redis);
+
   const server = app.listen(PORT, () => {
     logger.info({ port: PORT, version: process.env.npm_package_version }, 'API server started');
   });
@@ -169,6 +204,7 @@ async function bootstrap() {
   const gracefulShutdown = async () => {
     logger.info('Shutting down gracefully...');
     server.close();
+    stopAnalyticsRollup();
     await redis.quit();
     await closeRabbitMQ();
     logger.info('Shutdown complete');

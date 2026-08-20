@@ -15,6 +15,12 @@ if [[ ! -f "$WIDGET_PUBLIC" ]]; then
   cp "$ROOT/apps/widget/dist/widget.min.js" "$WIDGET_PUBLIC"
 fi
 
+# macOS defaults to 256 file descriptors; Next's watcher needs thousands or
+# [locale] routes never register and every page 404s (EMFILE).
+ulimit -n 10240 2>/dev/null || ulimit -n 4096 2>/dev/null || true
+export WATCHPACK_POLLING="${WATCHPACK_POLLING:-1000}"
+export CHOKIDAR_USEPOLLING="${CHOKIDAR_USEPOLLING:-1}"
+
 ARGS=()
 if [[ -f "$ENV_FILE" ]]; then
   ARGS=(--env-file="$ENV_FILE")

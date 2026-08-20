@@ -17,7 +17,7 @@ export function FAQSection({ items }: FAQSectionProps) {
           Frequently asked questions
         </h2>
         <p className="mt-4 text-lg leading-normal text-text-secondary">
-          Everything you need to know about AccessShield India pricing and compliance
+          Everything you need to know about AccessibleNow pricing and compliance
         </p>
       </div>
 

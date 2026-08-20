@@ -92,7 +92,9 @@ export function AssetList({ assets }: AssetListProps) {
                 <Button
                   size="sm"
                   variant="primary"
-                  onClick={() => triggerScan({ asset_id: asset.id })}
+                  onClick={() =>
+                    triggerScan({ asset_id: asset.id, standards: asset.standards })
+                  }
                   isLoading={isPending}
                   aria-label={`Scan ${asset.name} now`}
                 >

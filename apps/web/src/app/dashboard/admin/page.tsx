@@ -22,7 +22,7 @@ export default function AdminHomePage() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Platform overview"
-        description="Monitor tenants, usage, and widget adoption across AccessShield India."
+        description="Monitor tenants, usage, and widget adoption across AccessibleNow."
         actions={
           <Button variant="primary" size="sm" asChild>
             <Link href="/dashboard/admin/organisations">Manage organisations</Link>

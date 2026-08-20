@@ -131,6 +131,11 @@ export interface ScanProgress {
   pagesScanned: number;
   pagesTotal: number;
   currentUrl: string;
+  /** True when the operator paused the scan */
+  paused?: boolean;
+  /** Human-readable step, e.g. "SEBI checks" */
+  phase?: string;
+  currentStandard?: ComplianceStandard;
 }
 
 /** Cancel message published to stop a running scan */

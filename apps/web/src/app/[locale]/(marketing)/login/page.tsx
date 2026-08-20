@@ -5,7 +5,7 @@ import { LoginForm } from '@/components/marketing/LoginForm';
 export const metadata: Metadata = {
   title: 'Sign in',
   description:
-    'Sign in to your AccessShield India account to manage accessibility scans and compliance.',
+    'Sign in to your AccessibleNow account to manage accessibility scans and compliance.',
   robots: { index: false },
 };
 

@@ -120,7 +120,7 @@ export function JiraIntegrationCard() {
             <h3 className="text-lg font-semibold text-text-primary">Jira Integration</h3>
             <p className="mt-2 text-base text-text-secondary">
               Connect your Jira Cloud workspace to automatically sync accessibility issues. Issues
-              created in AccessShield will be pushed to Jira with full context, including
+              created in AccessibleNow will be pushed to Jira with full context, including
               screenshots, WCAG criteria, and AI-generated fix suggestions.
             </p>
             <ul className="mt-4 space-y-2 text-sm text-text-secondary">
@@ -257,7 +257,7 @@ export function JiraIntegrationCard() {
           Sync all open issues
         </Button>
         <p className="mt-2 text-sm text-text-tertiary">
-          Manually trigger a sync of all open AccessShield issues to Jira
+          Manually trigger a sync of all open AccessibleNow issues to Jira
         </p>
       </div>
 

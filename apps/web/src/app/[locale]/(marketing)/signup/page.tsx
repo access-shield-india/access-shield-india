@@ -4,7 +4,7 @@ import { SignupForm } from '@/components/marketing/SignupForm';
 export const metadata: Metadata = {
   title: 'Start free trial',
   description:
-    'Create your AccessShield India account and start scanning for accessibility compliance.',
+    'Create your AccessibleNow account and start scanning for accessibility compliance.',
 };
 
 export default function SignupPage() {

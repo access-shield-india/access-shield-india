@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from config import settings
 from utils.cache import cache, AICache
-from utils.model_router import get_client, normalize_provider, resolve_model
+from utils.model_router import get_client, resolve_backend
 from utils.dlp import scrub, truncate
 from db.session import update_violation_fix
 
@@ -75,8 +75,7 @@ async def generate_fix(
     Returns:
         Generated fix response.
     """
-    resolved_provider = normalize_provider(provider)
-    resolved_model = resolve_model(resolved_provider, model)
+    resolved_provider, resolved_model = resolve_backend(provider, model)
     # Use first 100 chars of element HTML for cache key to avoid overly long keys
     cache_key = AICache.make_key(
         "fix",

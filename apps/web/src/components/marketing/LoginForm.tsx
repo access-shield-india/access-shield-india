@@ -60,7 +60,7 @@ export function LoginForm() {
     <div className="flex justify-center px-4 py-16 sm:py-24">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-text-primary">Sign in to AccessShield India</h1>
+          <h1 className="text-3xl font-bold text-text-primary">Sign in to AccessibleNow</h1>
           <p className="mt-2 text-sm text-text-secondary">
             Don&apos;t have an account?{' '}
             <Link

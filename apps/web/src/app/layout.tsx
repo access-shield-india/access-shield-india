@@ -13,11 +13,17 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: 'AccessShield India — Digital Accessibility Compliance',
-    template: '%s | AccessShield India',
+    default: 'AccessibleNow — Digital Accessibility Compliance',
+    template: '%s | AccessibleNow',
   },
   description:
     'AI-powered digital accessibility platform for Indian organisations — make websites and apps usable by people with disabilities, with WCAG 2.2 AA, IS 17802, and SEBI compliance.',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '32x32' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -27,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'AccessShield India',
+    name: 'AccessibleNow',
     url: 'https://accessshield.in',
     description:
       'Digital accessibility platform for Indian organisations — websites and apps usable by people with disabilities, with WCAG 2.2 AA, IS 17802, and SEBI compliance.',

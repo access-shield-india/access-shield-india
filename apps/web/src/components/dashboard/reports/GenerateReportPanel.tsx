@@ -40,7 +40,7 @@ const REPORT_TYPES = [
     value: 'sebi' as const,
     label: 'SEBI Report',
     description: 'Format required by SEBI for financial service entities.',
-    enterprise: true,
+    requiresSebiScan: true,
   },
   {
     value: 'accessibility_statement' as const,
@@ -162,6 +162,8 @@ export function GenerateReportPanel() {
   });
 
   const scans = scansData?.rows ?? [];
+  const selectedScan = scans.find((scan) => scan.id === scanId);
+  const sebiAllowed = Boolean(selectedScan?.standards?.includes('SEBI'));
 
   useEffect(() => {
     if (!assetId) {
@@ -176,6 +178,12 @@ export function GenerateReportPanel() {
       setScanId('');
     }
   }, [assetId, scans]);
+
+  useEffect(() => {
+    if (reportType === 'sebi' && !sebiAllowed) {
+      setReportType('executive');
+    }
+  }, [reportType, sebiAllowed]);
 
   const generateMutation = useMutation({
     mutationFn: async (input: GenerateReportInput) => {
@@ -347,14 +355,21 @@ export function GenerateReportPanel() {
                         </span>
                       </legend>
                       <div className="space-y-2">
-                        {REPORT_TYPES.map((type) => (
+                        {REPORT_TYPES.map((type) => {
+                          const needsSebiScan = 'requiresSebiScan' in type && type.requiresSebiScan;
+                          const locked = Boolean(needsSebiScan) && !sebiAllowed;
+                          return (
                           <label
                             key={type.value}
-                            className={`flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-colors ${
+                            className={`flex items-start gap-3 rounded-lg border p-4 transition-colors ${
+                              locked
+                                ? 'cursor-not-allowed opacity-50'
+                                : 'cursor-pointer'
+                            } ${
                               reportType === type.value
                                 ? 'border-primary-600 bg-primary-50'
                                 : 'border-border hover:bg-gray-50'
-                            } ${type.enterprise ? 'opacity-50' : ''}`}
+                            }`}
                           >
                             <input
                               type="radio"
@@ -362,7 +377,7 @@ export function GenerateReportPanel() {
                               value={type.value}
                               checked={reportType === type.value}
                               onChange={(e) => setReportType(e.target.value as ReportType)}
-                              disabled={type.enterprise}
+                              disabled={locked}
                               aria-label={type.label}
                               className="mt-1 h-4 w-4 shrink-0 text-primary-600 focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
                               required
@@ -370,10 +385,16 @@ export function GenerateReportPanel() {
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <span className="font-medium text-text-primary">{type.label}</span>
-                                {type.enterprise && (
-                                  <Tooltip content="Available on Enterprise plan only">
+                                {needsSebiScan && (
+                                  <Tooltip
+                                    content={
+                                      sebiAllowed
+                                        ? 'This scan included the SEBI option'
+                                        : 'Available only when the selected scan was run with SEBI checked'
+                                    }
+                                  >
                                     <Badge variant="outline" className="text-xs">
-                                      Enterprise
+                                      SEBI scan
                                     </Badge>
                                   </Tooltip>
                                 )}
@@ -381,7 +402,8 @@ export function GenerateReportPanel() {
                               <p className="mt-1 text-sm text-text-secondary">{type.description}</p>
                             </div>
                           </label>
-                        ))}
+                          );
+                        })}
                       </div>
                     </fieldset>
 

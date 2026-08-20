@@ -1,7 +1,7 @@
 import type { CommonDict } from '../types';
 
 export const common: CommonDict = {
-  brand: 'AccessShield India',
+  brand: 'AccessibleNow',
   nav: {
     mainAria: 'Main navigation',
     home: 'Home',

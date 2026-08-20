@@ -33,9 +33,12 @@ class AIClient(Protocol):
     ) -> str: ...
 
 
+_CLOUD_MODEL_MARKERS = ("claude", "sonnet", "haiku", "opus", "anthropic", "gpt-", "gemini")
+
+
 def normalize_provider(provider: str | None) -> str:
     """Map aliases to canonical provider ids."""
-    value = (provider or settings.default_ai_provider or "anthropic").strip().lower()
+    value = (provider or settings.default_ai_provider or "local").strip().lower()
     if value in ("local", "local-mlx", "llama", "llamacpp"):
         return "local"
     if value in ("anthropic", "claude"):
@@ -43,13 +46,33 @@ def normalize_provider(provider: str | None) -> str:
     return value
 
 
+def _is_cloud_model_id(model: str) -> bool:
+    lower = model.lower()
+    return any(marker in lower for marker in _CLOUD_MODEL_MARKERS)
+
+
 def resolve_model(provider: str, model: str | None) -> str:
     """Pick a model id for the provider, with sensible defaults."""
-    if model and model.strip():
-        return model.strip()
+    stripped = (model or "").strip()
     if provider == "local":
+        if stripped and not _is_cloud_model_id(stripped):
+            return stripped
         return settings.local_model
+    if stripped:
+        return stripped
     return settings.claude_model
+
+
+def resolve_backend(provider: str | None, model: str | None) -> tuple[str, str]:
+    """Resolve provider+model, falling back to local when Anthropic is not configured."""
+    resolved_provider = normalize_provider(provider)
+    if resolved_provider == "anthropic" and not (settings.anthropic_api_key or "").strip():
+        logger.warning(
+            "ANTHROPIC_API_KEY unset; using local LLM instead (requested_model=%s)",
+            model,
+        )
+        resolved_provider = "local"
+    return resolved_provider, resolve_model(resolved_provider, model)
 
 
 def get_client(provider: str | None = None, model: str | None = None) -> AIClient:
@@ -62,16 +85,14 @@ def get_client(provider: str | None = None, model: str | None = None) -> AIClien
     Returns:
         Client implementing complete().
     """
-    resolved_provider = normalize_provider(provider)
-    resolved_model = resolve_model(resolved_provider, model)
+    resolved_provider, resolved_model = resolve_backend(provider, model)
 
     if resolved_provider == "local":
         if resolved_model not in _local_clients:
             _local_clients[resolved_model] = LocalClient(model_name=resolved_model)
         return _local_clients[resolved_model]
 
-    # anthropic (default)
-    if not settings.anthropic_api_key:
+    if not (settings.anthropic_api_key or "").strip():
         raise RuntimeError(
             "ANTHROPIC_API_KEY is not set — configure Anthropic or switch the org to local LLM"
         )

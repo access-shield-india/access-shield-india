@@ -8,7 +8,7 @@ import { prefetchIssues } from '@/lib/dashboard/prefetch';
 import type { IssueFilters as IssueFilterParams } from '@/lib/api/types';
 
 export const metadata = {
-  title: 'Issues | AccessShield India',
+  title: 'Issues | AccessibleNow',
   description: 'Track and manage accessibility violations across all your assets',
 };
 

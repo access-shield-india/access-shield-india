@@ -63,7 +63,7 @@ export default async function VerifyPage({ params }: { params: { token: string }
           <h1 className="text-3xl font-bold text-text-primary sm:text-4xl">
             Accessibility Certificate Verification
           </h1>
-          <p className="mt-4 text-base text-text-secondary">Issued by AccessShield India</p>
+          <p className="mt-4 text-base text-text-secondary">Issued by AccessibleNow</p>
         </div>
 
         <div className="mt-12">
@@ -224,7 +224,7 @@ export default async function VerifyPage({ params }: { params: { token: string }
             href="https://accessshield.in"
             className="font-medium text-primary-600 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
           >
-            AccessShield India
+            AccessibleNow
           </a>
         </p>
         <p className="mt-2">This certificate was independently verified on {today}</p>

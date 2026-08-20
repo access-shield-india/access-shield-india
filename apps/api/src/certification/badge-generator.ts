@@ -73,7 +73,7 @@ function generateRoundBadge(params: BadgeParams): string {
     ${year}
   </text>
   
-  <!-- AccessShield wordmark -->
+  <!-- AccessibleNow wordmark -->
   <text x="60" y="112" text-anchor="middle" font-family="Arial, sans-serif" font-size="5" fill="${COLORS.textLight}">
     accessshield.in
   </text>
@@ -110,7 +110,7 @@ function generateHorizontalBadge(params: BadgeParams): string {
   
   <!-- Subtitle -->
   <text x="70" y="44" font-family="Arial, sans-serif" font-size="10" fill="${COLORS.textLight}">
-    Certified by AccessShield India
+    Certified by AccessibleNow
   </text>
   
   <!-- Score badge on right -->

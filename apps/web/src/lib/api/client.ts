@@ -189,12 +189,13 @@ export async function listScans(
 export async function listViolations(
   token: string,
   scanId: string,
-  params?: { page?: number; limit?: number; severity?: string },
+  params?: { page?: number; limit?: number; severity?: string; standard?: string },
 ): Promise<{ rows: ViolationRow[]; meta: ApiResponse<ViolationRow[]>['meta'] }> {
   const search = new URLSearchParams();
   if (params?.page) search.set('page', String(params.page));
   if (params?.limit) search.set('limit', String(params.limit));
   if (params?.severity) search.set('severity', params.severity);
+  if (params?.standard && params.standard !== 'all') search.set('standard', params.standard);
 
   const query = search.toString();
   const path = `/api/v1/scans/${scanId}/violations${query ? `?${query}` : ''}`;
@@ -205,6 +206,20 @@ export async function listViolations(
 /** Request cancellation of a pending or running scan */
 export async function cancelScan(token: string, scanId: string): Promise<void> {
   await apiFetch<ApiResponse<{ message: string }>>(`/api/v1/scans/${scanId}/cancel`, token, {
+    method: 'POST',
+  });
+}
+
+/** Pause a pending or running scan (worker waits between pages) */
+export async function pauseScan(token: string, scanId: string): Promise<void> {
+  await apiFetch<ApiResponse<{ message: string }>>(`/api/v1/scans/${scanId}/pause`, token, {
+    method: 'POST',
+  });
+}
+
+/** Resume a paused scan */
+export async function resumeScan(token: string, scanId: string): Promise<void> {
+  await apiFetch<ApiResponse<{ message: string }>>(`/api/v1/scans/${scanId}/resume`, token, {
     method: 'POST',
   });
 }

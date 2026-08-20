@@ -5,7 +5,7 @@ import { MarketingContentPage } from '@/components/marketing/MarketingContentPag
 export const metadata: Metadata = {
   title: 'Accessibility Statement',
   description:
-    'AccessShield India commitment to WCAG 2.2 AA accessibility for our website and platform.',
+    'AccessibleNow commitment to WCAG 2.2 AA accessibility for our website and platform.',
 };
 
 export default function AccessibilityStatementPage() {
@@ -17,7 +17,7 @@ export default function AccessibilityStatementPage() {
       <section>
         <h2 className="text-xl font-semibold text-text-primary">Our commitment</h2>
         <p className="mt-2">
-          AccessShield India is committed to ensuring digital accessibility for people with
+          AccessibleNow is committed to ensuring digital accessibility for people with
           disabilities. We continually improve the user experience for everyone and apply relevant
           accessibility standards including WCAG 2.2 Level AA and IS 17802.
         </p>

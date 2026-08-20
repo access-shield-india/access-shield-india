@@ -42,6 +42,23 @@ export function ViolationTable({ violations, isLoading, total }: ViolationTableP
       },
     },
     {
+      id: 'standard',
+      header: 'Standard',
+      accessor: (violation) => {
+        const labels: Record<string, string> = {
+          WCAG22: 'WCAG 2.2',
+          IS17802: 'IS 17802',
+          GIGW3: 'GIGW 3.0',
+          SEBI: 'SEBI',
+        };
+        return (
+          <span className="text-sm text-text-secondary">
+            {labels[violation.standard ?? ''] ?? violation.standard ?? '—'}
+          </span>
+        );
+      },
+    },
+    {
       id: 'wcagCriteria',
       header: 'WCAG',
       accessor: (violation) =>

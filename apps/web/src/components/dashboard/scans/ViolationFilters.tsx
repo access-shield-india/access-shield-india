@@ -67,10 +67,10 @@ export function ViolationFilters({ filters, onFiltersChange }: ViolationFiltersP
             onValueChange={(standard) => onFiltersChange({ ...filters, standard })}
             options={[
               { value: ALL, label: 'All' },
-              { value: 'wcag22', label: 'WCAG 2.2' },
-              { value: 'is17802', label: 'IS 17802' },
-              { value: 'gigw3', label: 'GIGW 3.0' },
-              { value: 'sebi', label: 'SEBI' },
+              { value: 'WCAG22', label: 'WCAG 2.2' },
+              { value: 'IS17802', label: 'IS 17802' },
+              { value: 'GIGW3', label: 'GIGW 3.0' },
+              { value: 'SEBI', label: 'SEBI' },
             ]}
           />
         </div>

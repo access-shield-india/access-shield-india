@@ -8,6 +8,8 @@ export function generateStaticParams() {
   return [{ locale: 'en' }, { locale: 'hi' }];
 }
 
+export const dynamicParams = true;
+
 export default function LocaleLayout({
   children,
   params,

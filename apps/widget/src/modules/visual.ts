@@ -57,7 +57,12 @@ html button, html input, html select, html textarea {
 
 /** Apply saved visual prefs before widget render to prevent flash of unstyled content */
 export function applyEarlyVisualPreferences(prefs: Partial<WidgetPreferences>): void {
-  if (prefs.fontSize) {
+  if (prefs.textSize && prefs.textSize !== 1) {
+    injectStyle(
+      'font-size',
+      `html { font-size: ${Math.round(prefs.textSize * 100)}% !important; }`,
+    );
+  } else if (prefs.fontSize) {
     injectStyle('font-size', `html { font-size: ${FONT_SIZE_MAP[prefs.fontSize]} !important; }`);
   }
   if (prefs.dyslexiaFont) {
@@ -95,7 +100,7 @@ export class VisualModule {
 
   constructor(private readonly prefs: PreferencesManager) {}
 
-  render(parent: HTMLElement, lang: Language): void {
+  render(parent: HTMLElement, lang: Language): HTMLElement {
     this.lang = lang;
     this.container = document.createElement('section');
     this.container.className = 'as-section';
@@ -104,10 +109,11 @@ export class VisualModule {
     parent.appendChild(this.container);
     this.bindEvents();
     this.syncUI(this.prefs.get());
+    return this.container;
   }
 
   apply(prefs: WidgetPreferences): void {
-    this.applyFontSize(prefs.fontSize);
+    this.applyFontSize(prefs);
     this.applyDyslexiaFont(prefs.dyslexiaFont);
     this.applyDarkMode(prefs.darkMode);
     this.applyLightMode(prefs.lightMode);
@@ -128,14 +134,14 @@ export class VisualModule {
   updateLabels(lang: Language): void {
     this.lang = lang;
     if (!this.container) return;
-    this.container.querySelector('h2')!.textContent = t('sectionVisual', lang);
+    this.container.querySelector('h3')!.textContent = t('sectionVisual', lang);
     this.updateText(this.container, lang);
   }
 
   private buildHTML(): string {
     const l = this.lang;
     return `
-      <h2 id="as-section-visual" class="as-section-title">${t('sectionVisual', l)}</h2>
+      <h3 id="as-section-visual" class="as-section-title">${t('sectionVisual', l)}</h3>
       <div class="as-control-group">
         <span class="as-label" id="as-font-size-label">${t('fontSize', l)}</span>
         <div class="as-btn-group" role="group" aria-labelledby="as-font-size-label">
@@ -178,7 +184,8 @@ export class VisualModule {
     this.container.querySelectorAll('[data-font]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const size = (btn as HTMLElement).dataset.font as FontSize;
-        this.prefs.update({ fontSize: size });
+        const textSize = size === 'sm' ? 0.875 : size === 'lg' ? 1.25 : 1;
+        this.prefs.update({ fontSize: size, textSize });
       });
     });
 
@@ -212,9 +219,15 @@ export class VisualModule {
   syncUI(prefs: WidgetPreferences): void {
     if (!this.container) return;
 
+    const effectiveFont: FontSize =
+      prefs.textSize >= 1.25
+        ? 'lg'
+        : prefs.textSize > 0 && prefs.textSize < 1
+          ? 'sm'
+          : prefs.fontSize;
     this.container.querySelectorAll('[data-font]').forEach((btn) => {
       const size = (btn as HTMLElement).dataset.font;
-      const pressed = size === prefs.fontSize;
+      const pressed = size === effectiveFont;
       btn.setAttribute('aria-pressed', String(pressed));
       btn.classList.toggle('as-active', pressed);
     });
@@ -274,8 +287,12 @@ export class VisualModule {
     this.syncUI(this.prefs.get());
   }
 
-  private applyFontSize(size: FontSize): void {
-    injectStyle('font-size', `html { font-size: ${FONT_SIZE_MAP[size]} !important; }`);
+  private applyFontSize(prefs: WidgetPreferences): void {
+    const pct =
+      prefs.textSize && prefs.textSize !== 1
+        ? `${Math.round(prefs.textSize * 100)}%`
+        : FONT_SIZE_MAP[prefs.fontSize];
+    injectStyle('font-size', `html { font-size: ${pct} !important; }`);
   }
 
   private applyDyslexiaFont(enabled: boolean): void {

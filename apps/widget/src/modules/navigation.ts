@@ -13,7 +13,7 @@ export class NavigationModule {
 
   constructor(private readonly prefs: PreferencesManager) {}
 
-  render(parent: HTMLElement, lang: Language): void {
+  render(parent: HTMLElement, lang: Language): HTMLElement {
     this.lang = lang;
     this.container = document.createElement('section');
     this.container.className = 'as-section';
@@ -22,11 +22,12 @@ export class NavigationModule {
     parent.appendChild(this.container);
     this.bindEvents();
     this.syncUI(this.prefs.get());
+    return this.container;
   }
 
   apply(prefs: WidgetPreferences): void {
-    this.applyKeyboardNavMode(prefs.keyboardNavMode);
-    this.applySkipNavigation(prefs.skipNavigation);
+    this.applyKeyboardNavMode(prefs.keyboardNavMode || prefs.keyboardHighlights);
+    this.applySkipNavigation(prefs.skipNavigation || prefs.skipLinks);
     this.applyFocusTracker(prefs.focusTracker);
   }
 
@@ -39,14 +40,14 @@ export class NavigationModule {
   updateLabels(lang: Language): void {
     this.lang = lang;
     if (!this.container) return;
-    this.container.querySelector('h2')!.textContent = t('sectionNavigation', lang);
+    this.container.querySelector('h3')!.textContent = t('sectionNavigation', lang);
     this.updateText(this.container, lang);
   }
 
   private buildHTML(): string {
     const l = this.lang;
     return `
-      <h2 id="as-section-navigation" class="as-section-title">${t('sectionNavigation', l)}</h2>
+      <h3 id="as-section-navigation" class="as-section-title">${t('sectionNavigation', l)}</h3>
       ${this.switchRow('keyboardNavMode', 'keyboardNavMode')}
       <div class="as-control-row">
         <button type="button" class="as-btn as-btn-action" id="as-skip-nav-btn">${t('skipNavigation', l)}</button>

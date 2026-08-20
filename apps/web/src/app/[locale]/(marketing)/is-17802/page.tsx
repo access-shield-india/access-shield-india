@@ -61,7 +61,7 @@ const complySteps = [
   {
     title: 'Run an IS 17802 + WCAG 2.2 baseline scan',
     description:
-      'Use automated scanning to identify violations across perceivable, operable, understandable, and robust criteria. AccessShield maps findings to both IS 17802 custom rules and WCAG 2.2 success criteria.',
+      'Use automated scanning to identify violations across perceivable, operable, understandable, and robust criteria. AccessibleNow maps findings to both IS 17802 custom rules and WCAG 2.2 success criteria.',
   },
   {
     title: 'Validate India-specific rules manually',
@@ -201,7 +201,7 @@ export default function IS17802Page() {
           </h2>
           <div className="mt-6 space-y-4 text-base leading-normal text-text-secondary">
             <p>
-              Beyond standard WCAG criteria, IS 17802 and AccessShield&apos;s custom IS rules
+              Beyond standard WCAG criteria, IS 17802 and AccessibleNow&apos;s custom IS rules
               enforce these India-specific provisions:
             </p>
             <ul className="list-disc space-y-2 pl-6">
@@ -252,7 +252,7 @@ export default function IS17802Page() {
             </p>
             <p>
               If you conform to WCAG 2.2 Level AA and implement India-specific IS rules, you exceed
-              IS 17802 requirements. AccessShield scans against all three layers in a single pass.
+              IS 17802 requirements. AccessibleNow scans against all three layers in a single pass.
             </p>
             <p>
               Read our{' '}

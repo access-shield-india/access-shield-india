@@ -1,14 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import { Progress } from '@accessshield/ui';
+import { AlertCircle, CheckCircle, Loader2, Pause } from 'lucide-react';
+import { Badge, Progress } from '@accessshield/ui';
 import { ViolationFilters } from '@/components/dashboard/scans/ViolationFilters';
 import { ViolationTable } from '@/components/dashboard/scans/ViolationTable';
+import { ScanLiveControls } from '@/components/dashboard/scans/ScanLiveControls';
 import { MobileScanSummary } from '@/components/dashboard/mobile/MobileScanSummary';
 import { LoadingState } from '@/components/dashboard/common/LoadingState';
 import { useScan, useViolations } from '@/lib/hooks/useApi';
 import { formatIndianDate } from '@/lib/utils';
+import type { ComplianceStandard } from '@/lib/api/types';
 
 const SEVERITY_CONFIG = {
   critical: { label: 'Critical', color: 'bg-error-100 text-error-700 border-error-200' },
@@ -17,7 +19,9 @@ const SEVERITY_CONFIG = {
   minor: { label: 'Minor', color: 'bg-gray-100 text-gray-700 border-gray-200' },
 };
 
-function statusLabel(status: string): string {
+function statusLabel(status: string, cancelled = false, paused = false): string {
+  if (cancelled) return 'Cancelled';
+  if (paused) return 'Paused';
   switch (status) {
     case 'pending':
       return 'Queued';
@@ -32,6 +36,13 @@ function statusLabel(status: string): string {
   }
 }
 
+const STANDARD_LABELS: Record<ComplianceStandard, string> = {
+  WCAG22: 'WCAG 2.2',
+  IS17802: 'IS 17802',
+  GIGW3: 'GIGW 3.0',
+  SEBI: 'SEBI',
+};
+
 export default function ScanDetailPage({ params }: { params: { id: string } }) {
   const { id: scanId } = params;
   const [filters, setFilters] = useState({
@@ -44,7 +55,10 @@ export default function ScanDetailPage({ params }: { params: { id: string } }) {
   const { data: scan, isLoading: scanLoading } = useScan(scanId);
   const { data: violationsData, isLoading: violationsLoading } = useViolations(
     scanId,
-    { severity: filters.severity !== 'all' ? filters.severity : undefined },
+    {
+      severity: filters.severity !== 'all' ? filters.severity : undefined,
+      standard: filters.standard !== 'all' ? filters.standard : undefined,
+    },
     scan?.status,
   );
 
@@ -63,7 +77,9 @@ export default function ScanDetailPage({ params }: { params: { id: string } }) {
     );
   }
 
-  const isActive = scan.status === 'running' || scan.status === 'pending';
+  const isCancelled = scan.status === 'failed' && scan.errorMessage === 'Cancelled by user';
+  const isActive = !isCancelled && (scan.status === 'running' || scan.status === 'pending');
+  const isPaused = Boolean(isActive && scan.progress?.paused);
   const isMobileScan =
     scan.assetType === 'mobile_app' ||
     scan.assetUrl?.startsWith('mobile://') ||
@@ -72,17 +88,12 @@ export default function ScanDetailPage({ params }: { params: { id: string } }) {
   const workerHint = isMobileScan
     ? 'Make sure the mobile scanner worker is running: pnpm --filter @accessshield/mobile-scanner worker'
     : 'Make sure the API scan worker is running: pnpm --filter @accessshield/api dev:worker';
-  const severityCounts = (violationsData?.rows ?? []).reduce(
-    (acc, row) => {
-      acc[row.impact] = (acc[row.impact] ?? 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
+  // Cards must use full-scan totals, not the paginated table page (default 50).
+  const severityCounts = scan.severityCounts ?? { critical: 0, serious: 0, moderate: 0, minor: 0 };
   const subtitle =
     scan.status === 'completed' && scan.completedAt
       ? `Completed on ${formatIndianDate(scan.completedAt)}`
-      : `Status: ${statusLabel(scan.status)}`;
+      : `Status: ${statusLabel(scan.status, isCancelled, isPaused)}`;
 
   return (
     <div className="space-y-6">
@@ -92,6 +103,23 @@ export default function ScanDetailPage({ params }: { params: { id: string } }) {
           {subtitle} · Score: {scan.score ?? '—'}/100
           {scan.violationCount > 0 ? ` · ${scan.violationCount} violations` : ''}
         </p>
+        {scan.standards && scan.standards.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2" aria-label="Standards in this scan">
+            {scan.standards.map((standard) => {
+              const count = scan.standardCounts?.[standard];
+              return (
+                <Badge
+                  key={standard}
+                  variant="secondary"
+                  className="border border-primary-200 bg-primary-50 text-primary-700 font-semibold"
+                >
+                  {STANDARD_LABELS[standard] ?? standard}
+                  {typeof count === 'number' ? ` · ${count}` : ''}
+                </Badge>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Mobile Scan Summary - shown only for mobile scans */}
@@ -102,14 +130,43 @@ export default function ScanDetailPage({ params }: { params: { id: string } }) {
           className="rounded-lg border border-primary-200 bg-primary-50 p-4"
           role="status"
           aria-live="polite"
-          aria-busy="true"
+          aria-busy={!isPaused}
         >
           <div className="flex items-center gap-2 mb-2">
-            <Loader2 className="h-4 w-4 animate-spin text-primary-600" aria-hidden="true" />
+            {isPaused ? (
+              <Pause className="h-4 w-4 text-primary-600" aria-hidden="true" />
+            ) : (
+              <Loader2 className="h-4 w-4 animate-spin text-primary-600" aria-hidden="true" />
+            )}
             <p className="text-sm font-medium text-primary-700">
-              {scan.status === 'pending' ? 'Scan queued — waiting for worker' : 'Scan in progress'}
+              {isPaused
+                ? 'Scan paused'
+                : scan.status === 'pending'
+                  ? 'Scan queued — waiting for worker'
+                  : scan.progress?.phase
+                    ? scan.progress.phase
+                    : 'Scan in progress'}
             </p>
           </div>
+
+          {scan.standards && scan.standards.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-2" aria-label="Standards in this scan">
+              {scan.standards.map((standard) => (
+                <Badge
+                  key={standard}
+                  variant="secondary"
+                  className={
+                    scan.progress?.currentStandard === standard
+                      ? 'border border-primary-600 bg-white text-primary-700 font-semibold'
+                      : 'border border-primary-200 bg-white text-primary-700'
+                  }
+                >
+                  {STANDARD_LABELS[standard] ?? standard}
+                  {scan.progress?.currentStandard === standard ? ' — running' : ''}
+                </Badge>
+              ))}
+            </div>
+          )}
 
           {scan.progress ? (
             <>
@@ -135,6 +192,8 @@ export default function ScanDetailPage({ params }: { params: { id: string } }) {
               {scan.status === 'pending' ? workerHint : 'Starting scan…'}
             </p>
           )}
+
+          <ScanLiveControls scanId={scan.id} paused={isPaused} />
         </div>
       )}
 
@@ -176,7 +235,17 @@ export default function ScanDetailPage({ params }: { params: { id: string } }) {
         </>
       )}
 
-      {scan.status === 'failed' && (
+      {isCancelled && (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4" role="status">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-text-secondary" aria-hidden="true" />
+            <h3 className="font-medium text-text-primary">Scan cancelled</h3>
+          </div>
+          <p className="mt-2 text-sm text-text-secondary">You stopped this scan before it finished.</p>
+        </div>
+      )}
+
+      {scan.status === 'failed' && !isCancelled && (
         <div className="rounded-lg border border-error-200 bg-error-50 p-4" role="alert">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-error-700" aria-hidden="true" />

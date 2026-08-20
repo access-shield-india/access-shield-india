@@ -390,7 +390,7 @@ export default function RPwDActPage() {
                   Conduct a comprehensive accessibility assessment of your website, mobile apps, and
                   digital documents. Use automated tools like axe-core for quick scans, but also
                   include manual testing with screen readers and keyboard-only navigation.
-                  AccessShield provides AI-powered audits that combine automated detection with
+                  AccessibleNow provides AI-powered audits that combine automated detection with
                   contextual analysis.
                 </p>
               </div>

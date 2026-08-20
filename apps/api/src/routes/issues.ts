@@ -444,7 +444,7 @@ export function createIssuesRouter(db: Database): ExpressRouter {
           return;
         }
 
-        const { publishRealtime } = await import('../lib/realtime/publish');
+        const { publishRealtime } = await import('../lib/realtime/publish.js');
         await publishRealtime(`issues:${orgId}`, 'UPDATE', 'issues', {
           ...updated,
         });
@@ -493,6 +493,10 @@ export function createIssuesRouter(db: Database): ExpressRouter {
         }
         if (err instanceof Error && err.message.includes('not configured')) {
           sendProblem(res, 503, 'service-unavailable', 'AI service is temporarily unavailable');
+          return;
+        }
+        if (err instanceof Error) {
+          sendProblem(res, 502, 'ai-unavailable', 'AI fix generation failed', err.message);
           return;
         }
         next(err);

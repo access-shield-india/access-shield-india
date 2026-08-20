@@ -221,7 +221,7 @@ export async function issueCertificate(
   const badgeCloudFrontUrl = buildObjectPublicUrl(S3_BUCKET, horizontalBadgeKey);
   const verifyUrl = `${APP_URL}/verify/${verifyToken}`;
   const embedCode = `<a href="${verifyUrl}" target="_blank" rel="noopener" aria-label="View accessibility certification details">
-  <img src="${badgeCloudFrontUrl}" alt="${CERTIFICATION_LABELS[level]} Certified by AccessShield India" width="300" height="60" />
+  <img src="${badgeCloudFrontUrl}" alt="${CERTIFICATION_LABELS[level]} Certified by AccessibleNow" width="300" height="60" />
 </a>`;
 
   // 12. Log to audit logs

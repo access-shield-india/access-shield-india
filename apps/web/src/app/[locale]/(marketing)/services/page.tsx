@@ -35,7 +35,7 @@ export async function generateMetadata({
     title: pages.services.meta.title,
     description: pages.services.meta.description,
     openGraph: {
-      title: `${pages.services.meta.title} | AccessShield India`,
+      title: `${pages.services.meta.title} | AccessibleNow`,
       description: pages.services.meta.description,
       type: 'website',
     },

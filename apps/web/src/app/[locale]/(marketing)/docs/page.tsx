@@ -6,14 +6,14 @@ import { DocsIllustration } from '@/components/marketing/visuals';
 export const metadata: Metadata = {
   title: 'Documentation',
   description:
-    'Getting started with AccessShield India — scans, remediation, reports, and certification.',
+    'Getting started with AccessibleNow — scans, remediation, reports, and certification.',
 };
 
 export default function DocsPage() {
   return (
     <MarketingContentPage
       title="Documentation"
-      description="Quick start guide for AccessShield India customers."
+      description="Quick start guide for AccessibleNow customers."
       visual={<DocsIllustration />}
       visualLabel="Documentation and getting started guides"
     >

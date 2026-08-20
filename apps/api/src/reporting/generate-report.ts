@@ -5,6 +5,7 @@
 import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import { assets, organisations, reports, type Database } from '@accessshield/db';
+import type { Redis } from 'ioredis';
 import { logger } from '../lib/logger';
 import { fetchReportData } from './data-fetcher';
 import { generatePdfWithTitle } from './pdf-generator';
@@ -16,6 +17,8 @@ import { renderSebiTemplate } from './templates/sebi';
 import { renderTechnicalTemplate } from './templates/technical';
 import { renderWcagComplianceTemplate } from './templates/wcag-compliance';
 import type { ReportFormat, ReportType } from './types';
+import { resolveWidgetUsageForReport } from './widget-usage';
+import { consumeIncludeInNextReport } from '../lib/widget-analytics';
 
 const REPORT_TITLES: Record<ReportType, string> = {
   executive: 'Executive Summary Report',
@@ -54,6 +57,7 @@ export interface GenerateAndStoreReportInput {
   /** App users.id if known */
   generatedBy?: string | null;
   language?: 'en' | 'hi';
+  widgetAnalytics?: boolean;
 }
 
 export interface GenerateAndStoreReportResult {
@@ -72,6 +76,7 @@ export interface GenerateAndStoreReportResult {
 export async function generateAndStoreReport(
   db: Database,
   input: GenerateAndStoreReportInput,
+  redis?: Redis,
 ): Promise<GenerateAndStoreReportResult> {
   const {
     orgId,
@@ -81,6 +86,7 @@ export async function generateAndStoreReport(
     format = 'pdf',
     generatedBy,
     language = 'en',
+    widgetAnalytics,
   } = input;
 
   const [asset] = await db
@@ -107,6 +113,15 @@ export async function generateAndStoreReport(
     reportType,
     generatedBy ?? 'system',
   );
+
+  if (redis && (reportType === 'executive' || reportType === 'sebi')) {
+    reportData.widgetUsage = await resolveWidgetUsageForReport(
+      db,
+      redis,
+      orgId,
+      widgetAnalytics,
+    );
+  }
 
   let html: string;
   if (reportType === 'accessibility_statement') {
@@ -176,6 +191,10 @@ export async function generateAndStoreReport(
     { reportId: newReport.id, orgId, scanId, format: effectiveFormat, fileSizeBytes },
     'Report generated and stored',
   );
+
+  if (redis && reportData.widgetUsage) {
+    await consumeIncludeInNextReport(redis, orgId);
+  }
 
   return {
     reportId: newReport.id,
