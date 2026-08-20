@@ -111,7 +111,7 @@ const TECHNICAL_TEMPLATE = `
 
 <!-- PAGE 1: Cover -->
 <div class="cover-page">
-  <div style="color: #1A56A0; font-size: 14pt; font-weight: 600; margin-bottom: 16pt;">
+  <div style="color: #6D28D9; font-size: 14pt; font-weight: 600; margin-bottom: 16pt;">
     AccessibleNow
   </div>
   <h1 class="cover-title">Accessibility Compliance Report</h1>

@@ -28,9 +28,9 @@ const SEVERITY_CONFIG = {
   moderate: {
     label: 'Moderate',
     icon: Info,
-    bg: 'bg-blue-100',
-    text: 'text-blue-800',
-    border: 'border-blue-200',
+    bg: 'bg-primary-100',
+    text: 'text-primary-800',
+    border: 'border-primary-300',
   },
   minor: {
     label: 'Minor',

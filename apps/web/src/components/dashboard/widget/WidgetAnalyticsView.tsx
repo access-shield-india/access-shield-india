@@ -289,7 +289,7 @@ export function WidgetAnalyticsView() {
                     type="monotone"
                     dataKey="opens"
                     name="Panel opens"
-                    stroke="#1A56A0"
+                    stroke="#6D28D9"
                     strokeWidth={2}
                     isAnimationActive={!prefersReducedMotion}
                   />
@@ -334,7 +334,7 @@ export function WidgetAnalyticsView() {
                     <Bar
                       dataKey="count"
                       name="Activations"
-                      fill="#1A56A0"
+                      fill="#6D28D9"
                       isAnimationActive={!prefersReducedMotion}
                     />
                   </BarChart>
@@ -377,7 +377,7 @@ export function WidgetAnalyticsView() {
                     <Bar
                       dataKey="count"
                       name="Turns on"
-                      fill="#2E75B6"
+                      fill="#8B5CF6"
                       isAnimationActive={!prefersReducedMotion}
                     />
                   </BarChart>

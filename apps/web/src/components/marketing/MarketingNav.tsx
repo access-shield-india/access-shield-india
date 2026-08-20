@@ -2,6 +2,7 @@
 
 import { LocaleLink } from '@/components/common/LocaleLink';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 import { ButtonLink } from '@/components/marketing/ButtonLink';
 import { MobileMenuToggle } from './MobileMenuToggle';
 import { useDictionary } from '@/lib/i18n/locale-context';
@@ -13,16 +14,21 @@ export function MarketingNav() {
   const { common } = useDictionary();
 
   return (
-    <header className="border-b border-gray-200 bg-white">
+    <header className="border-b border-primary-100 bg-white">
+      <div
+        className="h-1 w-full bg-gradient-to-r from-primary-800 via-primary-600 to-primary-400"
+        aria-hidden="true"
+      />
       <nav
-        className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8"
+        className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8"
         aria-label={common.nav.mainAria}
       >
         <LocaleLink
           href="/"
-          className="text-xl font-bold text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded-sm"
+          className="shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+          aria-label={common.brand}
         >
-          {common.brand}
+          <BrandLogo variant="full" height={56} priority decorative />
         </LocaleLink>
 
         <div className="hidden items-center gap-8 md:flex">

@@ -15,7 +15,7 @@ import type { ComplianceStandard } from '@/lib/api/types';
 const SEVERITY_CONFIG = {
   critical: { label: 'Critical', color: 'bg-error-100 text-error-700 border-error-200' },
   serious: { label: 'Serious', color: 'bg-warning-100 text-warning-700 border-warning-200' },
-  moderate: { label: 'Moderate', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  moderate: { label: 'Moderate', color: 'bg-primary-100 text-primary-700 border-primary-300' },
   minor: { label: 'Minor', color: 'bg-gray-100 text-gray-700 border-gray-200' },
 };
 

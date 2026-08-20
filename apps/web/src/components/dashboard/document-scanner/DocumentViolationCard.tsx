@@ -65,7 +65,7 @@ export function DocumentViolationCard({
           <div className="mt-1.5 flex flex-wrap gap-2">
             <span className="text-xs text-gray-500">{violation.location}</span>
             {violation.checkpoint_id && (
-              <span className="rounded bg-blue-50 px-1.5 py-0.5 font-mono text-xs text-blue-700">
+              <span className="rounded bg-primary-50 px-1.5 py-0.5 font-mono text-xs text-primary-700">
                 {violation.checkpoint_id}
               </span>
             )}

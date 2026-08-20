@@ -91,8 +91,8 @@ export default function DocumentScanResultsPage() {
   if (!isCompleted && !isFailed) {
     return (
       <div className="mx-auto max-w-xl px-4 py-16 text-center">
-        <div className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-blue-50">
-          <Loader2 className="h-10 w-10 animate-spin text-blue-700" aria-hidden="true" />
+        <div className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-primary-50">
+          <Loader2 className="h-10 w-10 animate-spin text-primary-700" aria-hidden="true" />
         </div>
 
         <h1 className="mb-2 text-xl font-semibold text-gray-900">
@@ -107,7 +107,7 @@ export default function DocumentScanResultsPage() {
         <div className="mx-auto w-64">
           <div className="h-2 overflow-hidden rounded-full bg-gray-200">
             <div
-              className="h-full rounded-full bg-blue-700 transition-all duration-500"
+              className="h-full rounded-full bg-primary-700 transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -121,13 +121,13 @@ export default function DocumentScanResultsPage() {
               key={step.label}
               className={cn(
                 'flex items-center justify-center gap-2',
-                progress >= step.pct && 'text-blue-600',
+                progress >= step.pct && 'text-primary-600',
               )}
             >
               <div
                 className={cn(
                   'h-1.5 w-1.5 rounded-full',
-                  progress >= step.pct ? 'bg-blue-600' : 'bg-gray-300',
+                  progress >= step.pct ? 'bg-primary-600' : 'bg-gray-300',
                 )}
               />
               {step.label}
@@ -151,7 +151,7 @@ export default function DocumentScanResultsPage() {
         </p>
         <Link
           href="/dashboard/document-scanner"
-          className="mt-4 inline-block text-sm text-blue-600 hover:underline"
+          className="mt-4 inline-block text-sm text-primary-600 hover:underline"
         >
           ← Try scanning another document
         </Link>
@@ -199,7 +199,7 @@ export default function DocumentScanResultsPage() {
         <div>
           <Link
             href="/dashboard/document-scanner"
-            className="mb-2 inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
+            className="mb-2 inline-flex items-center gap-1 text-sm text-primary-600 hover:underline"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             New scan
@@ -272,8 +272,8 @@ export default function DocumentScanResultsPage() {
 
       {/* AI Summary */}
       {results.ai_summary && (
-        <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
+        <div className="rounded-xl border border-primary-200 bg-primary-50 p-5">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-primary-700">
             AI Summary
           </p>
           <p className="whitespace-pre-line text-sm text-gray-800">{results.ai_summary}</p>
@@ -329,8 +329,8 @@ export default function DocumentScanResultsPage() {
               className={cn(
                 'rounded-full border px-3 py-1 text-xs transition-colors',
                 !categoryFilter
-                  ? 'border-blue-700 bg-blue-700 text-white'
-                  : 'border-gray-300 text-gray-600 hover:border-blue-400',
+                  ? 'border-primary-700 bg-primary-700 text-white'
+                  : 'border-gray-300 text-gray-600 hover:border-primary-400',
               )}
             >
               All
@@ -343,8 +343,8 @@ export default function DocumentScanResultsPage() {
                 className={cn(
                   'rounded-full border px-3 py-1 text-xs transition-colors',
                   categoryFilter === cat
-                    ? 'border-blue-700 bg-blue-700 text-white'
-                    : 'border-gray-300 text-gray-600 hover:border-blue-400',
+                    ? 'border-primary-700 bg-primary-700 text-white'
+                    : 'border-gray-300 text-gray-600 hover:border-primary-400',
                 )}
               >
                 {CATEGORY_LABELS[cat] ?? cat} (

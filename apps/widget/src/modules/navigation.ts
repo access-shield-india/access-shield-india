@@ -130,13 +130,13 @@ export class NavigationModule {
         'keyboard-nav',
         `
         *:focus, *:focus-visible {
-          outline: 3px solid #1A56A0 !important;
+          outline: 3px solid #6D28D9 !important;
           outline-offset: 2px !important;
         }
         [accesskey]::after {
           content: ' [' attr(accesskey) ']';
           font-size: 0.75rem;
-          color: #1A56A0;
+          color: #6D28D9;
           font-weight: bold;
         }`,
       );
@@ -192,7 +192,7 @@ export class NavigationModule {
           overflow: 'visible',
           zIndex: '100000',
           padding: '12px 16px',
-          background: '#1A56A0',
+          background: '#6D28D9',
           color: '#fff',
           borderRadius: '6px',
           fontWeight: '600',

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 import { BadgeSvgDisplay } from '@/components/marketing/verify/BadgeSvgDisplay';
 
 export const metadata: Metadata = {
@@ -217,7 +218,16 @@ export default async function VerifyPage({ params }: { params: { token: string }
         </div>
       </div>
 
-      <footer className="mt-12 border-t border-gray-200 pt-8 text-center text-sm text-text-tertiary">
+      <footer className="mt-12 border-t border-primary-100 pt-8 text-center text-sm text-text-tertiary">
+        <p className="mb-3 flex justify-center">
+          <a
+            href="https://accessshield.in"
+            className="inline-block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+            aria-label="AccessibleNow"
+          >
+            <BrandLogo variant="mark" height={48} decorative />
+          </a>
+        </p>
         <p>
           Powered by{' '}
           <a

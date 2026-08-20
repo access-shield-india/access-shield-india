@@ -32,7 +32,15 @@ export function HeroSection() {
   const calendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_URL;
 
   return (
-    <section className="relative overflow-hidden border-b border-gray-200 bg-gradient-to-b from-primary-100 via-white to-white px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
+    <section className="relative overflow-hidden border-b border-primary-100 bg-gradient-to-b from-primary-100 via-primary-50 to-white px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
+      <div
+        className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-primary-200/50 blur-3xl"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute -right-16 bottom-0 h-80 w-80 rounded-full bg-primary-300/40 blur-3xl"
+        aria-hidden="true"
+      />
       <div className="relative mx-auto max-w-7xl">
         <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-16">
           <div className="text-center lg:text-left">

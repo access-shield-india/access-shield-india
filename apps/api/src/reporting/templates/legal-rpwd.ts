@@ -43,14 +43,14 @@ const LEGAL_CSS = `
 
   .section-number {
     font-weight: 700;
-    color: #1A56A0;
+    color: #6D28D9;
     margin-right: 8pt;
   }
 
   .statutory-block {
     background-color: #F9FAFB;
     border: 1px solid #D1D5DB;
-    border-left: 4px solid #1A56A0;
+    border-left: 4px solid #6D28D9;
     padding: 16pt;
     margin: 16pt 0;
     font-style: italic;

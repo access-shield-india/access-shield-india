@@ -11,7 +11,7 @@ import type { PdfGenerationOptions } from './types';
 function defaultHeaderTemplate(): string {
   return `
     <div style="width: 100%; font-size: 9px; padding: 0 18mm; display: flex; justify-content: space-between; align-items: center;">
-      <div style="color: #1A56A0; font-weight: 500;">AccessibleNow</div>
+      <div style="color: #6D28D9; font-weight: 500;">AccessibleNow</div>
       <div style="color: #6B7280;">Accessibility Compliance Report</div>
     </div>
   `;
@@ -98,7 +98,7 @@ export async function generatePdf(html: string, options?: PdfGenerationOptions):
 export async function generatePdfWithTitle(html: string, reportTitle: string): Promise<Buffer> {
   const headerHtml = `
     <div style="width: 100%; font-size: 9px; padding: 0 18mm; display: flex; justify-content: space-between; align-items: center;">
-      <div style="color: #1A56A0; font-weight: 500;">AccessibleNow</div>
+      <div style="color: #6D28D9; font-weight: 500;">AccessibleNow</div>
       <div style="color: #374151;">${reportTitle}</div>
     </div>
   `;

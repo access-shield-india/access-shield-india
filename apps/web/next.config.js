@@ -69,7 +69,7 @@ const nextConfig = {
         { source: '/hi/signup', destination: '/signup' },
         {
           source:
-            '/:path((?!hi$|hi/|en$|en/|dashboard|api|auth|login|onboarding|verify|widget\\.js|favicon\\.ico|_next/|marketing/).*)',
+            '/:path((?!hi$|hi/|en$|en/|dashboard|api|auth|login|onboarding|verify|widget\\.js|favicon\\.ico|favicon|apple-touch-icon|logo|brand/|_next/|marketing/).*)',
           destination: '/en/:path',
         },
       ],

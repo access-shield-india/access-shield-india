@@ -287,7 +287,7 @@ export class SpeechModule {
           cursor: help !important;
         }
         .as-tts-reading {
-          outline: 3px solid #1A56A0 !important;
+          outline: 3px solid #6D28D9 !important;
           outline-offset: 4px !important;
           background-color: rgba(235, 243, 251, 0.85) !important;
         }`,

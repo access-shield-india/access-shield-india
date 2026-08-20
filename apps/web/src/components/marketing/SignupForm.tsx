@@ -198,7 +198,7 @@ export function SignupForm() {
 
         <p className="mt-4 text-center text-sm text-text-secondary">
           Already have an account?{' '}
-          <a href="/login" className="font-medium text-[#1A56A0] hover:text-[#1A3A5C]">
+          <a href="/login" className="font-medium text-[#6D28D9] hover:text-[#5B21B6]">
             Sign in
           </a>
         </p>

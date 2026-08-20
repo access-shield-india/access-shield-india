@@ -18,7 +18,7 @@ const DOC_TYPE_ICONS: Record<DocumentType, typeof FileText> = {
 
 const STATUS_STYLES: Record<DocumentScanStatus, { bg: string; text: string; label: string }> = {
   queued: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Queued' },
-  processing: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Processing' },
+  processing: { bg: 'bg-primary-100', text: 'text-primary-800', label: 'Processing' },
   completed: { bg: 'bg-green-100', text: 'text-green-800', label: 'Completed' },
   failed: { bg: 'bg-red-100', text: 'text-red-800', label: 'Failed' },
 };
@@ -67,7 +67,7 @@ export default function DocumentScanHistoryPage() {
         </div>
         <Link
           href="/dashboard/document-scanner"
-          className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-800"
+          className="inline-flex items-center gap-2 rounded-xl bg-primary-700 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-800"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
           New Scan
@@ -87,7 +87,7 @@ export default function DocumentScanHistoryPage() {
               setTypeFilter(e.target.value as DocumentType | 'all');
               setPage(1);
             }}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
           >
             {DOC_TYPE_FILTERS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -108,7 +108,7 @@ export default function DocumentScanHistoryPage() {
               setStatusFilter(e.target.value as DocumentScanStatus | 'all');
               setPage(1);
             }}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
           >
             {STATUS_FILTERS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -135,7 +135,7 @@ export default function DocumentScanHistoryPage() {
           <File className="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
           <p className="mt-4 text-gray-500">
             No document scans yet.{' '}
-            <Link href="/dashboard/document-scanner" className="text-blue-600 hover:underline">
+            <Link href="/dashboard/document-scanner" className="text-primary-600 hover:underline">
               Scan your first document
             </Link>
           </p>
@@ -210,7 +210,7 @@ export default function DocumentScanHistoryPage() {
                         {scan.status === 'completed' ? (
                           <Link
                             href={`/dashboard/document-scanner/results/${scan.id}`}
-                            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                            className="inline-flex items-center gap-1 text-xs text-primary-600 hover:underline"
                           >
                             <Eye className="h-3.5 w-3.5" aria-hidden="true" />
                             View

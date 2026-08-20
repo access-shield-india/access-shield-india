@@ -15,7 +15,7 @@ const SEBI_CSS = `
   ${REPORT_BASE_CSS}
 
   .sebi-header {
-    background: linear-gradient(135deg, #0D2E5A 0%, #1A56A0 100%);
+    background: linear-gradient(135deg, #3B0764 0%, #6D28D9 100%);
     color: #FFFFFF;
     padding: 24pt;
     margin: -20pt -20pt 24pt -20pt;
@@ -33,9 +33,9 @@ const SEBI_CSS = `
   }
 
   .regulatory-context {
-    background-color: #F4F8FD;
-    border: 1px solid #EBF3FB;
-    border-left: 4px solid #1A56A0;
+    background-color: #FAF5FF;
+    border: 1px solid #F3E8FF;
+    border-left: 4px solid #6D28D9;
     padding: 16pt;
     margin: 16pt 0;
   }
@@ -98,7 +98,7 @@ const SEBI_CSS = `
 
   .declaration-block {
     background-color: #FFFFFF;
-    border: 2px solid #1A56A0;
+    border: 2px solid #6D28D9;
     padding: 20pt;
     margin: 24pt 0;
   }
@@ -106,7 +106,7 @@ const SEBI_CSS = `
   .declaration-title {
     font-size: 14pt;
     font-weight: 700;
-    color: #1A56A0;
+    color: #6D28D9;
     margin-bottom: 12pt;
     text-align: center;
   }
@@ -225,9 +225,9 @@ const SEBI_TEMPLATE = `
 
 <div style="margin-top: 32pt;">
   <div class="kpi-grid">
-    <div class="kpi-box" style="background-color: #F4F8FD; border: 1px solid #1A56A0;">
-      <div class="kpi-number" style="color: #1A56A0;">{{scan.score}}</div>
-      <div class="kpi-label" style="color: #1A56A0;">Accessibility Score</div>
+    <div class="kpi-box" style="background-color: #FAF5FF; border: 1px solid #6D28D9;">
+      <div class="kpi-number" style="color: #6D28D9;">{{scan.score}}</div>
+      <div class="kpi-label" style="color: #6D28D9;">Accessibility Score</div>
     </div>
     <div class="kpi-box kpi-box-critical">
       <div class="kpi-number">{{scan.criticalCount}}</div>

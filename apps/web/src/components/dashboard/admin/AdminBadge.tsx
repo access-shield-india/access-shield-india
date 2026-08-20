@@ -12,14 +12,14 @@ const toneStyles: Record<AdminBadgeTone, string> = {
   success: 'bg-emerald-50 text-emerald-800 ring-emerald-600/20',
   error: 'bg-red-50 text-red-800 ring-red-600/20',
   neutral: 'bg-gray-100 text-gray-700 ring-gray-500/20',
-  info: 'bg-blue-50 text-blue-800 ring-blue-600/20',
+  info: 'bg-primary-50 text-primary-800 ring-primary-600/20',
 };
 
 const dotStyles: Record<AdminBadgeTone, string> = {
   success: 'bg-emerald-600',
   error: 'bg-red-600',
   neutral: 'bg-gray-500',
-  info: 'bg-blue-600',
+  info: 'bg-primary-600',
 };
 
 export function AdminBadge({ label, tone = 'neutral', dot = true }: AdminBadgeProps) {

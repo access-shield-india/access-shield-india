@@ -8,7 +8,7 @@ export interface ScoreRingProps {
 
 function getScoreColor(score: number): string {
   if (score >= 80) return '#1A6B3C';
-  if (score >= 60) return '#1A56A0';
+  if (score >= 60) return '#6D28D9';
   if (score >= 40) return '#E07B00';
   return '#8B1A1A';
 }

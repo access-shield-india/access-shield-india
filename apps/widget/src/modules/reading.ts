@@ -139,7 +139,7 @@ export class ReadingModule {
         left: '0',
         width: '100%',
         height: `${GUIDE_HEIGHT}px`,
-        backgroundColor: '#1A56A0',
+        backgroundColor: '#6D28D9',
         pointerEvents: 'none',
         zIndex: '99990',
         top: '0',
@@ -237,7 +237,7 @@ export class ReadingModule {
         'focus-indicator',
         `
         *:focus-visible {
-          outline: 3px solid #1A56A0 !important;
+          outline: 3px solid #6D28D9 !important;
           outline-offset: 3px !important;
           box-shadow: 0 0 0 6px rgba(26, 86, 160, 0.3) !important;
         }`,

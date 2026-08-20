@@ -1,5 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="AccessibleNow">
-  <rect width="32" height="32" rx="8" fill="#1A56A0"/>
-  <circle cx="16" cy="8" r="3" fill="#FFFFFF"/>
-  <path fill="#FFFFFF" d="M8.5 14.2c.4-1.2 1.8-1.7 3-.9L16 16.1l4.5-2.8c1.2-.8 2.6-.3 3 .9l.7 2.1c.3.8-.1 1.7-.9 2L21 19.2V25c0 1.1-.9 2-2 2h-1.2c-.7 0-1.3-.4-1.6-1l-1.2-2.6-1.2 2.6c-.3.6-.9 1-1.6 1H11c-1.1 0-2-.9-2-2v-5.8l-1.3-.9c-.8-.3-1.2-1.2-.9-2l.7-2.1z"/>
+  <rect width="32" height="32" rx="8" fill="#0A0A0B"/>
+  <defs>
+    <linearGradient id="an" x1="6" y1="4" x2="26" y2="28" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C084FC"/>
+      <stop offset="0.45" stop-color="#A855F7"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <!-- Simplified Ai mark for tiny favicon sizes -->
+  <path fill="url(#an)" d="M9 24 L14.2 8.5 h3.6 L23 24 h-3.2 l-1.1-3.4 H13.3 L12.2 24 H9zm4.7-5.8 h4.6 L16.1 12.2 13.7 18.2z"/>
+  <circle cx="22.2" cy="9.2" r="2.2" fill="url(#an)"/>
+  <path fill="url(#an)" d="M16.8 14.2c2.2 1.4 4.4 2.2 6.2 2.2 0.9 0 1.6-.2 2.1-.5-.4 2.1-2.2 3.6-4.5 3.6-1.8 0-3.1-.8-4.2-2.1l.4-3.2z" opacity="0.92"/>
 </svg>

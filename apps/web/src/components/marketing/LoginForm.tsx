@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { signIn } from 'next-auth/react';
 import { Button, Input, Alert } from '@accessshield/ui';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -60,6 +61,9 @@ export function LoginForm() {
     <div className="flex justify-center px-4 py-16 sm:py-24">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
+          <div className="mb-6 flex justify-center">
+            <BrandLogo variant="full" height={72} priority />
+          </div>
           <h1 className="text-3xl font-bold text-text-primary">Sign in to AccessibleNow</h1>
           <p className="mt-2 text-sm text-text-secondary">
             Don&apos;t have an account?{' '}

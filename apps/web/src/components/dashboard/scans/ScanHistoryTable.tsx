@@ -125,7 +125,7 @@ export function ScanHistoryTable({
         const statusClasses = {
           completed: 'bg-green-50 text-green-800 border border-green-300 font-semibold shadow-sm',
           running:
-            'bg-blue-50 text-blue-800 border border-blue-300 font-semibold shadow-sm animate-pulse',
+            'bg-primary-50 text-primary-800 border border-primary-300 font-semibold shadow-sm animate-pulse',
           pending: 'bg-gray-50 text-gray-700 border border-gray-300 font-semibold shadow-sm',
           failed: 'bg-red-50 text-red-800 border border-red-300 font-semibold shadow-sm',
         };
