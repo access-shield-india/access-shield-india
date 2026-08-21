@@ -40,7 +40,7 @@ export async function generateMetadata({
     title: home.meta.title,
     description: home.meta.description,
     openGraph: {
-      title: 'Enterprise Digital Accessibility | AccessShield India',
+      title: 'Enterprise Digital Accessibility | AccessibleNow',
       description: home.meta.description,
       type: 'website',
     },

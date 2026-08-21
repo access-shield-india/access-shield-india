@@ -20,6 +20,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# Next/tsx file watchers need more than macOS default (256). Without this,
+# web compiles /_not-found for every route (EMFILE: too many open files).
+ulimit -n 10240 2>/dev/null || ulimit -n 4096 2>/dev/null || true
+
 DEPLOY_DIR="$ROOT/.deploy"
 LOG_DIR="$DEPLOY_DIR/logs"
 PID_DIR="$DEPLOY_DIR/pids"

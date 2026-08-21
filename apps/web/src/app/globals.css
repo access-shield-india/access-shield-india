@@ -31,7 +31,7 @@
 .as-btn-ghost:focus-visible,
 .as-btn-danger:focus-visible,
 .as-btn-on-dark:focus-visible {
-  outline: 2px solid #1a56a0;
+  outline: 2px solid #7c3aed;
   outline-offset: 2px;
 }
 
@@ -99,7 +99,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid #1a56a0;
+    outline: 2px solid #7c3aed;
     outline-offset: 2px;
   }
 
@@ -131,19 +131,19 @@
   }
 
   .as-nav-item:focus-visible {
-    outline: 2px solid #1a56a0;
+    outline: 2px solid #7c3aed;
     outline-offset: 2px;
   }
 
   .as-nav-item-active {
     background-color: #eff6ff;
-    color: #1a56a0;
+    color: #7c3aed;
     font-weight: 600;
   }
 
   .as-nav-item-active:hover {
     background-color: #dbeafe;
-    color: #1a3a5c;
+    color: #6d28d9;
   }
 }
 

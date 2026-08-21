@@ -12,7 +12,7 @@ export type ButtonThemeSize = 'sm' | 'md' | 'lg';
 
 /** Layout only — colors are applied via inline styles (getButtonStyle). */
 export const BUTTON_LAYOUT_CLASS =
-  'inline-flex items-center justify-center gap-2 rounded-md border-2 border-solid font-semibold no-underline transition-colors box-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A56A0] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:shrink-0';
+  'inline-flex items-center justify-center gap-2 rounded-md border-2 border-solid font-semibold no-underline transition-colors box-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:shrink-0';
 
 export const BUTTON_SIZE_CLASS: Record<ButtonThemeSize, string> = {
   sm: 'min-h-11 px-3 py-1.5 text-sm',
@@ -20,32 +20,32 @@ export const BUTTON_SIZE_CLASS: Record<ButtonThemeSize, string> = {
   lg: 'min-h-11 px-6 py-3 text-lg',
 };
 
-/** Canonical button colors — always applied as inline styles on the element. */
+/** Canonical button colors — AccessibleNow logo violet. */
 export const BUTTON_VARIANT_STYLE: Record<ButtonThemeVariant, CSSProperties> = {
   primary: {
-    backgroundColor: '#1A56A0',
-    borderColor: '#1A3A5C',
+    backgroundColor: '#7C3AED',
+    borderColor: '#6D28D9',
     color: '#FFFFFF',
   },
   secondary: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#1A56A0',
-    color: '#1A3A5C',
+    borderColor: '#7C3AED',
+    color: '#6D28D9',
   },
   outline: {
-    backgroundColor: '#EBF3FB',
-    borderColor: '#1A56A0',
-    color: '#1A3A5C',
+    backgroundColor: '#F3E8FF',
+    borderColor: '#7C3AED',
+    color: '#6D28D9',
   },
   ghost: {
     backgroundColor: 'transparent',
     borderColor: 'transparent',
-    color: '#1A56A0',
+    color: '#7C3AED',
   },
   onDark: {
     backgroundColor: '#FFFFFF',
     borderColor: '#FFFFFF',
-    color: '#1A3A5C',
+    color: '#6D28D9',
   },
   danger: {
     backgroundColor: '#8B1A1A',

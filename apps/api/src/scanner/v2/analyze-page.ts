@@ -8,6 +8,7 @@ import { runAxeWithRetry } from '../axe-runner';
 import { scanPage, closeScanContext } from '../playwright-runner';
 import { runGIGWChecks } from '../rules/gigw';
 import { runIS17802Rules } from '../rules/is17802';
+import { runSebiChecks } from '../rules/sebi';
 import type { RawViolation, ScanJobConfig } from '../types';
 
 export interface AnalyzePageResult {
@@ -39,6 +40,11 @@ export async function analyzePageUrl(
     if (config.standards.includes('GIGW3')) {
       const gigwViolations = await runGIGWChecks(page, url, assetId, config);
       pageViolations.push(...gigwViolations);
+    }
+
+    if (config.standards.includes('SEBI')) {
+      const sebiViolations = await runSebiChecks(page, url, assetId);
+      pageViolations.push(...sebiViolations);
     }
 
     return {

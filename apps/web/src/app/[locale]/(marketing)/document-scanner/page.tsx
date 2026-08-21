@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   description:
     'Scan government documents for accessibility issues before publishing. Detects untagged PDFs, missing alt text, inaccessible tables, and 40+ WCAG 2.1 AA / GIGW 3.0 issues.',
   openGraph: {
-    title: 'Document Scanner | AccessShield India',
+    title: 'Document Scanner | AccessibleNow',
     description:
       'Is your government PDF accessible? Scan PDF, Word, PowerPoint, and Excel files for 40+ WCAG 2.1 AA and GIGW 3.0 accessibility issues.',
     type: 'website',
@@ -136,7 +136,7 @@ export default function DocumentScannerPage() {
             Is Your Government PDF Accessible?
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-text-secondary sm:text-xl">
-            Most government documents fail basic screen reader tests. AccessShield scans PDF, Word,
+            Most government documents fail basic screen reader tests. AccessibleNow scans PDF, Word,
             PowerPoint, and Excel files for 40+ WCAG 2.1 AA, GIGW 3.0, and RPwD Act 2016 issues.
           </p>
 
@@ -251,7 +251,7 @@ export default function DocumentScannerPage() {
             <p className="mt-2 text-base leading-normal text-amber-800">
               Most government PDFs are scanned images with no text layer — completely invisible to
               screen readers. A blind citizen cannot read a notification, apply for a scheme, or
-              file RTI if the PDF is just a picture of text. AccessShield detects these
+              file RTI if the PDF is just a picture of text. AccessibleNow detects these
               &quot;image-only&quot; PDFs and flags them for OCR remediation.
             </p>
           </div>
@@ -407,7 +407,7 @@ export default function DocumentScannerPage() {
             Start Scanning Your Documents Today
           </h2>
           <p className="mt-6 text-lg leading-normal text-primary-100">
-            Join government organisations across India using AccessShield to identify accessibility
+            Join government organisations across India using AccessibleNow to identify accessibility
             barriers before they reach citizens.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">

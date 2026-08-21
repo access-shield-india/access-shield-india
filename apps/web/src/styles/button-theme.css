@@ -4,26 +4,26 @@
  */
 
 [data-as-btn='primary']:hover:not(:disabled):not([aria-disabled='true']) {
-  background-color: #1a3a5c !important;
-  border-color: #0d2e5a !important;
+  background-color: #6d28d9 !important;
+  border-color: #5b21b6 !important;
   color: #ffffff !important;
 }
 
 [data-as-btn='secondary']:hover:not(:disabled):not([aria-disabled='true']) {
-  background-color: #ebf3fb !important;
-  border-color: #1a3a5c !important;
-  color: #1a3a5c !important;
+  background-color: #f3e8ff !important;
+  border-color: #6d28d9 !important;
+  color: #6d28d9 !important;
 }
 
 [data-as-btn='outline']:hover:not(:disabled):not([aria-disabled='true']) {
-  background-color: #dde9f7 !important;
-  border-color: #1a3a5c !important;
-  color: #1a3a5c !important;
+  background-color: #e9d5ff !important;
+  border-color: #6d28d9 !important;
+  color: #6d28d9 !important;
 }
 
 [data-as-btn='ghost']:hover:not(:disabled):not([aria-disabled='true']) {
-  background-color: #ebf3fb !important;
-  color: #1a3a5c !important;
+  background-color: #f3e8ff !important;
+  color: #6d28d9 !important;
 }
 
 [data-as-btn='danger']:hover:not(:disabled):not([aria-disabled='true']) {
@@ -33,9 +33,9 @@
 }
 
 [data-as-btn='onDark']:hover:not(:disabled):not([aria-disabled='true']) {
-  background-color: #f4f8fd !important;
-  border-color: #ebf3fb !important;
-  color: #1a3a5c !important;
+  background-color: #faf5ff !important;
+  border-color: #f3e8ff !important;
+  color: #6d28d9 !important;
 }
 
 [data-as-btn]:disabled,

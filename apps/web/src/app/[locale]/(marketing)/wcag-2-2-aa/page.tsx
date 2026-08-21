@@ -44,7 +44,7 @@ const faqs = [
   {
     question: 'Is WCAG 2.2 AA legally required in India?',
     answer:
-      'WCAG 2.2 AA is not explicitly named in Indian law. IS 17802 (WCAG 2.1 AA base) is the legal technical standard under RPwD Act. SEBI requires WCAG 2.1 AA. However, adopting WCAG 2.2 AA exceeds both requirements and is considered global best practice — AccessShield scans against WCAG 2.2 by default.',
+      'WCAG 2.2 AA is not explicitly named in Indian law. IS 17802 (WCAG 2.1 AA base) is the legal technical standard under RPwD Act. SEBI requires WCAG 2.1 AA. However, adopting WCAG 2.2 AA exceeds both requirements and is considered global best practice — AccessibleNow scans against WCAG 2.2 by default.',
   },
   {
     question: 'How many success criteria are in WCAG 2.2 AA?',
@@ -67,7 +67,7 @@ const complySteps = [
   {
     title: 'Run an automated WCAG 2.2 AA scan',
     description:
-      'Use axe-core or AccessShield to identify violations across all pages. Prioritise templates and high-traffic flows — homepage, login, checkout, forms, and account management.',
+      'Use axe-core or AccessibleNow to identify violations across all pages. Prioritise templates and high-traffic flows — homepage, login, checkout, forms, and account management.',
   },
   {
     title: 'Conduct manual assistive technology testing',
@@ -133,7 +133,7 @@ export default function WCAG22Page() {
               <strong>AA (the legal benchmark)</strong>, and AAA (enhanced).
             </p>
             <p>
-              AccessShield scans every customer website against WCAG 2.2 AA by default, alongside
+              AccessibleNow scans every customer website against WCAG 2.2 AA by default, alongside
               India-specific{' '}
               <Link
                 href="/is-17802"
@@ -197,7 +197,7 @@ export default function WCAG22Page() {
               </li>
               <li>
                 <strong>2.5.8 Target Size (Minimum):</strong> Interactive targets at least 24×24 CSS
-                pixels (AccessShield enforces 44×44px per IS 17802 touch guidance)
+                pixels (AccessibleNow enforces 44×44px per IS 17802 touch guidance)
               </li>
               <li>
                 <strong>3.2.6 Consistent Help:</strong> Help mechanisms appear in the same relative

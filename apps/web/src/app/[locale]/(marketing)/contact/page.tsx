@@ -6,7 +6,7 @@ import { ContactIllustration } from '@/components/marketing/visuals';
 export const metadata: Metadata = {
   title: 'Contact',
   description:
-    'Contact AccessShield India for sales, support, and accessibility compliance questions.',
+    'Contact AccessibleNow for sales, support, and accessibility compliance questions.',
 };
 
 export default function ContactPage() {
@@ -54,7 +54,7 @@ export default function ContactPage() {
           </p>
         )}
         <p>
-          New to AccessShield?{' '}
+          New to AccessibleNow?{' '}
           <Link href="/signup" className="font-medium text-primary-600 hover:text-primary-700">
             Start your free trial
           </Link>{' '}

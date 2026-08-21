@@ -67,8 +67,8 @@ async function loadOrgAiSettings(
     .limit(1);
 
   return {
-    aiProvider: org?.aiProvider ?? 'anthropic',
-    aiModel: org?.aiModel ?? 'claude-sonnet-4-5-20250929',
+    aiProvider: org?.aiProvider ?? 'local',
+    aiModel: org?.aiModel ?? 'Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF',
   };
 }
 

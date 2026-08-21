@@ -67,7 +67,7 @@ export class SpeechModule {
   updateLabels(lang: Language): void {
     this.lang = lang;
     if (!this.container) return;
-    this.container.querySelector('h2')!.textContent = t('sectionSpeech', lang);
+    this.container.querySelector('h3')!.textContent = t('sectionSpeech', lang);
     this.updateText(this.container, lang);
   }
 
@@ -103,7 +103,7 @@ export class SpeechModule {
     const supported = isSpeechSupported();
 
     return `
-      <h2 id="as-section-speech" class="as-section-title">${t('sectionSpeech', l)}</h2>
+      <h3 id="as-section-speech" class="as-section-title">${t('sectionSpeech', l)}</h3>
       <p id="as-speech-unsupported" class="as-hint" ${supported ? 'hidden' : ''} role="alert">
         ${t('speechUnsupported', l)}
       </p>
@@ -287,7 +287,7 @@ export class SpeechModule {
           cursor: help !important;
         }
         .as-tts-reading {
-          outline: 3px solid #1A56A0 !important;
+          outline: 3px solid #6D28D9 !important;
           outline-offset: 4px !important;
           background-color: rgba(235, 243, 251, 0.85) !important;
         }`,

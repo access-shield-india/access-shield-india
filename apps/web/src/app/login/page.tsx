@@ -48,7 +48,7 @@ export default function LoginPage() {
   return (
     <main id="main-content" className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <h1 className="text-2xl font-bold text-gray-900">Sign in to AccessShield</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Sign in to AccessibleNow</h1>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6" noValidate>
           {error && (

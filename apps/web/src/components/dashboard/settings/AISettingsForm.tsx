@@ -53,9 +53,14 @@ export function AISettingsForm() {
 
   useEffect(() => {
     if (!org) return;
-    const nextProvider = 'local';
+    const nextProvider = 'local' as const;
     setProvider(nextProvider);
-    setModel(org.aiModel || DEFAULT_MODELS[nextProvider]);
+    const savedModel = org.aiModel || '';
+    setModel(
+      savedModel && !/claude|sonnet|haiku|opus|anthropic/i.test(savedModel)
+        ? savedModel
+        : DEFAULT_MODELS.local,
+    );
   }, [org]);
 
   const updateMutation = useMutation({
@@ -87,8 +92,8 @@ export function AISettingsForm() {
         <div>
           <h2 className="text-lg font-semibold text-text-primary">AI model configuration</h2>
           <p className="mt-1 text-sm text-text-secondary">
-            Choose Anthropic Claude (cloud) or a local GGUF model running inside the AI service.
-            Local models download on first use and need enough RAM on the host.
+            Choose a local GGUF model running inside the AI service. Models download on first use
+            and need enough RAM on this machine.
           </p>
         </div>
 

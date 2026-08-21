@@ -60,7 +60,8 @@ const nextConfig = {
     return {
       // English URLs stay unprefixed in the browser; internally route to /en/...
       beforeFiles: [
-        { source: '/', destination: '/en' },
+        // `/` is apps/web/src/app/page.tsx — do not rewrite it to /en (Next 14.2
+        // skips beforeFiles after middleware, which made `/` 404).
         // Legacy /hi/dashboard links → real dashboard routes (locale via cookie)
         { source: '/hi/dashboard', destination: '/dashboard' },
         { source: '/hi/dashboard/:path*', destination: '/dashboard/:path*' },
@@ -68,7 +69,7 @@ const nextConfig = {
         { source: '/hi/signup', destination: '/signup' },
         {
           source:
-            '/:path((?!hi$|hi/|en$|en/|dashboard|api|auth|login|onboarding|verify|widget\\.js|favicon\\.ico|_next/|marketing/).*)',
+            '/:path((?!hi$|hi/|en$|en/|dashboard|api|auth|login|onboarding|verify|widget\\.js|favicon\\.ico|favicon|apple-touch-icon|logo|brand/|_next/|marketing/).*)',
           destination: '/en/:path',
         },
       ],
@@ -79,6 +80,23 @@ const nextConfig = {
         },
       ],
     };
+  },
+  webpack: (config, { dev }) => {
+    if (dev) {
+      // pnpm + macOS (256–10k FD cap): webpack watching node_modules exhausts
+      // kqueue, then Next's route Watchpack never sees src/app → every URL 404s.
+      config.watchOptions = {
+        ignored: /node_modules|[/\\]\.git|[/\\]\.next|[/\\]\.deploy|[/\\]\.data|[/\\]\.turbo/,
+        followSymlinks: false,
+        poll: 1000,
+        aggregateTimeout: 300,
+      };
+      config.snapshot = {
+        ...(config.snapshot ?? {}),
+        managedPaths: [resolve(monorepoRoot, 'node_modules')],
+      };
+    }
+    return config;
   },
   async redirects() {
     return [

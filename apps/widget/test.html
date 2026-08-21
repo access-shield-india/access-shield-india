@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="data:," />
-  <title>AccessShield Widget — Full Test Lab</title>
+  <title>AccessibleNow Widget — Full Test Lab</title>
   <style>
     :root {
       --text: #1a1a2e;
       --muted: #6b7280;
       --border: #d1d5db;
-      --primary: #1a56a0;
+      --primary: #6d28d9;
       --bg: #f9fafb;
     }
     * { box-sizing: border-box; }
@@ -68,7 +68,7 @@
       padding: 1.5rem;
     }
     .test-guide {
-      background: #ebf3fb;
+      background: #f3e8ff;
       border: 1px solid #93c5fd;
       border-radius: 10px;
       padding: 1rem 1.25rem;
@@ -83,7 +83,7 @@
       padding: 1.25rem;
       margin-bottom: 1.25rem;
     }
-    .card h2, .card h3 { margin-top: 0; color: #1a3a5c; }
+    .card h2, .card h3 { margin-top: 0; color: #5b21b6; }
     .low-contrast {
       background: #e5e7eb;
       color: #9ca3af;
@@ -136,14 +136,17 @@
       color: var(--muted);
       text-align: center;
     }
-    .hindi-block { margin-top: 1rem; }
+    .positive { color: #1a6b3c; }
+    .negative { color: #8b1a1a; }
+    .up { color: #1a6b3c; }
+    .down { color: #8b1a1a; }
   </style>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to main content</a>
 
   <header>
-    <strong>AccessShield</strong> Widget Test Lab
+    <strong>AccessibleNow</strong> Widget Test Lab
     <nav aria-label="Sample site navigation">
       <ul>
         <li><a href="#visual">Visual</a></li>
@@ -161,19 +164,20 @@
     <main id="main-content">
       <h1>Widget functionality test page</h1>
       <p>
-        Use this page to verify every AccessShield widget feature. Open the blue accessibility
+        Use this page to verify every AccessibleNow widget feature. Open the blue accessibility
         launcher (bottom-right), then work through the checklist below.
       </p>
 
       <aside class="test-guide" aria-labelledby="guide-title">
         <h2 id="guide-title">Testing checklist</h2>
         <ul>
-          <li><strong>Visual:</strong> font size, dyslexia font, dark/light mode, contrast, grayscale, saturation</li>
-          <li><strong>Reading:</strong> reading guide, reading mask, link highlight, focus indicator</li>
+          <li><strong>Profiles:</strong> one-click Screen reader / Low vision / Colour blind / Motor / Dyslexia / Seizure safe. Toggle off to restore previous settings.</li>
+          <li><strong>Visual:</strong> font size, dyslexia font, dark/light mode, contrast, grayscale, saturation, large cursor, colour vision</li>
+          <li><strong>Reading:</strong> reading guide, reading mask, link highlight, focus indicator, text spacing</li>
           <li><strong>Speech:</strong> read selection, read page, read-on-hover, speed (slow/normal/fast), stop</li>
-          <li><strong>Navigation:</strong> keyboard nav mode, skip link, focus tracker</li>
-          <li><strong>Language:</strong> switch widget UI to Hindi (हिन्दी)</li>
-          <li><strong>Reset:</strong> “Reset All” restores defaults and clears host-page changes</li>
+          <li><strong>Navigation:</strong> keyboard nav mode, skip link, focus tracker, large click areas</li>
+          <li><strong>Language:</strong> switch widget UI to Hindi (हिन्दी) from the header</li>
+          <li><strong>Reset:</strong> header “Reset” restores defaults and clears host-page changes</li>
         </ul>
       </aside>
 
@@ -188,7 +192,7 @@
         </div>
         <figure>
           <img
-            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='120' viewBox='0 0 320 120'%3E%3Crect fill='%231A56A0' width='320' height='120'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='20' font-family='sans-serif'%3EDecorative chart%3C/text%3E%3C/svg%3E"
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='120' viewBox='0 0 320 120'%3E%3Crect fill='%236D28D9' width='320' height='120'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='20' font-family='sans-serif'%3EDecorative chart%3C/text%3E%3C/svg%3E"
             width="320"
             height="120"
             alt="Bar chart showing accessibility score of 78 percent"
@@ -292,6 +296,15 @@
         </table>
       </section>
 
+      <section class="card" aria-labelledby="pnl-title">
+        <h2 id="pnl-title">Colour-blind markers (heuristic demo)</h2>
+        <p>Turn on the <strong>Colour blind</strong> profile. Gain/loss classes should show ▲/▼ and patterned fills.</p>
+        <p class="positive">Revenue .positive — should gain a triangle</p>
+        <p class="negative">Expenses .negative — should gain a down triangle</p>
+        <p class="up">Sensex .up</p>
+        <p class="down">Nifty .down</p>
+      </section>
+
       <section id="hindi" class="card hindi-block" lang="hi" aria-labelledby="hindi-title">
         <h2 id="hindi-title">हिन्दी सामग्री</h2>
         <p>
@@ -303,7 +316,7 @@
   </div>
 
   <footer>
-  <p>AccessShield Widget Test Lab — local development only</p>
+  <p>AccessibleNow Widget Test Lab — local development only</p>
   </footer>
 
   <!-- Fail-open verify in local dev (no API required) -->

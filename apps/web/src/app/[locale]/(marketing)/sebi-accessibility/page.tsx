@@ -33,9 +33,9 @@ const sebiFaqs = [
       'The circular emphasises critical user functions: login, trading, fund transfers, account statements, and customer support interfaces. While best practice is to make your entire digital platform accessible, priority must be given to these core transactional and informational functions. Third-party embedded content (ads, analytics) should be accessible where possible, but documented exceptions may be acceptable if remediation is not in your control.',
   },
   {
-    question: 'Can I use an automated tool like AccessShield for the SEBI audit?',
+    question: 'Can I use an automated tool like AccessibleNow for the SEBI audit?',
     answer:
-      'Automated tools are an essential part of the audit process, but the SEBI circular requires validation by an IAAP-certified professional. AccessShield provides AI-powered automated scans plus manual review by IAAP-certified auditors, ensuring both speed and regulatory compliance. The final report is signed off by a certified auditor, meeting SEBI requirements.',
+      'Automated tools are an essential part of the audit process, but the SEBI circular requires validation by an IAAP-certified professional. AccessibleNow provides AI-powered automated scans plus manual review by IAAP-certified auditors, ensuring both speed and regulatory compliance. The final report is signed off by a certified auditor, meeting SEBI requirements.',
   },
   {
     question: 'What if my platform is already accessible — do I still need the audit?',
@@ -248,7 +248,7 @@ export default function SEBIAccessibilityPage() {
 
         <section className="mt-16">
           <div className="rounded-xl border-2 border-primary-600 bg-primary-50 p-8 text-center">
-            <h3 className="text-2xl font-bold text-primary-900">AccessShield SEBI Report</h3>
+            <h3 className="text-2xl font-bold text-primary-900">AccessibleNow SEBI Report</h3>
             <p className="mt-4 text-base leading-normal text-primary-900">
               WCAG 2.1 AA audit • IAAP auditor sign-off • SEBI-format report • Accessibility
               statement • Annual renewal

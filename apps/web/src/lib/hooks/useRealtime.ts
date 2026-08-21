@@ -196,7 +196,7 @@ export function useIssueUpdates(orgId: string | null, onUpdate: (issue: Issue) =
 
         source.addEventListener('UPDATE', (evt) => {
           const envelope = JSON.parse((evt as MessageEvent).data) as RealtimeEnvelope;
-          onUpdate(envelope.new as Issue);
+          onUpdate(envelope.new as unknown as Issue);
         });
       } catch {
         // optional

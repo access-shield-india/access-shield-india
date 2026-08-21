@@ -4,19 +4,19 @@ import { MarketingContentPage } from '@/components/marketing/MarketingContentPag
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'Terms governing use of AccessShield India software and services.',
+  description: 'Terms governing use of AccessibleNow software and services.',
 };
 
 export default function TermsPage() {
   return (
     <MarketingContentPage
       title="Terms of Service"
-      description="Last updated: June 2026. By using AccessShield India, you agree to these terms."
+      description="Last updated: June 2026. By using AccessibleNow, you agree to these terms."
     >
       <section>
         <h2 className="text-xl font-semibold text-text-primary">1. Service</h2>
         <p className="mt-2">
-          AccessShield India provides website accessibility scanning, issue tracking, reporting, and
+          AccessibleNow provides website accessibility scanning, issue tracking, reporting, and
           related tools. Features vary by subscription plan. We may update the service with
           reasonable notice for material changes.
         </p>
@@ -59,7 +59,7 @@ export default function TermsPage() {
       <section>
         <h2 className="text-xl font-semibold text-text-primary">6. Limitation of liability</h2>
         <p className="mt-2">
-          To the maximum extent permitted by law, AccessShield India is not liable for indirect,
+          To the maximum extent permitted by law, AccessibleNow is not liable for indirect,
           incidental, or consequential damages arising from use of the service. Our aggregate
           liability is limited to fees paid by you in the twelve months preceding the claim.
         </p>

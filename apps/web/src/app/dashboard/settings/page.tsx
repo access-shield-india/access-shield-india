@@ -1,7 +1,7 @@
 import { SettingsPageContent } from '@/components/dashboard/settings/SettingsPageContent';
 
 export const metadata = {
-  title: 'Settings | AccessShield India',
+  title: 'Settings | AccessibleNow',
   description: 'Manage organisation settings, team, integrations, and billing',
 };
 

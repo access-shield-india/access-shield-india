@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Tabs, type TabItem } from '@accessshield/ui';
 import { LoadingState } from '@/components/dashboard/common/LoadingState';
 import { OrgSettingsForm } from '@/components/dashboard/settings/OrgSettingsForm';
@@ -101,12 +102,23 @@ export function SettingsPageContent() {
         </p>
       </div>
 
-      <Tabs
-        items={SETTINGS_TABS}
-        defaultValue="organisation"
-        ariaLabel="Settings sections"
-        lazyMount
-      />
+      <Suspense
+        fallback={<LoadingState message="Please wait, loading settings…" variant="card" />}
+      >
+        <SettingsTabs />
+      </Suspense>
     </div>
+  );
+}
+
+function SettingsTabs() {
+  const searchParams = useSearchParams();
+  const requested = searchParams.get('tab') ?? 'organisation';
+  const defaultValue = SETTINGS_TABS.some((tab) => tab.value === requested)
+    ? requested
+    : 'organisation';
+
+  return (
+    <Tabs items={SETTINGS_TABS} defaultValue={defaultValue} ariaLabel="Settings sections" lazyMount />
   );
 }

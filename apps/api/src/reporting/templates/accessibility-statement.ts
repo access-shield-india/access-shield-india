@@ -42,14 +42,14 @@ const STATEMENT_CSS = `
 
   h1 {
     font-size: 1.75rem;
-    color: #0D2E5A;
+    color: #3B0764;
     margin-bottom: 24px;
     line-height: 1.3;
   }
 
   h2 {
     font-size: 1.25rem;
-    color: #1A3A5C;
+    color: #5B21B6;
     margin-top: 32px;
     margin-bottom: 12px;
     line-height: 1.4;
@@ -69,24 +69,24 @@ const STATEMENT_CSS = `
   }
 
   a {
-    color: #1A56A0;
+    color: #6D28D9;
     text-decoration: underline;
   }
 
   a:hover {
-    color: #0D2E5A;
+    color: #3B0764;
   }
 
   a:focus {
-    outline: 2px solid #1A56A0;
+    outline: 2px solid #6D28D9;
     outline-offset: 2px;
     border-radius: 2px;
   }
 
   address {
     font-style: normal;
-    background-color: #F4F8FD;
-    border: 1px solid #EBF3FB;
+    background-color: #FAF5FF;
+    border: 1px solid #F3E8FF;
     border-radius: 8px;
     padding: 16px 20px;
     margin: 16px 0;

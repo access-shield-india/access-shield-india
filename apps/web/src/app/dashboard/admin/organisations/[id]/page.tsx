@@ -7,6 +7,7 @@ import {
   createAdminOrgUser,
   fetchAdminOrgSummary,
   fetchAdminOrgUsers,
+  fetchAdminOrgWidgetAnalytics,
   updateAdminOrganisation,
   updateAdminOrgWidget,
   updateAdminUser,
@@ -76,6 +77,12 @@ export default function AdminOrganisationDetailPage() {
   const { data: summary, isLoading: summaryLoading } = useQuery({
     queryKey: ['admin', 'org', orgId, 'summary'],
     queryFn: () => fetchAdminOrgSummary(orgId),
+  });
+
+  const { data: widgetAnalytics } = useQuery({
+    queryKey: ['admin', 'org', orgId, 'widget-analytics'],
+    queryFn: () => fetchAdminOrgWidgetAnalytics(orgId),
+    enabled: activeTab === 'widget',
   });
 
   const { data: users = [], isLoading: usersLoading } = useQuery({
@@ -305,7 +312,7 @@ export default function AdminOrganisationDetailPage() {
       )}
 
       {activeTab === 'widget' && (
-        <section id="panel-widget" role="tabpanel" aria-labelledby="tab-widget">
+        <section id="panel-widget" role="tabpanel" aria-labelledby="tab-widget" className="space-y-4">
           <AdminCard
             title="Widget control"
             description="Disabling stops the widget on all sites using this organisation's token."
@@ -344,6 +351,42 @@ export default function AdminOrganisationDetailPage() {
                 </div>
               )}
             </dl>
+          </AdminCard>
+
+          <AdminCard
+            title="Widget analytics (30 days)"
+            description="Anonymous aggregate usage. No visitor identifiers."
+          >
+            {widgetAnalytics ? (
+              <dl className="grid gap-4 sm:grid-cols-2 text-sm">
+                <div>
+                  <dt className="text-text-tertiary">Panel opens</dt>
+                  <dd className="mt-0.5 font-medium text-text-primary">
+                    {widgetAnalytics.panelOpens.toLocaleString('en-IN')}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-text-tertiary">Hindi usage</dt>
+                  <dd className="mt-0.5 font-medium text-text-primary">
+                    {widgetAnalytics.hindiUsagePercent}%
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-text-tertiary">Top profile</dt>
+                  <dd className="mt-0.5 font-medium text-text-primary">
+                    {widgetAnalytics.topProfiles[0]?.id ?? 'None yet'}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-text-tertiary">Top setting</dt>
+                  <dd className="mt-0.5 font-medium text-text-primary">
+                    {widgetAnalytics.topSettings[0]?.id ?? 'None yet'}
+                  </dd>
+                </div>
+              </dl>
+            ) : (
+              <p className="text-sm text-text-secondary">Loading analytics…</p>
+            )}
           </AdminCard>
         </section>
       )}

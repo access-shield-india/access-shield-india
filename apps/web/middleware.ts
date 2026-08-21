@@ -96,6 +96,35 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  // English marketing URLs are unprefixed in the browser (`/about`).
+  // next.config beforeFiles rewrites to `/en` are skipped after middleware in
+  // Next 14.2. Leave `/` alone — apps/web/src/app/page.tsx serves it.
+  const needsEnRewrite =
+    pathname !== '/' &&
+    !pathnameHasHiPrefix(pathname) &&
+    pathname !== '/en' &&
+    !pathname.startsWith('/en/') &&
+    !isLocaleAgnosticPath(pathname) &&
+    !pathname.startsWith('/api/');
+
+  if (needsEnRewrite) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname === '/' ? '/en' : `/en${pathname}`;
+    const requestHeaders = forwardRequestHeaders(request, {
+      [LOCALE_HEADER]: 'en',
+      'x-as-pathname': pathname,
+    });
+    const rewriteResponse = NextResponse.rewrite(url, {
+      request: { headers: requestHeaders },
+    });
+    rewriteResponse.cookies.set(LOCALE_COOKIE, 'en', {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: 'lax',
+    });
+    return rewriteResponse;
+  }
+
   const locale = resolveLocale(pathname);
   const internalPath = pathnameHasHiPrefix(pathname)
     ? stripLocalePrefix(pathname)
@@ -166,6 +195,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/',
     '/((?!_next/static|_next/image|favicon.ico|widget\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

@@ -4,15 +4,22 @@
  * Integrates axe-core accessibility testing with Playwright pages.
  * Maps axe results to AccessShield violation format with
  * WCAG 2.2, IS 17802, GIGW 3.0, and SEBI standard tagging.
+ *
+ * Knowledge-base rules applied here:
+ * - RULE-001: run axe inside each accessible iframe (page.frames())
+ * - RULE-002: scroll the page to load lazy content before axe.run()
+ * Custom DOM rules RULE-004–007 are in ./custom-rules.ts and merged in.
  */
 
 import { createHash } from 'crypto';
 import { logger } from '../lib/logger';
 import type { IssueSeverity } from '@accessshield/types';
+import { runCustomAxeRules } from './custom-rules';
 import type { ComplianceStandard, RawViolation, ScanJobConfig, WcagLevel } from './types';
 
-/** Playwright Page type */
+/** Playwright types */
 type Page = import('playwright').Page;
+type Frame = import('playwright').Frame;
 
 /** axe-core result types */
 interface AxeNode {
@@ -189,15 +196,143 @@ function buildAxeTags(config: ScanJobConfig): string[] {
   return [...new Set(tags)];
 }
 
+const SCROLL_SETTLE_MS = 2500;
+
+/**
+ * RULE-002: scroll to bottom so lazy-loaded images/carousels enter the DOM, then return to top.
+ */
+export async function scrollPageBeforeScan(page: Page): Promise<void> {
+  try {
+    await page.evaluate(() => {
+      const doc = (globalThis as unknown as { document: Document; window: Window }).document;
+      const win = (globalThis as unknown as { window: Window }).window;
+      win.scrollTo(0, Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight));
+    });
+    await page.waitForTimeout(SCROLL_SETTLE_MS);
+    await page.evaluate(() => {
+      (globalThis as unknown as { window: Window }).window.scrollTo(0, 0);
+    });
+  } catch (err) {
+    logger.warn({ err }, 'RULE-002 scroll-before-scan failed; continuing with current viewport');
+  }
+}
+
+async function runAxeInContext(
+  target: Page | Frame,
+  axeCorePath: string,
+  axeTags: string[],
+): Promise<AxeResults> {
+  await target.addScriptTag({ path: axeCorePath });
+
+  return (await target.evaluate(async (tags: string[]) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const axe = (globalThis as any).axe;
+
+    if (!axe) {
+      throw new Error('axe-core not loaded');
+    }
+
+    return await axe.run({
+      runOnly: {
+        type: 'tag',
+        values: tags,
+      },
+      reporter: 'v2',
+      resultTypes: ['violations'],
+    });
+  }, axeTags)) as AxeResults;
+}
+
+function mapAxeResults(
+  results: AxeResults,
+  config: ScanJobConfig,
+  assetId: string,
+  pageUrl: string,
+  seenFingerprints: Set<string>,
+  selectorPrefix = '',
+): RawViolation[] {
+  const violations: RawViolation[] = [];
+
+  for (const violation of results.violations) {
+    for (const node of violation.nodes) {
+      const selector = `${selectorPrefix}${node.target.join(' > ')}`;
+      const fingerprint = computeFingerprint(assetId, violation.id, selector);
+
+      if (seenFingerprints.has(fingerprint)) {
+        continue;
+      }
+      seenFingerprints.add(fingerprint);
+
+      violations.push({
+        ruleId: violation.id,
+        wcagCriterion: extractCriterion(violation.tags),
+        wcagLevel: extractWcagLevel(violation.tags),
+        standard: determineStandard(violation.tags, config.standards),
+        severity: mapImpact(violation.impact),
+        elementType: extractElementType(node.html),
+        elementHtml: node.html.substring(0, 2000),
+        elementSelector: selector,
+        description: `${violation.help}. ${node.failureSummary ?? violation.description}`,
+        helpUrl: violation.helpUrl,
+        fingerprint,
+        pageUrl,
+      });
+    }
+  }
+
+  return violations;
+}
+
+/**
+ * RULE-001: axe-core cannot cross iframe boundaries. Run axe in every accessible child frame.
+ * Cross-origin frames throw on script injection and are skipped (logged).
+ */
+async function collectIframeViolations(
+  page: Page,
+  axeCorePath: string,
+  axeTags: string[],
+  config: ScanJobConfig,
+  assetId: string,
+  pageUrl: string,
+  seenFingerprints: Set<string>,
+): Promise<RawViolation[]> {
+  const collected: RawViolation[] = [];
+  const frames = page.frames().filter((frame) => frame !== page.mainFrame());
+
+  for (const frame of frames) {
+    const frameUrl = frame.url();
+    if (!frameUrl || frameUrl === 'about:blank') continue;
+
+    try {
+      const results = await runAxeInContext(frame, axeCorePath, axeTags);
+      const prefix = `[iframe:${frameUrl}] `;
+      collected.push(
+        ...mapAxeResults(results, config, assetId, pageUrl, seenFingerprints, prefix),
+      );
+      logger.info(
+        { pageUrl, frameUrl, violationCount: results.violations.length },
+        'RULE-001 axe-core iframe scan complete',
+      );
+    } catch (err) {
+      logger.debug(
+        { err, pageUrl, frameUrl },
+        'RULE-001 skipped inaccessible iframe (likely cross-origin)',
+      );
+    }
+  }
+
+  return collected;
+}
+
 /**
  * Run axe-core accessibility analysis on a page.
  *
  * Workflow:
- * 1. Inject axe-core script into page
- * 2. Configure axe with appropriate WCAG tags
- * 3. Run analysis and collect violations
- * 4. Map violations to RawViolation format
- * 5. Deduplicate by fingerprint within page
+ * 1. RULE-002: scroll page so lazy-loaded content is in the DOM
+ * 2. Inject axe-core and run on the main document
+ * 3. RULE-001: run axe inside each accessible iframe
+ * 4. RULE-004–007: custom DOM rules
+ * 5. Map + merge all violations before returning (worker persists this array)
  *
  * @param page - Playwright page instance
  * @param config - Scan configuration
@@ -212,66 +347,40 @@ export async function runAxe(
   pageUrl: string,
 ): Promise<RawViolation[]> {
   try {
+    await scrollPageBeforeScan(page);
+
     const axeCorePath = require.resolve('axe-core');
-    await page.addScriptTag({ path: axeCorePath });
-
     const axeTags = buildAxeTags(config);
-
-    const results = (await page.evaluate(async (tags: string[]) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const axe = (globalThis as any).axe;
-
-      if (!axe) {
-        throw new Error('axe-core not loaded');
-      }
-
-      return await axe.run({
-        runOnly: {
-          type: 'tag',
-          values: tags,
-        },
-        reporter: 'v2',
-        resultTypes: ['violations'],
-      });
-    }, axeTags)) as AxeResults;
-
-    const violations: RawViolation[] = [];
     const seenFingerprints = new Set<string>();
 
-    for (const violation of results.violations) {
-      for (const node of violation.nodes) {
-        const selector = node.target.join(' > ');
-        const fingerprint = computeFingerprint(assetId, violation.id, selector);
+    const mainResults = await runAxeInContext(page, axeCorePath, axeTags);
+    const violations = mapAxeResults(mainResults, config, assetId, pageUrl, seenFingerprints);
 
-        if (seenFingerprints.has(fingerprint)) {
-          continue;
-        }
-        seenFingerprints.add(fingerprint);
+    const iframeViolations = await collectIframeViolations(
+      page,
+      axeCorePath,
+      axeTags,
+      config,
+      assetId,
+      pageUrl,
+      seenFingerprints,
+    );
+    violations.push(...iframeViolations);
 
-        const rawViolation: RawViolation = {
-          ruleId: violation.id,
-          wcagCriterion: extractCriterion(violation.tags),
-          wcagLevel: extractWcagLevel(violation.tags),
-          standard: determineStandard(violation.tags, config.standards),
-          severity: mapImpact(violation.impact),
-          elementType: extractElementType(node.html),
-          elementHtml: node.html.substring(0, 2000),
-          elementSelector: selector,
-          description: `${violation.help}. ${node.failureSummary ?? violation.description}`,
-          helpUrl: violation.helpUrl,
-          fingerprint,
-          pageUrl,
-        };
-
-        violations.push(rawViolation);
-      }
+    const customViolations = await runCustomAxeRules(page, pageUrl, assetId);
+    for (const custom of customViolations) {
+      if (seenFingerprints.has(custom.fingerprint)) continue;
+      seenFingerprints.add(custom.fingerprint);
+      violations.push(custom);
     }
 
     logger.info(
       {
         pageUrl,
         violationCount: violations.length,
-        axeViolationCount: results.violations.length,
+        axeViolationCount: mainResults.violations.length,
+        iframeViolationCount: iframeViolations.length,
+        customViolationCount: customViolations.length,
       },
       'axe-core analysis complete',
     );

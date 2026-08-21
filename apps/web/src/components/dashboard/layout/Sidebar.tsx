@@ -17,6 +17,7 @@ import {
   FileStack,
 } from 'lucide-react';
 import type { UserRole } from '@accessshield/types';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 import { useUIStore } from '@/lib/stores/uiStore';
 import { useDictionary } from '@/lib/i18n/locale-context';
 import { cn } from '@/lib/utils';
@@ -78,18 +79,21 @@ export function Sidebar({ userRole }: SidebarProps) {
       )}
       aria-label={nav.sidebarAria}
     >
-      <div className="flex h-14 items-center justify-between border-b border-gray-100 px-4">
-        {!sidebarCollapsed && (
-          <Link
-            href="/dashboard"
-            className="text-base font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
-          >
-            AccessShield
-          </Link>
-        )}
+      <div className="flex h-[4.5rem] items-center justify-between gap-2 border-b border-primary-100 px-3">
+        <Link
+          href="/dashboard"
+          className="min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+          aria-label="AccessibleNow"
+        >
+          {sidebarCollapsed ? (
+            <BrandLogo variant="mark" height={40} decorative />
+          ) : (
+            <BrandLogo variant="full" height={48} decorative />
+          )}
+        </Link>
         <button
           onClick={toggleSidebar}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-text-tertiary hover:bg-gray-100 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-tertiary hover:bg-primary-50 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
           aria-label={sidebarCollapsed ? nav.expand : nav.collapse}
           aria-expanded={!sidebarCollapsed}
         >

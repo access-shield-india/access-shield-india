@@ -1,11 +1,9 @@
-import { readFileSync } from 'node:fs';
-import { gzipSync } from 'node:zlib';
 import * as esbuild from 'esbuild';
+import { checkBundleSize, CORE_BUDGET } from './scripts/check-size';
 
-const MAX_GZIP_BYTES = 35 * 1024;
 const isWatch = process.argv.includes('--watch');
 
-const buildOptions: esbuild.BuildOptions = {
+const coreOptions: esbuild.BuildOptions = {
   entryPoints: ['src/index.ts'],
   bundle: true,
   minify: !isWatch,
@@ -24,29 +22,48 @@ const buildOptions: esbuild.BuildOptions = {
   metafile: !isWatch,
 };
 
-function checkBundleSize(): void {
-  const raw = readFileSync('dist/widget.min.js');
-  const gzipped = gzipSync(raw);
-  const kb = (gzipped.length / 1024).toFixed(1);
-  console.log(`Bundle: ${(raw.length / 1024).toFixed(1)} KB raw, ${kb} KB gzipped`);
+const analyticsOptions: esbuild.BuildOptions = {
+  entryPoints: ['src/analytics.ts'],
+  bundle: true,
+  minify: !isWatch,
+  sourcemap: true,
+  target: 'es2018',
+  format: 'iife',
+  globalName: 'AccessShieldAnalytics',
+  outfile: 'dist/analytics.min.js',
+};
 
-  if (gzipped.length > MAX_GZIP_BYTES) {
-    console.error(`ERROR: Bundle exceeds ${MAX_GZIP_BYTES / 1024} KB gzipped limit (${kb} KB)`);
-    process.exit(1);
-  }
-}
+const langOptions: esbuild.BuildOptions = {
+  entryPoints: ['src/lang/hi.ts'],
+  bundle: true,
+  minify: !isWatch,
+  target: 'es2018',
+  format: 'esm',
+  outdir: 'dist/lang',
+  entryNames: '[name]',
+};
 
 async function build(): Promise<void> {
   if (isWatch) {
-    const ctx = await esbuild.context(buildOptions);
-    await ctx.watch();
+    const [core, analytics, lang] = await Promise.all([
+      esbuild.context(coreOptions),
+      esbuild.context(analyticsOptions),
+      esbuild.context(langOptions),
+    ]);
+    await Promise.all([core.watch(), analytics.watch(), lang.watch()]);
     console.log('Watching for changes...');
     return;
   }
 
-  const result = await esbuild.build(buildOptions);
-  if (result.metafile?.outputs['dist/widget.min.js']) {
-    checkBundleSize();
+  await Promise.all([
+    esbuild.build(coreOptions),
+    esbuild.build(analyticsOptions),
+    esbuild.build(langOptions),
+  ]);
+
+  if (!checkBundleSize()) {
+    console.error(`ERROR: Core bundle exceeds ${CORE_BUDGET} bytes gzipped`);
+    process.exit(1);
   }
 }
 

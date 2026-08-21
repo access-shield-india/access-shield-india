@@ -27,6 +27,7 @@ const createAssetSchema = z.object({
     .optional()
     .default('website'),
   description: z.string().max(2000).optional(),
+  standards: z.array(z.enum(['WCAG22', 'IS17802', 'GIGW3', 'SEBI'])).optional(),
 });
 
 /**
@@ -54,6 +55,7 @@ export function createAssetsRouter(db: Database): ExpressRouter {
             description: assets.description,
             isActive: assets.isActive,
             lastScannedAt: assets.lastScannedAt,
+            standards: assets.standards,
             createdAt: assets.createdAt,
           })
           .from(assets)
@@ -103,6 +105,7 @@ export function createAssetsRouter(db: Database): ExpressRouter {
             description: assets.description,
             isActive: assets.isActive,
             lastScannedAt: assets.lastScannedAt,
+            standards: assets.standards,
             createdAt: assets.createdAt,
             updatedAt: assets.updatedAt,
           })
@@ -149,7 +152,7 @@ export function createAssetsRouter(db: Database): ExpressRouter {
           return;
         }
 
-        const { name, url, type, description } = parseResult.data;
+        const { name, url, type, description, standards } = parseResult.data;
         const orgId = req.user!.org_id;
 
         const [org] = await db
@@ -187,6 +190,7 @@ export function createAssetsRouter(db: Database): ExpressRouter {
             url,
             type,
             description,
+            standards: standards && standards.length > 0 ? standards : ['WCAG22', 'IS17802'],
           })
           .returning({
             id: assets.id,
@@ -194,6 +198,7 @@ export function createAssetsRouter(db: Database): ExpressRouter {
             url: assets.url,
             type: assets.type,
             description: assets.description,
+            standards: assets.standards,
             createdAt: assets.createdAt,
           });
 
@@ -355,7 +360,11 @@ export function createAssetsRouter(db: Database): ExpressRouter {
 
         await db
           .update(assets)
-          .set({ description: mobileDescription, url: mobileUrl })
+          .set({
+            description: mobileDescription,
+            url: mobileUrl,
+            standards: parsedStandards,
+          })
           .where(and(eq(assets.id, created.id), eq(assets.organisationId, orgId)));
 
         const assetWithMetadata = { ...created, description: mobileDescription, url: mobileUrl };

@@ -21,6 +21,8 @@ interface KeycloakUserRepresentation {
   emailVerified?: boolean;
   firstName?: string;
   lastName?: string;
+  /** Empty array skips VERIFY_PROFILE so password grant works immediately. */
+  requiredActions?: string[];
   attributes?: Record<string, string[]>;
   credentials?: Array<{ type: string; value: string; temporary?: boolean }>;
 }

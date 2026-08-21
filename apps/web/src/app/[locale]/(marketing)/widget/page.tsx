@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description:
     'Help visitors with disabilities use your website — font size, contrast, dyslexia tools, Hindi UI, and keyboard enhancements. Built for Indian sites.',
   openGraph: {
-    title: 'Accessibility Widget | AccessShield India',
+    title: 'Accessibility Widget | AccessibleNow',
     description:
       'A toolbar for visitors who need larger text, higher contrast, reading aids, or Hindi UI — one click, no login required.',
     type: 'website',
@@ -55,7 +55,7 @@ export default function WidgetPage() {
             Help visitors with disabilities use your site
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-text-secondary sm:text-xl">
-            The AccessShield widget is a lightweight toolbar for people who need larger text, higher
+            The AccessibleNow widget is a lightweight toolbar for people who need larger text, higher
             contrast, dyslexia-friendly fonts, Hindi UI, keyboard tools, or text-to-speech — one
             click, no login required.
           </p>
@@ -117,7 +117,7 @@ export default function WidgetPage() {
             <div
               className="relative rounded-xl border-2 border-dashed border-primary-300 bg-white p-8 shadow-lg"
               role="img"
-              aria-label="Illustration of the AccessShield widget launcher on a website"
+              aria-label="Illustration of the AccessibleNow widget launcher on a website"
             >
               <div className="rounded-lg border border-border bg-bg-secondary p-4">
                 <div className="flex gap-2 border-b border-border pb-3">

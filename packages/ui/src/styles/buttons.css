@@ -31,7 +31,7 @@
 .as-btn-ghost:focus-visible,
 .as-btn-danger:focus-visible,
 .as-btn-on-dark:focus-visible {
-  outline: 2px solid #1a56a0;
+  outline: 2px solid #7c3aed;
   outline-offset: 2px;
 }
 
@@ -54,8 +54,8 @@
 }
 
 .as-btn-primary {
-  border: 2px solid #1a3a5c;
-  background-color: #1a56a0;
+  border: 2px solid #6d28d9;
+  background-color: #7c3aed;
   color: #ffffff;
   box-shadow:
     0 1px 3px 0 rgb(0 0 0 / 0.1),
@@ -63,47 +63,47 @@
 }
 
 .as-btn-primary:hover {
-  border-color: #0d2e5a;
-  background-color: #1a3a5c;
+  border-color: #5b21b6;
+  background-color: #6d28d9;
   color: #ffffff;
 }
 
 .as-btn-secondary {
-  border: 2px solid #1a56a0;
+  border: 2px solid #7c3aed;
   background-color: #ffffff;
-  color: #1a3a5c;
+  color: #6d28d9;
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 
 .as-btn-secondary:hover {
-  border-color: #1a3a5c;
-  background-color: #ebf3fb;
-  color: #1a3a5c;
+  border-color: #6d28d9;
+  background-color: #f3e8ff;
+  color: #6d28d9;
 }
 
 .as-btn-outline {
-  border: 2px solid #1a56a0;
-  background-color: #ebf3fb;
-  color: #1a3a5c;
+  border: 2px solid #7c3aed;
+  background-color: #f3e8ff;
+  color: #6d28d9;
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 
 .as-btn-outline:hover {
-  border-color: #1a3a5c;
-  background-color: #ebf3fb;
-  color: #1a3a5c;
+  border-color: #6d28d9;
+  background-color: #f3e8ff;
+  color: #6d28d9;
 }
 
 .as-btn-ghost {
   border: 2px solid transparent;
   background-color: transparent;
-  color: #1a56a0;
+  color: #7c3aed;
 }
 
 .as-btn-ghost:hover {
   border-color: transparent;
-  background-color: #ebf3fb;
-  color: #1a3a5c;
+  background-color: #f3e8ff;
+  color: #6d28d9;
 }
 
 .as-btn-danger {
@@ -122,16 +122,16 @@
 .as-btn-on-dark {
   border: 2px solid #ffffff;
   background-color: #ffffff;
-  color: #1a3a5c;
+  color: #6d28d9;
   box-shadow:
     0 1px 3px 0 rgb(0 0 0 / 0.1),
     0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 
 .as-btn-on-dark:hover {
-  border-color: #ebf3fb;
-  background-color: #f4f8fd;
-  color: #1a3a5c;
+  border-color: #f3e8ff;
+  background-color: #faf5ff;
+  color: #6d28d9;
 }
 
 .as-btn-primary:disabled,

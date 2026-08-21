@@ -24,4 +24,5 @@ export type {
   S3UploadResult,
   ScanTrendPoint,
   ViolationSummary,
+  WidgetUsageForReport,
 } from './types';

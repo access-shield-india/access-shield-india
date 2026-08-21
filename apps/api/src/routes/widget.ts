@@ -13,8 +13,16 @@ import type { Redis } from 'ioredis';
 import { z } from 'zod';
 import { sendProblem } from '../lib/problem-details';
 import { requireRoles } from '../middleware/rbac';
+import {
+  WIDGET_EVENT_TYPES,
+  buildWidgetAnalyticsSummary,
+  daysAgoUtc,
+  incrementWidgetStats,
+  setIncludeInNextReport,
+  utcDateString,
+} from '../lib/widget-analytics';
 
-const POSITIONS = ['bottom-right', 'bottom-left', 'top-right', 'top-left'] as const;
+const POSITIONS = ['bottom-right', 'bottom-left', 'middle-right', 'top-right', 'top-left'] as const;
 const LANGUAGES = ['en', 'hi'] as const;
 
 interface WidgetSettingsResponse {
@@ -308,18 +316,21 @@ async function getPrefsForVerify(
   db: Database,
   orgId: string,
   assetId: string | null = null,
-): Promise<{ isEnabled: boolean }> {
+): Promise<{ isEnabled: boolean; position: string }> {
   const whereClause = assetId
     ? and(eq(widgetPreferences.organisationId, orgId), eq(widgetPreferences.assetId, assetId))
     : and(eq(widgetPreferences.organisationId, orgId), isNull(widgetPreferences.assetId));
 
   const [existing] = await db
-    .select({ isEnabled: widgetPreferences.isEnabled })
+    .select({
+      isEnabled: widgetPreferences.isEnabled,
+      position: widgetPreferences.position,
+    })
     .from(widgetPreferences)
     .where(whereClause)
     .limit(1);
 
-  return existing ?? { isEnabled: true };
+  return existing ?? { isEnabled: true, position: 'bottom-right' };
 }
 
 async function getOrCreatePrefs(db: Database, orgId: string, assetId: string | null = null) {
@@ -429,6 +440,32 @@ const verifyQuerySchema = z.object({
   token: z.string().min(8).max(128),
 });
 
+const analyticsEventSchema = z.object({
+  type: z.enum(WIDGET_EVENT_TYPES),
+  feature: z.string().max(60).optional(),
+  tsBucket: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}$/),
+});
+
+const analyticsBodySchema = z.object({
+  token: z.string().min(8).max(128),
+  events: z.array(analyticsEventSchema).min(1).max(50),
+});
+
+const analyticsSummaryQuerySchema = z.object({
+  from: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  to: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+});
+
+const includeInReportSchema = z.object({
+  include: z.boolean(),
+});
+
 /** PUBLIC — token verification for embedded widget (mount before auth middleware). */
 export function createPublicWidgetRouter(db: Database, redis: Redis): ExpressRouter {
   const router = Router();
@@ -463,12 +500,50 @@ export function createPublicWidgetRouter(db: Database, redis: Redis): ExpressRou
       const hostname = requestHostname(req);
       const valid = prefs.isEnabled && domainAllowed(allowedDomains, hostname);
 
-      const response: ApiResponse<{ valid: boolean }> = {
-        data: { valid },
+      const response: ApiResponse<{ valid: boolean; position?: string }> = {
+        data: { valid, position: prefs.position },
         timestamp: new Date().toISOString(),
       };
 
       res.json(response);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
+   * PUBLIC — batched anonymous usage events. Token-validated.
+   * Do not log IP or request body beyond event types.
+   */
+  router.post('/analytics', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      let payload: unknown = req.body;
+      if (typeof payload === 'string') {
+        try {
+          payload = JSON.parse(payload) as unknown;
+        } catch {
+          sendProblem(res, 400, 'validation-error', 'Invalid analytics payload');
+          return;
+        }
+      }
+
+      const parseResult = analyticsBodySchema.safeParse(payload);
+      if (!parseResult.success) {
+        sendProblem(res, 400, 'validation-error', 'Invalid analytics payload', undefined, {
+          errors: parseResult.error.flatten().fieldErrors,
+        });
+        return;
+      }
+
+      const { token, events } = parseResult.data;
+      const ctx = await resolveTokenContext(redis, db, token);
+      if (!ctx) {
+        sendProblem(res, 401, 'unauthorized', 'Invalid widget token');
+        return;
+      }
+
+      await incrementWidgetStats(redis, ctx.orgId, events);
+      res.status(204).end();
     } catch (err) {
       next(err);
     }
@@ -686,6 +761,62 @@ export function createWidgetRouter(db: Database, redis: Redis): ExpressRouter {
           timestamp: new Date().toISOString(),
         };
 
+        res.json(response);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.get(
+    '/analytics/summary',
+    requireRoles('auditor', 'developer', 'accessibility_officer', 'customer_admin'),
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const parseResult = analyticsSummaryQuerySchema.safeParse(req.query);
+        if (!parseResult.success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid date range', undefined, {
+            errors: parseResult.error.flatten().fieldErrors,
+          });
+          return;
+        }
+
+        const to = parseResult.data.to ?? utcDateString();
+        const from = parseResult.data.from ?? daysAgoUtc(29, new Date(`${to}T00:00:00.000Z`));
+        const orgId = req.user!.org_id;
+        const summary = await buildWidgetAnalyticsSummary(db, redis, orgId, from, to);
+
+        const response: ApiResponse<typeof summary> = {
+          data: summary,
+          timestamp: new Date().toISOString(),
+        };
+        res.json(response);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.post(
+    '/analytics/include-in-report',
+    requireRoles('auditor', 'developer', 'accessibility_officer', 'customer_admin'),
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const parseResult = includeInReportSchema.safeParse(req.body);
+        if (!parseResult.success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid request body', undefined, {
+            errors: parseResult.error.flatten().fieldErrors,
+          });
+          return;
+        }
+
+        const orgId = req.user!.org_id;
+        await setIncludeInNextReport(redis, orgId, parseResult.data.include);
+
+        const response: ApiResponse<{ includeInNextReport: boolean }> = {
+          data: { includeInNextReport: parseResult.data.include },
+          timestamp: new Date().toISOString(),
+        };
         res.json(response);
       } catch (err) {
         next(err);

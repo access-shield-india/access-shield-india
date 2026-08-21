@@ -43,6 +43,49 @@ export interface AiAltTextResponseBody {
 
 export type AiProvider = 'anthropic' | 'local' | string;
 
+const LOCAL_DEFAULT_MODEL = 'Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF';
+
+function looksLikeCloudModel(model: string): boolean {
+  return /claude|sonnet|haiku|opus|anthropic|gpt-|gemini/i.test(model);
+}
+
+/** Org rows still say anthropic from an old migration; local-dev has no Anthropic key. */
+export function resolveAiBackend(
+  provider?: string,
+  model?: string,
+): { provider: string; model: string } {
+  const requested = (provider ?? 'local').trim().toLowerCase();
+  const requestedModel = model?.trim() ?? '';
+  const hasAnthropicKey = Boolean(process.env.ANTHROPIC_API_KEY?.trim());
+
+  if (requested === 'anthropic' && !hasAnthropicKey) {
+    return {
+      provider: 'local',
+      model:
+        requestedModel && !looksLikeCloudModel(requestedModel)
+          ? requestedModel
+          : LOCAL_DEFAULT_MODEL,
+    };
+  }
+
+  if (requested === 'local' || requested === 'local-mlx') {
+    return {
+      provider: 'local',
+      model:
+        requestedModel && !looksLikeCloudModel(requestedModel)
+          ? requestedModel
+          : LOCAL_DEFAULT_MODEL,
+    };
+  }
+
+  return {
+    provider: requested,
+    model:
+      requestedModel ||
+      (requested === 'anthropic' ? 'claude-sonnet-4-5-20250929' : LOCAL_DEFAULT_MODEL),
+  };
+}
+
 function aiHeaders(
   orgId: string,
   planTier: string,
@@ -78,6 +121,7 @@ export async function requestAiFix(
   aiModel?: string,
 ): Promise<AiFixResponseBody> {
   const { url, internalKey } = getAiServiceConfig();
+  const backend = resolveAiBackend(aiProvider, aiModel);
 
   if (!internalKey) {
     throw new Error('AI service is not configured (INTERNAL_AI_SERVICE_KEY missing)');
@@ -85,9 +129,9 @@ export async function requestAiFix(
 
   const response = await fetch(`${url}/ai/fix`, {
     method: 'POST',
-    headers: aiHeaders(orgId, planTier, internalKey, aiProvider, aiModel),
+    headers: aiHeaders(orgId, planTier, internalKey, backend.provider, backend.model),
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(requestTimeoutMs(aiProvider)),
+    signal: AbortSignal.timeout(requestTimeoutMs(backend.provider)),
   });
 
   if (!response.ok) {
@@ -111,6 +155,7 @@ export async function requestAiAltText(
   aiModel?: string,
 ): Promise<AiAltTextResponseBody> {
   const { url, internalKey } = getAiServiceConfig();
+  const backend = resolveAiBackend(aiProvider, aiModel);
 
   if (!internalKey) {
     throw new Error('AI service is not configured (INTERNAL_AI_SERVICE_KEY missing)');
@@ -118,9 +163,9 @@ export async function requestAiAltText(
 
   const response = await fetch(`${url}/ai/alt-text`, {
     method: 'POST',
-    headers: aiHeaders(orgId, planTier, internalKey, aiProvider, aiModel),
+    headers: aiHeaders(orgId, planTier, internalKey, backend.provider, backend.model),
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(requestTimeoutMs(aiProvider)),
+    signal: AbortSignal.timeout(requestTimeoutMs(backend.provider)),
   });
 
   if (!response.ok) {

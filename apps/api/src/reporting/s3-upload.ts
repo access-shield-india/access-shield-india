@@ -105,6 +105,32 @@ export async function uploadReportToS3(
 }
 
 /**
+ * Fetch a report object from S3/MinIO as a buffer (API streams this to the browser).
+ */
+export async function getReportObjectFromS3(
+  s3Key: string,
+): Promise<{ buffer: Buffer; contentType: string }> {
+  const client = getSharedS3Client();
+  const bucketName = getBucketName();
+  const obj = await client.send(
+    new GetObjectCommand({
+      Bucket: bucketName,
+      Key: s3Key,
+    }),
+  );
+
+  if (!obj.Body) {
+    throw new Error('Report object is empty');
+  }
+
+  const bytes = await obj.Body.transformToByteArray();
+  return {
+    buffer: Buffer.from(bytes),
+    contentType: obj.ContentType ?? 'application/octet-stream',
+  };
+}
+
+/**
  * Generate a pre-signed GET URL for downloading a report from S3.
  */
 export async function getSignedReportUrl(s3Key: string): Promise<string> {

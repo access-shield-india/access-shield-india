@@ -13,10 +13,12 @@ import { Select } from '@accessshield/ui';
 import { CopyButton } from '@accessshield/ui';
 import { Modal } from '@accessshield/ui';
 import { LoadingState } from '@/components/dashboard/common/LoadingState';
+import { WidgetSectionNav } from '@/components/dashboard/widget/WidgetSectionNav';
 
 const POSITION_OPTIONS = [
   { value: 'bottom-right' as const, label: 'Bottom Right' },
   { value: 'bottom-left' as const, label: 'Bottom Left' },
+  { value: 'middle-right' as const, label: 'Middle Right' },
   { value: 'top-right' as const, label: 'Top Right' },
   { value: 'top-left' as const, label: 'Top Left' },
 ];
@@ -133,6 +135,8 @@ export function WidgetSettings() {
 
   return (
     <div className="space-y-6">
+      <WidgetSectionNav />
+
       {/* Widget on/off */}
       <div className="rounded-lg border border-border bg-white p-6">
         <Switch

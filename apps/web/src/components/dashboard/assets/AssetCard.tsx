@@ -4,9 +4,28 @@ import Link from 'next/link';
 import { ExternalLink, PlayCircle, Settings } from 'lucide-react';
 import { Card, Badge, Button, getButtonStyle, getButtonThemeClassName } from '@accessshield/ui';
 import { cn, formatRelativeTime } from '@/lib/utils';
-import type { Asset } from '@/lib/api/types';
+import type { Asset, ComplianceStandard } from '@/lib/api/types';
 import { useTriggerScan } from '@/lib/hooks/useApi';
 import { DeleteAssetDialog } from '@/components/dashboard/assets/DeleteAssetDialog';
+
+const STANDARD_BADGES: Record<ComplianceStandard, { label: string; className: string }> = {
+  WCAG22: {
+    label: 'WCAG 2.2 AA',
+    className: 'border border-primary-200 bg-primary-50 text-primary-700 font-semibold',
+  },
+  IS17802: {
+    label: 'IS 17802',
+    className: 'border border-amber-200 bg-amber-50 text-amber-700 font-semibold',
+  },
+  GIGW3: {
+    label: 'GIGW 3.0',
+    className: 'border border-emerald-200 bg-emerald-50 text-emerald-800 font-semibold',
+  },
+  SEBI: {
+    label: 'SEBI',
+    className: 'border border-violet-200 bg-violet-50 text-violet-800 font-semibold',
+  },
+};
 
 function stableScoreFromId(id: string): number {
   let hash = 0;
@@ -75,18 +94,17 @@ export function AssetCard({ asset }: AssetCardProps) {
         </a>
 
         <div className="flex flex-wrap gap-2">
-          <Badge
-            variant="secondary"
-            className="border border-primary-200 bg-primary-50 text-primary-700 font-semibold"
-          >
-            WCAG 2.2 AA
-          </Badge>
-          <Badge
-            variant="secondary"
-            className="border border-amber-200 bg-amber-50 text-amber-700 font-semibold"
-          >
-            IS 17802
-          </Badge>
+          {(asset.standards?.length ? asset.standards : (['WCAG22', 'IS17802'] as const)).map(
+            (standard) => {
+              const badge = STANDARD_BADGES[standard];
+              if (!badge) return null;
+              return (
+                <Badge key={standard} variant="secondary" className={badge.className}>
+                  {badge.label}
+                </Badge>
+              );
+            },
+          )}
         </div>
 
         {asset.lastScannedAt && (
@@ -101,7 +119,7 @@ export function AssetCard({ asset }: AssetCardProps) {
         <Button
           size="sm"
           variant="primary"
-          onClick={() => triggerScan({ asset_id: asset.id })}
+          onClick={() => triggerScan({ asset_id: asset.id, standards: asset.standards })}
           isLoading={isPending}
           className="flex-1"
         >

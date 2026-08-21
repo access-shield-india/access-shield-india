@@ -4,7 +4,7 @@ import { IssueCertificatePanel } from '@/components/dashboard/certs/IssueCertifi
 import { CertificateList } from '@/components/dashboard/certs/CertificateList';
 
 export const metadata = {
-  title: 'Certificates | AccessShield India',
+  title: 'Certificates | AccessibleNow',
   description: 'Issue and manage accessibility compliance certificates',
 };
 

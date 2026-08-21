@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button, Input, Select, Checkbox, Card, Progress, CopyButton } from '@accessshield/ui';
+import { Button, Input, Select, Card, Progress, CopyButton } from '@accessshield/ui';
 import { CheckCircle, Circle, Loader2 } from 'lucide-react';
 import { useCreateAsset, useTriggerScan } from '@/lib/hooks/useApi';
+import { RhfCheckbox } from '@/components/dashboard/forms/RhfCheckbox';
 
 const STEPS = [
   { id: 1, label: 'Organisation Details' },
@@ -75,6 +76,12 @@ export default function OnboardingPage() {
         name: data.websiteName,
         url: data.url,
         type: 'website',
+        standards: [
+          ...(data.standards.wcag22 ? (['WCAG22'] as const) : []),
+          ...(data.standards.is17802 ? (['IS17802'] as const) : []),
+          ...(data.standards.gigw3 ? (['GIGW3'] as const) : []),
+          ...(data.standards.sebi ? (['SEBI'] as const) : []),
+        ],
       },
       {
         onSuccess: (asset) => {
@@ -231,10 +238,26 @@ export default function OnboardingPage() {
                   Compliance Standards
                 </legend>
                 <div className="space-y-2">
-                  <Checkbox {...step2Form.register('standards.wcag22')} label="WCAG 2.2 AA" />
-                  <Checkbox {...step2Form.register('standards.is17802')} label="IS 17802 (India)" />
-                  <Checkbox {...step2Form.register('standards.gigw3')} label="GIGW 3.0" />
-                  <Checkbox {...step2Form.register('standards.sebi')} label="SEBI Guidelines" />
+                  <RhfCheckbox
+                    control={step2Form.control}
+                    name="standards.wcag22"
+                    label="WCAG 2.2 AA"
+                  />
+                  <RhfCheckbox
+                    control={step2Form.control}
+                    name="standards.is17802"
+                    label="IS 17802 (India)"
+                  />
+                  <RhfCheckbox
+                    control={step2Form.control}
+                    name="standards.gigw3"
+                    label="GIGW 3.0"
+                  />
+                  <RhfCheckbox
+                    control={step2Form.control}
+                    name="standards.sebi"
+                    label="SEBI Guidelines"
+                  />
                 </div>
               </fieldset>
 

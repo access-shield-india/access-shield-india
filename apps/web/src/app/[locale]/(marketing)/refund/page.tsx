@@ -4,7 +4,7 @@ import { MarketingContentPage } from '@/components/marketing/MarketingContentPag
 
 export const metadata: Metadata = {
   title: 'Refund Policy',
-  description: 'Cancellation and refund terms for AccessShield India subscriptions.',
+  description: 'Cancellation and refund terms for AccessibleNow subscriptions.',
 };
 
 export default function RefundPage() {

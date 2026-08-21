@@ -13,7 +13,7 @@ export class NavigationModule {
 
   constructor(private readonly prefs: PreferencesManager) {}
 
-  render(parent: HTMLElement, lang: Language): void {
+  render(parent: HTMLElement, lang: Language): HTMLElement {
     this.lang = lang;
     this.container = document.createElement('section');
     this.container.className = 'as-section';
@@ -22,11 +22,12 @@ export class NavigationModule {
     parent.appendChild(this.container);
     this.bindEvents();
     this.syncUI(this.prefs.get());
+    return this.container;
   }
 
   apply(prefs: WidgetPreferences): void {
-    this.applyKeyboardNavMode(prefs.keyboardNavMode);
-    this.applySkipNavigation(prefs.skipNavigation);
+    this.applyKeyboardNavMode(prefs.keyboardNavMode || prefs.keyboardHighlights);
+    this.applySkipNavigation(prefs.skipNavigation || prefs.skipLinks);
     this.applyFocusTracker(prefs.focusTracker);
   }
 
@@ -39,14 +40,14 @@ export class NavigationModule {
   updateLabels(lang: Language): void {
     this.lang = lang;
     if (!this.container) return;
-    this.container.querySelector('h2')!.textContent = t('sectionNavigation', lang);
+    this.container.querySelector('h3')!.textContent = t('sectionNavigation', lang);
     this.updateText(this.container, lang);
   }
 
   private buildHTML(): string {
     const l = this.lang;
     return `
-      <h2 id="as-section-navigation" class="as-section-title">${t('sectionNavigation', l)}</h2>
+      <h3 id="as-section-navigation" class="as-section-title">${t('sectionNavigation', l)}</h3>
       ${this.switchRow('keyboardNavMode', 'keyboardNavMode')}
       <div class="as-control-row">
         <button type="button" class="as-btn as-btn-action" id="as-skip-nav-btn">${t('skipNavigation', l)}</button>
@@ -129,13 +130,13 @@ export class NavigationModule {
         'keyboard-nav',
         `
         *:focus, *:focus-visible {
-          outline: 3px solid #1A56A0 !important;
+          outline: 3px solid #6D28D9 !important;
           outline-offset: 2px !important;
         }
         [accesskey]::after {
           content: ' [' attr(accesskey) ']';
           font-size: 0.75rem;
-          color: #1A56A0;
+          color: #6D28D9;
           font-weight: bold;
         }`,
       );
@@ -191,7 +192,7 @@ export class NavigationModule {
           overflow: 'visible',
           zIndex: '100000',
           padding: '12px 16px',
-          background: '#1A56A0',
+          background: '#6D28D9',
           color: '#fff',
           borderRadius: '6px',
           fontWeight: '600',

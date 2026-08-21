@@ -4,9 +4,10 @@ import { useState, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Modal, Input, Select, Button, Checkbox } from '@accessshield/ui';
+import { Modal, Input, Select, Button } from '@accessshield/ui';
 import { useCreateAsset, useCreateMobileAsset } from '@/lib/hooks/useApi';
 import { Upload, Smartphone, Globe } from 'lucide-react';
+import { RhfCheckbox } from '@/components/dashboard/forms/RhfCheckbox';
 
 const webAssetSchema = z.object({
   name: z.string().min(2, 'Asset name must be at least 2 characters'),
@@ -50,6 +51,22 @@ export interface AddAssetModalProps {
 }
 
 type AssetMode = 'web' | 'mobile';
+
+type StandardFlags = {
+  wcag22: boolean;
+  is17802: boolean;
+  gigw3?: boolean;
+  sebi: boolean;
+};
+
+function standardsFromFlags(flags: StandardFlags): Array<'WCAG22' | 'IS17802' | 'GIGW3' | 'SEBI'> {
+  const selected: Array<'WCAG22' | 'IS17802' | 'GIGW3' | 'SEBI'> = [];
+  if (flags.wcag22) selected.push('WCAG22');
+  if (flags.is17802) selected.push('IS17802');
+  if (flags.gigw3) selected.push('GIGW3');
+  if (flags.sebi) selected.push('SEBI');
+  return selected.length > 0 ? selected : ['WCAG22', 'IS17802'];
+}
 
 export function AddAssetModal({ open, onClose }: AddAssetModalProps) {
   const [mode, setMode] = useState<AssetMode>('web');
@@ -106,6 +123,7 @@ export function AddAssetModal({ open, onClose }: AddAssetModalProps) {
         url: data.url,
         type: data.type,
         description: data.description,
+        standards: standardsFromFlags(data.standards),
       },
       {
         onSuccess: () => {
@@ -236,10 +254,22 @@ export function AddAssetModal({ open, onClose }: AddAssetModalProps) {
                 Compliance Standards
               </legend>
               <div className="space-y-2">
-                <Checkbox {...webForm.register('standards.wcag22')} label="WCAG 2.2 AA" />
-                <Checkbox {...webForm.register('standards.is17802')} label="IS 17802 (India)" />
-                <Checkbox {...webForm.register('standards.gigw3')} label="GIGW 3.0 (Government)" />
-                <Checkbox {...webForm.register('standards.sebi')} label="SEBI Guidelines" />
+                <RhfCheckbox control={webForm.control} name="standards.wcag22" label="WCAG 2.2 AA" />
+                <RhfCheckbox
+                  control={webForm.control}
+                  name="standards.is17802"
+                  label="IS 17802 (India)"
+                />
+                <RhfCheckbox
+                  control={webForm.control}
+                  name="standards.gigw3"
+                  label="GIGW 3.0 (Government)"
+                />
+                <RhfCheckbox
+                  control={webForm.control}
+                  name="standards.sebi"
+                  label="SEBI Guidelines"
+                />
               </div>
             </fieldset>
 
@@ -367,9 +397,21 @@ export function AddAssetModal({ open, onClose }: AddAssetModalProps) {
                 Compliance Standards
               </legend>
               <div className="space-y-2">
-                <Checkbox {...mobileForm.register('standards.wcag22')} label="WCAG 2.2 AA" />
-                <Checkbox {...mobileForm.register('standards.is17802')} label="IS 17802 (India)" />
-                <Checkbox {...mobileForm.register('standards.sebi')} label="SEBI Guidelines" />
+                <RhfCheckbox
+                  control={mobileForm.control}
+                  name="standards.wcag22"
+                  label="WCAG 2.2 AA"
+                />
+                <RhfCheckbox
+                  control={mobileForm.control}
+                  name="standards.is17802"
+                  label="IS 17802 (India)"
+                />
+                <RhfCheckbox
+                  control={mobileForm.control}
+                  name="standards.sebi"
+                  label="SEBI Guidelines"
+                />
               </div>
             </fieldset>
 

@@ -18,7 +18,7 @@ export class ReadingModule {
 
   constructor(private readonly prefs: PreferencesManager) {}
 
-  render(parent: HTMLElement, lang: Language): void {
+  render(parent: HTMLElement, lang: Language): HTMLElement {
     this.lang = lang;
     this.container = document.createElement('section');
     this.container.className = 'as-section';
@@ -27,6 +27,7 @@ export class ReadingModule {
     parent.appendChild(this.container);
     this.bindEvents();
     this.syncUI(this.prefs.get());
+    return this.container;
   }
 
   apply(prefs: WidgetPreferences): void {
@@ -46,14 +47,14 @@ export class ReadingModule {
   updateLabels(lang: Language): void {
     this.lang = lang;
     if (!this.container) return;
-    this.container.querySelector('h2')!.textContent = t('sectionReading', lang);
+    this.container.querySelector('h3')!.textContent = t('sectionReading', lang);
     this.updateText(this.container, lang);
   }
 
   private buildHTML(): string {
     const l = this.lang;
     return `
-      <h2 id="as-section-reading" class="as-section-title">${t('sectionReading', l)}</h2>
+      <h3 id="as-section-reading" class="as-section-title">${t('sectionReading', l)}</h3>
       ${this.switchRow('readingGuide', 'readingGuide')}
       ${this.switchRow('readingMask', 'readingMask')}
       ${this.switchRow('linkHighlight', 'linkHighlight')}
@@ -138,7 +139,7 @@ export class ReadingModule {
         left: '0',
         width: '100%',
         height: `${GUIDE_HEIGHT}px`,
-        backgroundColor: '#1A56A0',
+        backgroundColor: '#6D28D9',
         pointerEvents: 'none',
         zIndex: '99990',
         top: '0',
@@ -236,7 +237,7 @@ export class ReadingModule {
         'focus-indicator',
         `
         *:focus-visible {
-          outline: 3px solid #1A56A0 !important;
+          outline: 3px solid #6D28D9 !important;
           outline-offset: 3px !important;
           box-shadow: 0 0 0 6px rgba(26, 86, 160, 0.3) !important;
         }`,

@@ -22,7 +22,7 @@ const GenerateReportPanel = dynamic(
 );
 
 export const metadata = {
-  title: 'Reports | AccessShield India',
+  title: 'Reports | AccessibleNow',
   description: 'Generate and download accessibility compliance reports',
 };
 

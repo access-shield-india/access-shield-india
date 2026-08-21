@@ -177,7 +177,7 @@ export const home: HomeDict = {
     items: [
       {
         quote:
-          'हम सोचते थे सब ठीक है, जब तक blind user हमारा KYC flow complete नहीं कर पाया। AccessShield ने बताया क्या fix करना है — और SEBI-ready reports दिए।',
+          'हम सोचते थे सब ठीक है, जब तक blind user हमारा KYC flow complete नहीं कर पाया। AccessibleNow ने बताया क्या fix करना है — और SEBI-ready reports दिए।',
         name: 'Priya Sharma',
         role: 'Head of Compliance',
         company: 'Leading Fintech',
@@ -185,7 +185,7 @@ export const home: HomeDict = {
       },
       {
         quote:
-          'Government tender में GIGW compliance चाहिए था। AccessShield ने इसे real barriers में बदला — सिर्फ checklist नहीं।',
+          'Government tender में GIGW compliance चाहिए था। AccessibleNow ने इसे real barriers में बदला — सिर्फ checklist नहीं।',
         name: 'Rajesh Kumar',
         role: 'CTO',
         company: 'E-commerce Platform',

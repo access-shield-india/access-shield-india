@@ -131,3 +131,11 @@ export function getScanLimit(planTier: string): number | null {
 export function getPlanFeatures(planTier: string): PlanFeatures {
   return PLAN_FEATURES[planTier] ?? STARTER_PLAN_FEATURES;
 }
+
+/** SEBI PDF reports — Enterprise / Government / Regulatory Defense, or any plan in local dev. */
+export function isSebiReportAllowed(planTier: string): boolean {
+  if (process.env.NODE_ENV !== 'production') {
+    return true;
+  }
+  return getPlanFeatures(planTier).sebiReport;
+}

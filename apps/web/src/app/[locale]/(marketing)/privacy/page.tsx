@@ -4,19 +4,19 @@ import { MarketingContentPage } from '@/components/marketing/MarketingContentPag
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  description: 'How AccessShield India collects, uses, and protects your personal data.',
+  description: 'How AccessibleNow collects, uses, and protects your personal data.',
 };
 
 export default function PrivacyPage() {
   return (
     <MarketingContentPage
       title="Privacy Policy"
-      description="Last updated: June 2026. This policy explains how AccessShield India handles your information."
+      description="Last updated: June 2026. This policy explains how AccessibleNow handles your information."
     >
       <section>
         <h2 className="text-xl font-semibold text-text-primary">1. Who we are</h2>
         <p className="mt-2">
-          AccessShield India (&quot;we&quot;, &quot;us&quot;) provides digital accessibility
+          AccessibleNow (&quot;we&quot;, &quot;us&quot;) provides digital accessibility
           compliance software to organisations in India. For privacy questions, contact{' '}
           <a
             href="mailto:privacy@accessshield.in"

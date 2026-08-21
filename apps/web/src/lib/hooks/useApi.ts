@@ -13,6 +13,9 @@ import {
   getScan,
   listScans,
   listViolations,
+  cancelScan,
+  pauseScan,
+  resumeScan,
   getAccessToken,
   getDashboardStats,
   uploadDocumentScan,
@@ -157,6 +160,61 @@ export function useTriggerScan() {
   });
 }
 
+export function useCancelScan(scanId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const token = await getAccessToken();
+      return cancelScan(token, scanId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scans', scanId] });
+      queryClient.invalidateQueries({ queryKey: ['scans'] });
+      toast.success('Scan cancelled');
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function usePauseScan(scanId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const token = await getAccessToken();
+      return pauseScan(token, scanId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scans', scanId] });
+      toast.success('Scan paused');
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useResumeScan(scanId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const token = await getAccessToken();
+      return resumeScan(token, scanId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scans', scanId] });
+      toast.success('Scan resumed');
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message);
+    },
+  });
+}
+
 export function useScans(params?: ListScansParams) {
   return useQuery({
     queryKey: ['scans', params],
@@ -175,7 +233,7 @@ export function useScans(params?: ListScansParams) {
 /** Violations */
 export function useViolations(
   scanId: string | null,
-  params?: { page?: number; limit?: number; severity?: string },
+  params?: { page?: number; limit?: number; severity?: string; standard?: string },
   scanStatus?: ScanDetail['status'],
 ) {
   return useQuery({

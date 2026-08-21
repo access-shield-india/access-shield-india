@@ -152,7 +152,7 @@ export function buildDevMockFix(
 
 export function buildDevMockAltText(ruleId: string): string {
   if (ruleId.includes('image')) {
-    return 'Company logo — AccessShield India';
+    return 'Company logo — AccessibleNow';
   }
   return 'Decorative or informational image on the page';
 }

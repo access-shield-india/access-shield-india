@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useFocusTrap } from '@accessshield/ui';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 import { ButtonLink } from '@/components/marketing/ButtonLink';
 import { LocaleLink } from '@/components/common/LocaleLink';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
@@ -11,7 +12,7 @@ export function MobileMenuToggle() {
   const [isOpen, setIsOpen] = useState(false);
   const trapRef = useFocusTrap<HTMLDivElement>({ active: isOpen });
   const { common } = useDictionary();
-  const { nav, brand } = common;
+  const { nav } = common;
 
   const handleClose = () => setIsOpen(false);
 
@@ -61,7 +62,7 @@ export function MobileMenuToggle() {
             className="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white px-6 py-6 shadow-xl sm:max-w-sm"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xl font-bold text-primary-700">{brand}</span>
+            <BrandLogo variant="full" height={48} decorative />
               <button
                 type="button"
                 onClick={handleClose}

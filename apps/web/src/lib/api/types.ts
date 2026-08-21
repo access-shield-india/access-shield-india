@@ -30,6 +30,8 @@ export class ApiError extends Error {
 
 // ─── Assets ───────────────────────────────────────────────────────────────
 
+export type ComplianceStandard = 'WCAG22' | 'IS17802' | 'GIGW3' | 'SEBI';
+
 export interface Asset {
   id: string;
   organisationId: string;
@@ -39,6 +41,7 @@ export interface Asset {
   description: string | null;
   isActive: boolean;
   lastScannedAt: string | null;
+  standards?: ComplianceStandard[];
   createdAt: string;
   updatedAt: string;
 }
@@ -48,11 +51,11 @@ export interface CreateAssetInput {
   url: string;
   type: Asset['type'];
   description?: string;
+  standards?: ComplianceStandard[];
 }
 
 // ─── Scans ───────────────────────────────────────────────────────────────
 
-export type ComplianceStandard = 'WCAG22' | 'IS17802' | 'GIGW3' | 'SEBI';
 export type ScanType = 'full' | 'incremental' | 'single_page';
 export type WcagLevel = 'A' | 'AA' | 'AAA';
 
@@ -68,6 +71,12 @@ export interface ScanDetail {
   wcagVersion: string;
   pagesScanned: number;
   violationCount: number;
+  severityCounts?: {
+    critical: number;
+    serious: number;
+    moderate: number;
+    minor: number;
+  };
   score: number | null;
   startedAt: string | null;
   completedAt: string | null;
@@ -79,8 +88,13 @@ export interface ScanDetail {
     pagesScanned: number;
     pagesTotal: number;
     currentUrl: string;
+    paused?: boolean;
+    phase?: string;
+    currentStandard?: ComplianceStandard;
   };
   mobileScanId?: string | null;
+  standards?: ComplianceStandard[];
+  standardCounts?: Partial<Record<ComplianceStandard, number>>;
 }
 
 export interface CreateScanInput {
@@ -114,6 +128,7 @@ export interface ScanListItem {
   completedAt: string | null;
   errorMessage: string | null;
   createdAt: string;
+  standards?: ComplianceStandard[];
 }
 
 export interface ListScansParams {
@@ -138,6 +153,7 @@ export interface ViolationRow {
   selector: string | null;
   html: string | null;
   pageUrl: string | null;
+  standard?: ComplianceStandard | string | null;
   createdAt: string;
 }
 
@@ -554,7 +570,7 @@ export interface WidgetSettings {
   assetUrl?: string | null;
   token: string;
   allowedDomains: string[];
-  position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+  position: 'bottom-right' | 'bottom-left' | 'middle-right' | 'top-right' | 'top-left';
   defaultLanguage: 'en' | 'hi';
   primaryColor: string;
   isEnabled: boolean;
@@ -568,4 +584,26 @@ export interface UpdateWidgetSettingsInput {
   defaultLanguage?: WidgetSettings['defaultLanguage'];
   primaryColor?: string;
   isEnabled?: boolean;
+}
+
+export interface WidgetAnalyticsNamedCount {
+  id: string;
+  count: number;
+}
+
+export interface WidgetAnalyticsDailyOpens {
+  date: string;
+  opens: number;
+}
+
+export interface WidgetAnalyticsSummary {
+  panelOpens: number;
+  topProfiles: WidgetAnalyticsNamedCount[];
+  topSettings: WidgetAnalyticsNamedCount[];
+  languageSplit: WidgetAnalyticsNamedCount[];
+  dailyTrend: WidgetAnalyticsDailyOpens[];
+  hindiUsagePercent: number;
+  includeInNextReport: boolean;
+  from: string;
+  to: string;
 }

@@ -55,6 +55,7 @@ async function processFindingsPersist(msg: FindingsPersistQueueMessage): Promise
             html: v.elementHtml,
             pageUrl: v.pageUrl,
             fingerprint: v.fingerprint,
+            standard: v.standard,
           })),
         )
         .onConflictDoNothing({

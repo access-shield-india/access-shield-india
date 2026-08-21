@@ -17,7 +17,7 @@ const severityConfig = {
   moderate: {
     label: 'Moderate',
     icon: InfoIcon,
-    className: 'bg-blue-100 text-blue-800 border-blue-200',
+    className: 'bg-primary-100 text-primary-800 border-primary-300',
   },
   minor: {
     label: 'Minor',
@@ -44,7 +44,7 @@ const badgeVariants = cva(
         outline: 'bg-white text-text-secondary border-border',
         error: 'bg-red-100 text-red-800 border-red-200',
         warning: 'bg-amber-100 text-amber-800 border-amber-200',
-        info: 'bg-blue-100 text-blue-800 border-blue-200',
+        info: 'bg-primary-100 text-primary-800 border-primary-300',
       },
       size: {
         sm: 'text-xs px-2 py-0.5',

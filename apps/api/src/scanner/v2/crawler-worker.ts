@@ -14,7 +14,7 @@ import { discoverUrlsStreaming } from '../crawler';
 import { createBrowser, closeBrowser } from '../playwright-runner';
 import type { ScanJobConfig } from '../types';
 import { setScanBarrier } from './barrier';
-import { isScanCancelledInRedis } from './finalize-from-page-jobs';
+import { isScanCancelledInRedis, waitWhileScanPaused } from './finalize-from-page-jobs';
 import { scanJobsQueueMessageSchema } from './message-schemas';
 import { upsertScanPageJob } from './page-jobs';
 import { publishPageScanJob } from './publish';
@@ -69,6 +69,10 @@ async function processScanJobsMessage(msg: ScanJobsQueueMessage): Promise<void> 
       assetUrl,
       config as ScanJobConfig,
       async (url, meta) => {
+        if (await isScanCancelledInRedis(scanId)) {
+          return;
+        }
+        await waitWhileScanPaused(scanId);
         if (await isScanCancelledInRedis(scanId)) {
           return;
         }

@@ -174,6 +174,7 @@ export async function fetchReportData(
       wcagLevel: scans.wcagLevel,
       wcagVersion: scans.wcagVersion,
       completedAt: scans.completedAt,
+      standards: scans.standards,
     })
     .from(scans)
     .where(and(eq(scans.id, scanId), eq(scans.organisationId, organisationId)))
@@ -287,11 +288,15 @@ export async function fetchReportData(
 
   const severityCounts = await countViolationsBySeverity(db, scanId, organisationId);
 
-  const standards: string[] = [];
-  if (scan.wcagVersion && scan.wcagLevel) {
-    standards.push(`WCAG ${scan.wcagVersion} ${scan.wcagLevel}`);
-  }
-  standards.push('IS 17802');
+  const STANDARD_LABELS: Record<string, string> = {
+    WCAG22: `WCAG ${scan.wcagVersion} ${scan.wcagLevel}`,
+    IS17802: 'IS 17802',
+    GIGW3: 'GIGW 3.0',
+    SEBI: 'SEBI Circular 2024',
+  };
+  const standardCodes =
+    scan.standards && scan.standards.length > 0 ? scan.standards : ['WCAG22', 'IS17802'];
+  const standards = standardCodes.map((code) => STANDARD_LABELS[code] ?? code);
 
   const reportData: ReportTemplateData = {
     organisation: {

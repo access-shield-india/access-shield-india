@@ -6,7 +6,7 @@ export function BadgeSvgDisplay({ level }: BadgeSvgDisplayProps) {
   const levelColors = {
     'WCAG 2.1 AA': { primary: '#059669', secondary: '#10B981' },
     'WCAG 2.2 AA': { primary: '#059669', secondary: '#10B981' },
-    'IS 17802': { primary: '#0369A1', secondary: '#0284C7' },
+    'IS 17802': { primary: '#6D28D9', secondary: '#8B5CF6' },
   };
 
   const colors = levelColors[level as keyof typeof levelColors] || levelColors['WCAG 2.1 AA'];

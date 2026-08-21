@@ -237,3 +237,24 @@ export async function isScanCancelledInRedis(scanId: string): Promise<boolean> {
     return false;
   }
 }
+
+/** True if the operator paused this scan */
+export async function isScanPausedInRedis(scanId: string): Promise<boolean> {
+  const redis = getRedis();
+  if (!redis) return false;
+  try {
+    if (redis.status !== 'ready') await redis.connect();
+    const v = await redis.get(ScanRedisKeys.pause(scanId));
+    return v === '1';
+  } catch {
+    return false;
+  }
+}
+
+/** Block until the scan is resumed or cancelled. */
+export async function waitWhileScanPaused(scanId: string): Promise<void> {
+  while (await isScanPausedInRedis(scanId)) {
+    if (await isScanCancelledInRedis(scanId)) return;
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
+}

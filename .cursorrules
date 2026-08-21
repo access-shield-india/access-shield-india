@@ -127,7 +127,7 @@ KEYBOARD NAVIGATION (WCAG 2.1):
 FOCUS INDICATORS (WCAG 2.4.7, 2.4.11 — new in WCAG 2.2):
   - ALWAYS visible focus ring on every interactive element
   - Minimum: 2px solid outline, high-contrast offset
-  - Use: outline: 2px solid #1A56A0; outline-offset: 2px;
+  - Use: outline: 2px solid #6D28D9; outline-offset: 2px;
   - NEVER: outline: none; or outline: 0; without a custom replacement
   - Focus ring must meet 3:1 contrast against adjacent colours
 
@@ -243,13 +243,13 @@ IS-009: Error messages must not expose system internals (stack traces, SQL error
 All colour, typography, and spacing must use these tokens (extend Tailwind config):
 
 COLOURS (all pairs meet WCAG 1.4.3 contrast requirements):
-  Primary:
-    primary-900: #0D2E5A   (text on light backgrounds — 12.4:1 on white)
-    primary-700: #1A3A5C   (headings — 10.1:1 on white)
-    primary-600: #1A56A0   (buttons, links — 5.8:1 on white ✓ AA)
-    primary-500: #2E75B6   (secondary elements — 4.8:1 on white ✓ AA)
-    primary-100: #EBF3FB   (backgrounds — use with primary-700+ text)
-    primary-50:  #F4F8FD   (subtle backgrounds)
+  Primary (Purple Economy):
+    primary-900: #3B0764   (text on light backgrounds — AAA on white)
+    primary-700: #5B21B6   (headings — AAA on white)
+    primary-600: #6D28D9   (buttons, links — AA on white)
+    primary-500: #8B5CF6   (secondary elements — AA Large / UI)
+    primary-100: #F3E8FF   (backgrounds — use with primary-700+ text)
+    primary-50:  #FAF5FF   (subtle backgrounds)
 
   Accent (amber — use sparingly for CTAs, warnings):
     accent-700: #7A4500   (text — 8.2:1 on white ✓ AAA)
@@ -276,7 +276,7 @@ COLOURS (all pairs meet WCAG 1.4.3 contrast requirements):
   Severity (violation severity — use icon + colour, NEVER colour alone):
     critical: text #991B1B, bg #FEE2E2, border #FCA5A5  (Critical)
     serious:  text #92400E, bg #FEF3C7, border #FCD34D  (Serious)
-    moderate: text #1E40AF, bg #DBEAFE, border #93C5FD  (Moderate)
+    moderate: text #5B21B6, bg #F3E8FF, border #D8B4FE  (Moderate)
     minor:    text #374151, bg #F3F4F6, border #D1D5DB  (Minor)
 
 TYPOGRAPHY (use rem — never px for font sizes):
@@ -917,7 +917,7 @@ SEVERITY BADGE TEMPLATE (never colour alone):
   const severityConfig = {
     critical: { label: 'Critical', icon: 'AlertCircle', bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-200' },
     serious:  { label: 'Serious',  icon: 'AlertTriangle', bg: 'bg-amber-100', text: 'text-amber-800', border: 'border-amber-200' },
-    moderate: { label: 'Moderate', icon: 'Info', bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-200' },
+    moderate: { label: 'Moderate', icon: 'Info', bg: 'bg-primary-100', text: 'text-primary-800', border: 'border-primary-300' },
     minor:    { label: 'Minor',    icon: 'Minus', bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-200' },
   }
   // Usage: always renders icon + text + colour (WCAG 1.4.1 — not colour alone)

@@ -25,7 +25,12 @@ import { getScanLimit, isScanLimitDisabled } from '../lib/plan-limits';
 import { closeScanQueue, publishScanJob } from './queue';
 import { publishMobileScanJob } from './mobile-queue';
 import { parseMobileAssetMetadata } from '../lib/mobile-asset';
-import { SCAN_CANCEL_TTL_SECONDS, ScanRedisKeys } from './v2/redis-keys';
+import {
+  SCAN_CANCEL_TTL_SECONDS,
+  SCAN_PAUSE_TTL_SECONDS,
+  SCAN_PROGRESS_TTL_SECONDS,
+  ScanRedisKeys,
+} from './v2/redis-keys';
 import { isScanPipelineV2ScanJobsEnabled } from './v2/queues';
 import { publishScanJobsMessage } from './v2/publish';
 
@@ -34,10 +39,7 @@ const createScanSchema = z.object({
   asset_id: z.string().uuid('Invalid asset ID format'),
   scan_type: z.enum(['full', 'incremental', 'single_page']).optional().default('full'),
   wcag_level: z.enum(['A', 'AA', 'AAA']).optional().default('AA'),
-  standards: z
-    .array(z.enum(['WCAG22', 'IS17802', 'GIGW3', 'SEBI']))
-    .optional()
-    .default(['WCAG22', 'IS17802']),
+  standards: z.array(z.enum(['WCAG22', 'IS17802', 'GIGW3', 'SEBI'])).optional(),
   max_pages: z.number().int().min(1).max(500).optional(),
   exclude_paths: z.array(z.string()).optional(),
 });
@@ -58,6 +60,21 @@ let rabbitChannel: Awaited<
 > | null = null;
 
 const CANCEL_QUEUE = 'scan_cancellations';
+
+const DEFAULT_STANDARDS: ComplianceStandard[] = ['WCAG22', 'IS17802'];
+
+function resolveScanStandards(
+  requested: ComplianceStandard[] | undefined,
+  assetStandards: string[] | null | undefined,
+  fallback?: string[] | null,
+): ComplianceStandard[] {
+  if (requested && requested.length > 0) return requested;
+  if (assetStandards && assetStandards.length > 0) {
+    return assetStandards as ComplianceStandard[];
+  }
+  if (fallback && fallback.length > 0) return fallback as ComplianceStandard[];
+  return DEFAULT_STANDARDS;
+}
 
 /**
  * Initialize RabbitMQ connection and channel.
@@ -106,6 +123,40 @@ async function publishCancelRequest(scanId: string, orgId: string): Promise<void
 
   channel.sendToQueue(CANCEL_QUEUE, content, { persistent: true });
   logger.info({ scanId }, 'Scan cancel request published');
+}
+
+async function patchProgressPaused(redis: Redis, scanId: string, paused: boolean): Promise<void> {
+  if (paused) {
+    await redis.setex(ScanRedisKeys.pause(scanId), SCAN_PAUSE_TTL_SECONDS, '1');
+  } else {
+    await redis.del(ScanRedisKeys.pause(scanId));
+  }
+
+  const raw = await redis.get(ScanRedisKeys.progress(scanId));
+  let progress: ScanProgress = {
+    pagesScanned: 0,
+    pagesTotal: 0,
+    currentUrl: '',
+    paused,
+    phase: paused ? 'Paused' : 'Scanning pages',
+  };
+  if (raw) {
+    try {
+      progress = { ...(JSON.parse(raw) as ScanProgress), paused };
+      if (paused) {
+        progress.phase = 'Paused';
+      } else if (progress.phase === 'Paused') {
+        progress.phase = 'Scanning pages';
+      }
+    } catch {
+      // keep defaults
+    }
+  }
+  await redis.setex(
+    ScanRedisKeys.progress(scanId),
+    SCAN_PROGRESS_TTL_SECONDS,
+    JSON.stringify(progress),
+  );
 }
 
 /**
@@ -206,6 +257,16 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
           return;
         }
 
+        const mobileMeta =
+          asset.type === 'mobile_app'
+            ? parseMobileAssetMetadata(asset.description, asset.url)
+            : null;
+        const resolvedStandards = resolveScanStandards(
+          standards as ComplianceStandard[] | undefined,
+          asset.standards,
+          mobileMeta?.standards,
+        );
+
         const planCheck = await checkPlanLimits(db, orgId);
         if (planCheck.limitReached) {
           sendProblem(res, 402, 'payment-required', 'Monthly scan limit reached', undefined, {
@@ -238,6 +299,7 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
             status: 'pending',
             wcagLevel: wcag_level,
             wcagVersion: '2.2',
+            standards: resolvedStandards,
           })
           .returning({ id: scans.id });
 
@@ -247,8 +309,6 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
         }
 
         if (asset.type === 'mobile_app') {
-          const mobileMeta = parseMobileAssetMetadata(asset.description, asset.url);
-
           if (!mobileMeta?.appS3Key) {
             await db
               .update(scans)
@@ -280,7 +340,7 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
               ? { apkS3Key: mobileMeta.appS3Key }
               : { ipaS3Key: mobileMeta.appS3Key }),
             config: {
-              standards: mobileMeta.standards,
+              standards: resolvedStandards,
               maxScreens: max_pages ?? mobileMeta.maxScreens,
             },
           };
@@ -334,7 +394,7 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
             maxPages:
               max_pages ?? (scan_type === 'single_page' ? 1 : DEFAULT_SCAN_CONFIG.maxPages!),
             wcagLevel: wcag_level as WcagLevel,
-            standards: standards as ComplianceStandard[],
+            standards: resolvedStandards,
             excludePaths: exclude_paths ?? DEFAULT_SCAN_CONFIG.excludePaths!,
             viewports: DEFAULT_SCAN_CONFIG.viewports!,
           },
@@ -427,6 +487,7 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
             completedAt: scans.completedAt,
             errorMessage: scans.errorMessage,
             createdAt: scans.createdAt,
+            standards: scans.standards,
             assetId: scans.assetId,
             assetName: assets.name,
             assetUrl: assets.url,
@@ -444,7 +505,7 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
 
         let progress: ScanProgress | null = null;
         if (scan.status === 'running' || scan.status === 'pending') {
-          const progressData = await redis.get(`scan:progress:${scanId}`);
+          const progressData = await redis.get(ScanRedisKeys.progress(scanId));
           if (progressData) {
             try {
               progress = JSON.parse(progressData) as ScanProgress;
@@ -452,11 +513,63 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
               logger.warn({ scanId }, 'Failed to parse scan progress from Redis');
             }
           }
+          const paused = (await redis.get(ScanRedisKeys.pause(scanId))) === '1';
+          if (progress) {
+            progress.paused = paused;
+            if (paused) progress.phase = 'Paused';
+          } else if (paused) {
+            progress = {
+              pagesScanned: 0,
+              pagesTotal: 0,
+              currentUrl: '',
+              paused: true,
+              phase: 'Paused',
+            };
+          }
         }
 
-        const response: ApiResponse<typeof scan & { progress?: ScanProgress }> = {
+        const severityRows = await db
+          .select({
+            impact: violations.impact,
+            count: sql<number>`count(*)::int`,
+          })
+          .from(violations)
+          .where(and(eq(violations.scanId, scanId), eq(violations.organisationId, orgId)))
+          .groupBy(violations.impact);
+
+        const severityCounts = { critical: 0, serious: 0, moderate: 0, minor: 0 };
+        for (const row of severityRows) {
+          if (row.impact === 'critical') severityCounts.critical = Number(row.count);
+          else if (row.impact === 'serious') severityCounts.serious = Number(row.count);
+          else if (row.impact === 'moderate') severityCounts.moderate = Number(row.count);
+          else if (row.impact === 'minor') severityCounts.minor = Number(row.count);
+        }
+
+        const standardRows = await db
+          .select({
+            standard: violations.standard,
+            count: sql<number>`count(*)::int`,
+          })
+          .from(violations)
+          .where(and(eq(violations.scanId, scanId), eq(violations.organisationId, orgId)))
+          .groupBy(violations.standard);
+
+        const standardCounts: Record<string, number> = {};
+        for (const row of standardRows) {
+          standardCounts[row.standard] = Number(row.count);
+        }
+
+        const response: ApiResponse<
+          typeof scan & {
+            progress?: ScanProgress;
+            severityCounts: typeof severityCounts;
+            standardCounts: Record<string, number>;
+          }
+        > = {
           data: {
             ...scan,
+            severityCounts,
+            standardCounts,
             ...(progress && { progress }),
           },
           timestamp: new Date().toISOString(),
@@ -496,7 +609,7 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
           return;
         }
 
-        const { page, limit, severity, wcag_criterion } = parseResult.data;
+        const { page, limit, severity, wcag_criterion, standard } = parseResult.data;
         const offset = (page - 1) * limit;
 
         const [scanCheck] = await db
@@ -520,6 +633,10 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
           conditions.push(sql`${wcag_criterion} = ANY(${violations.wcagCriteria})`);
         }
 
+        if (standard) {
+          conditions.push(eq(violations.standard, standard));
+        }
+
         const [totalResult] = await db
           .select({ count: count() })
           .from(violations)
@@ -538,6 +655,7 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
             selector: violations.selector,
             html: violations.html,
             pageUrl: violations.pageUrl,
+            standard: violations.standard,
             createdAt: violations.createdAt,
           })
           .from(violations)
@@ -567,6 +685,96 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
           timestamp: new Date().toISOString(),
         };
 
+        res.json(response);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  /**
+   * POST /scans/:id/pause - Pause a pending or running scan
+   */
+  router.post(
+    '/:id/pause',
+    requireRoles('customer_admin', 'accessibility_officer', 'developer'),
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const scanId = req.params.id ?? '';
+        const orgId = req.user!.org_id;
+
+        if (!scanId || !z.string().uuid().safeParse(scanId).success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid scan ID format');
+          return;
+        }
+
+        const [scan] = await db
+          .select({ id: scans.id, status: scans.status })
+          .from(scans)
+          .where(and(eq(scans.id, scanId), eq(scans.organisationId, orgId)))
+          .limit(1);
+
+        if (!scan) {
+          sendProblem(res, 404, 'not-found', 'Scan not found');
+          return;
+        }
+
+        if (scan.status !== 'pending' && scan.status !== 'running') {
+          sendProblem(res, 409, 'conflict', 'Cannot pause scan', `Scan is already ${scan.status}`);
+          return;
+        }
+
+        await patchProgressPaused(redis, scanId, true);
+
+        const response: ApiResponse<{ message: string; paused: boolean }> = {
+          data: { message: 'Scan paused', paused: true },
+          timestamp: new Date().toISOString(),
+        };
+        res.json(response);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  /**
+   * POST /scans/:id/resume - Resume a paused scan
+   */
+  router.post(
+    '/:id/resume',
+    requireRoles('customer_admin', 'accessibility_officer', 'developer'),
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const scanId = req.params.id ?? '';
+        const orgId = req.user!.org_id;
+
+        if (!scanId || !z.string().uuid().safeParse(scanId).success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid scan ID format');
+          return;
+        }
+
+        const [scan] = await db
+          .select({ id: scans.id, status: scans.status })
+          .from(scans)
+          .where(and(eq(scans.id, scanId), eq(scans.organisationId, orgId)))
+          .limit(1);
+
+        if (!scan) {
+          sendProblem(res, 404, 'not-found', 'Scan not found');
+          return;
+        }
+
+        if (scan.status !== 'pending' && scan.status !== 'running') {
+          sendProblem(res, 409, 'conflict', 'Cannot resume scan', `Scan is already ${scan.status}`);
+          return;
+        }
+
+        await patchProgressPaused(redis, scanId, false);
+
+        const response: ApiResponse<{ message: string; paused: boolean }> = {
+          data: { message: 'Scan resumed', paused: false },
+          timestamp: new Date().toISOString(),
+        };
         res.json(response);
       } catch (err) {
         next(err);
@@ -624,6 +832,7 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
         }
 
         await redis.setex(ScanRedisKeys.cancel(scanId), SCAN_CANCEL_TTL_SECONDS, '1');
+        await redis.del(ScanRedisKeys.pause(scanId));
         await redis.del(ScanRedisKeys.progress(scanId));
 
         const response: ApiResponse<{ message: string }> = {
@@ -701,6 +910,7 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
             completedAt: scans.completedAt,
             errorMessage: scans.errorMessage,
             createdAt: scans.createdAt,
+            standards: scans.standards,
           })
           .from(scans)
           .leftJoin(assets, and(eq(scans.assetId, assets.id), eq(assets.organisationId, orgId)))

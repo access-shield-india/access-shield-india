@@ -18,7 +18,7 @@ export interface MobileScanJobMessage {
   ipaS3Key?: string;
   bundleId?: string;
   config: {
-    standards: Array<'WCAG22' | 'IS17802' | 'SEBI'>;
+    standards: Array<'WCAG22' | 'IS17802' | 'GIGW3' | 'SEBI'>;
     maxScreens: number;
   };
 }

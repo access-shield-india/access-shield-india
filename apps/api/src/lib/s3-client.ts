@@ -19,6 +19,14 @@ export function createS3ClientFromEnv(): S3Client {
     ...(accessKeyId && secretAccessKey
       ? { credentials: { accessKeyId, secretAccessKey } }
       : {}),
+    // AWS SDK v3.729+ sends CRC32 checksums by default. MinIO treats those
+    // headers as object metadata and returns MetadataTooLarge on GET/presign.
+    ...(endpoint
+      ? {
+          requestChecksumCalculation: 'WHEN_REQUIRED' as const,
+          responseChecksumValidation: 'WHEN_REQUIRED' as const,
+        }
+      : {}),
   });
 }
 

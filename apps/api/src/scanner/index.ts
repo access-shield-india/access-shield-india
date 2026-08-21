@@ -16,6 +16,7 @@ export {
   buildAbsoluteUrl,
 } from './crawler';
 export { createBrowser, scanPage, closeBrowser, injectAuth } from './playwright-runner';
+export { runCustomAxeRules } from './custom-rules';
 export {
   runAxe,
   runAxeWithRetry,

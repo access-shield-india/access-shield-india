@@ -171,8 +171,8 @@ export default function DocumentScannerPage() {
           className={cn(
             'cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-all duration-200',
             isDragActive
-              ? 'scale-[1.01] border-blue-500 bg-blue-50'
-              : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50',
+              ? 'scale-[1.01] border-primary-500 bg-primary-50'
+              : 'border-gray-300 hover:border-primary-400 hover:bg-gray-50',
             file && !error ? 'border-green-500 bg-green-50' : '',
             isPending ? 'pointer-events-none opacity-60' : '',
           )}
@@ -254,7 +254,7 @@ export default function DocumentScannerPage() {
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-gray-200">
               <div
-                className="h-full rounded-full bg-blue-600 transition-all duration-300"
+                className="h-full rounded-full bg-primary-600 transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
@@ -263,15 +263,15 @@ export default function DocumentScannerPage() {
 
         {/* What will be checked */}
         {formatInfo && !error && (
-          <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
-            <h2 className="mb-3 text-sm font-semibold text-blue-900">
+          <div className="rounded-xl border border-primary-300 bg-primary-50 p-5">
+            <h2 className="mb-3 text-sm font-semibold text-primary-900">
               Accessibility checks for {formatInfo.label}:
             </h2>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               {formatInfo.checks.map((check) => (
-                <div key={check} className="flex items-start gap-2 text-xs text-blue-800">
+                <div key={check} className="flex items-start gap-2 text-xs text-primary-800">
                   <CheckCircle
-                    className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-blue-500"
+                    className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-primary-500"
                     aria-hidden="true"
                   />
                   <span>{check}</span>
@@ -306,7 +306,7 @@ export default function DocumentScannerPage() {
           type="button"
           onClick={handleScan}
           disabled={!file || isPending || Boolean(error)}
-          className="w-full rounded-xl bg-blue-700 py-4 text-base font-semibold text-white shadow-sm transition-all duration-200 hover:bg-blue-800 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40"
+          className="w-full rounded-xl bg-primary-700 py-4 text-base font-semibold text-white shadow-sm transition-all duration-200 hover:bg-primary-800 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40"
         >
           {isPending
             ? 'Uploading document...'
@@ -318,7 +318,7 @@ export default function DocumentScannerPage() {
         {/* Past scans link */}
         <p className="text-center text-sm text-gray-500">
           View{' '}
-          <a href="/dashboard/document-scanner/history" className="text-blue-600 hover:underline">
+          <a href="/dashboard/document-scanner/history" className="text-primary-600 hover:underline">
             past document scans
           </a>
         </p>

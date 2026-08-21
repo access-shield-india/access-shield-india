@@ -1,6 +1,6 @@
 import { getAccessToken } from './client';
 import { apiUrl } from './base';
-import type { ApiResponse } from './types';
+import type { ApiResponse, WidgetAnalyticsSummary } from './types';
 
 export interface AdminStats {
   organisations: number;
@@ -118,6 +118,12 @@ export function fetchAdminOrganisation(id: string): Promise<AdminOrganisation> {
 
 export function fetchAdminOrgSummary(orgId: string): Promise<AdminOrgSummary> {
   return adminFetch<AdminOrgSummary>(`/api/v1/admin/organisations/${orgId}/summary`);
+}
+
+export function fetchAdminOrgWidgetAnalytics(orgId: string): Promise<WidgetAnalyticsSummary> {
+  return adminFetch<WidgetAnalyticsSummary>(
+    `/api/v1/admin/organisations/${orgId}/widget-analytics`,
+  );
 }
 
 export function updateAdminOrganisation(

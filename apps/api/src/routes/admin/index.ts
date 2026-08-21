@@ -25,6 +25,11 @@ import { requireRoles } from '../../middleware/rbac';
 import { createIdentityAdmin } from '../../services/identity-admin';
 import { provisionOrgUser } from '../../services/user-provisioning';
 import type { AppSecrets } from '../../config/secrets';
+import {
+  buildWidgetAnalyticsSummary,
+  daysAgoUtc,
+  utcDateString,
+} from '../../lib/widget-analytics';
 
 const PLAN_TIERS = [
   'trial',
@@ -252,6 +257,42 @@ export function createAdminRouter(db: Database, secrets: AppSecrets, redis: Redi
           timestamp: new Date().toISOString(),
         };
 
+        res.json(response);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.get(
+    '/organisations/:id/widget-analytics',
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const orgId = req.params.id ?? '';
+        if (!z.string().uuid().safeParse(orgId).success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid organisation ID');
+          return;
+        }
+
+        const [org] = await db
+          .select({ id: organisations.id })
+          .from(organisations)
+          .where(eq(organisations.id, orgId))
+          .limit(1);
+
+        if (!org) {
+          sendProblem(res, 404, 'not-found', 'Organisation not found');
+          return;
+        }
+
+        const to = utcDateString();
+        const from = daysAgoUtc(29);
+        const summary = await buildWidgetAnalyticsSummary(db, redis, orgId, from, to);
+
+        const response: ApiResponse<typeof summary> = {
+          data: summary,
+          timestamp: new Date().toISOString(),
+        };
         res.json(response);
       } catch (err) {
         next(err);

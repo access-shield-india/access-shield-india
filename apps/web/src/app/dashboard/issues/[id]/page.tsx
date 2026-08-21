@@ -16,7 +16,7 @@ interface IssueDetailPageProps {
 
 export async function generateMetadata({ params }: IssueDetailPageProps) {
   return {
-    title: `Issue ${params.id} | AccessShield India`,
+    title: `Issue ${params.id} | AccessibleNow`,
     description: 'View and manage accessibility issue details',
   };
 }

@@ -175,7 +175,7 @@ export const home: HomeDict = {
     items: [
       {
         quote:
-          'We thought we were fine until we realised a blind user could not complete our KYC flow. AccessShield showed us exactly what to fix — and gave us SEBI-ready reports.',
+          'We thought we were fine until we realised a blind user could not complete our KYC flow. AccessibleNow showed us exactly what to fix — and gave us SEBI-ready reports.',
         name: 'Priya Sharma',
         role: 'Head of Compliance',
         company: 'Leading Fintech',
@@ -183,7 +183,7 @@ export const home: HomeDict = {
       },
       {
         quote:
-          'Our government tender required GIGW compliance. AccessShield translated that into real barriers for users with disabilities — not just a checklist.',
+          'Our government tender required GIGW compliance. AccessibleNow translated that into real barriers for users with disabilities — not just a checklist.',
         name: 'Rajesh Kumar',
         role: 'CTO',
         company: 'E-commerce Platform',

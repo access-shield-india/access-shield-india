@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 import { BadgeSvgDisplay } from '@/components/marketing/verify/BadgeSvgDisplay';
 
 export const metadata: Metadata = {
@@ -63,7 +64,7 @@ export default async function VerifyPage({ params }: { params: { token: string }
           <h1 className="text-3xl font-bold text-text-primary sm:text-4xl">
             Accessibility Certificate Verification
           </h1>
-          <p className="mt-4 text-base text-text-secondary">Issued by AccessShield India</p>
+          <p className="mt-4 text-base text-text-secondary">Issued by AccessibleNow</p>
         </div>
 
         <div className="mt-12">
@@ -217,14 +218,23 @@ export default async function VerifyPage({ params }: { params: { token: string }
         </div>
       </div>
 
-      <footer className="mt-12 border-t border-gray-200 pt-8 text-center text-sm text-text-tertiary">
+      <footer className="mt-12 border-t border-primary-100 pt-8 text-center text-sm text-text-tertiary">
+        <p className="mb-3 flex justify-center">
+          <a
+            href="https://accessshield.in"
+            className="inline-block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+            aria-label="AccessibleNow"
+          >
+            <BrandLogo variant="mark" height={48} decorative />
+          </a>
+        </p>
         <p>
           Powered by{' '}
           <a
             href="https://accessshield.in"
             className="font-medium text-primary-600 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
           >
-            AccessShield India
+            AccessibleNow
           </a>
         </p>
         <p className="mt-2">This certificate was independently verified on {today}</p>

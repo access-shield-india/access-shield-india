@@ -5,21 +5,21 @@ export const pages: PagesDict = {
     meta: {
       title: 'About Us',
       description:
-        'AccessShield India is a Pune-based company helping Indian organisations achieve RPwD, IS 17802, GIGW, WCAG 2.2 AA, and SEBI digital accessibility compliance.',
+        'AccessibleNow is a Pune-based company helping Indian organisations achieve RPwD, IS 17802, GIGW, WCAG 2.2 AA, and SEBI digital accessibility compliance.',
     },
-    title: 'About AccessShield India',
+    title: 'About AccessibleNow',
     description:
       'A Pune-based company making digital accessibility compliance practical for Indian businesses, government vendors, and regulated industries.',
     sections: [
       {
         id: 'mission',
         heading: 'Our mission',
-        body: "Everyone deserves equal access to digital services — from banking and healthcare to government portals and investor platforms. AccessShield India exists to close the gap between India's accessibility laws and what teams can actually ship on tight deadlines and budgets.",
+        body: "Everyone deserves equal access to digital services — from banking and healthcare to government portals and investor platforms. AccessibleNow exists to close the gap between India's accessibility laws and what teams can actually ship on tight deadlines and budgets.",
       },
       {
         id: 'what-we-do',
         heading: 'What we do',
-        body: 'We are an AI-powered SaaS platform for continuous accessibility compliance. Teams use AccessShield to scan websites, prioritise issues, track remediation, generate audit-ready reports, and demonstrate progress toward RPwD Act 2016, IS 17802, GIGW 3.0, WCAG 2.2 AA, and SEBI accessibility requirements.',
+        body: 'We are an AI-powered SaaS platform for continuous accessibility compliance. Teams use AccessibleNow to scan websites, prioritise issues, track remediation, generate audit-ready reports, and demonstrate progress toward RPwD Act 2016, IS 17802, GIGW 3.0, WCAG 2.2 AA, and SEBI accessibility requirements.',
         list: [
           'Automated scanning with India-specific rules (IS 17802, GIGW)',
           'Issue tracking and remediation workflows for dev and compliance teams',
@@ -49,7 +49,7 @@ export const pages: PagesDict = {
     meta: {
       title: 'Contact',
       description:
-        'Get in touch with AccessShield India for demos, enterprise pricing, and compliance questions.',
+        'Get in touch with AccessibleNow for demos, enterprise pricing, and compliance questions.',
     },
     title: 'Contact us',
     description:
@@ -102,7 +102,7 @@ export const pages: PagesDict = {
   docs: {
     meta: {
       title: 'Documentation',
-      description: 'Install guides, API reference, and widget setup for AccessShield India.',
+      description: 'Install guides, API reference, and widget setup for AccessibleNow.',
     },
     title: 'Documentation',
     description: 'Setup guides for widget embed, scanning API, and dashboard workflows.',
@@ -111,7 +111,7 @@ export const pages: PagesDict = {
     meta: {
       title: 'Careers',
       description:
-        'Join AccessShield India — accessibility engineering, sales, and compliance roles in Pune.',
+        'Join AccessibleNow — accessibility engineering, sales, and compliance roles in Pune.',
     },
     title: 'Careers',
     description: "Help make India's digital services accessible to everyone.",
@@ -119,7 +119,7 @@ export const pages: PagesDict = {
   waitlist: {
     meta: {
       title: 'Waitlist',
-      description: 'Join the AccessShield India waitlist for early access.',
+      description: 'Join the AccessibleNow waitlist for early access.',
     },
     title: 'Join the waitlist',
     description: 'Be first to know when new features launch.',
@@ -127,7 +127,7 @@ export const pages: PagesDict = {
   privacy: {
     meta: {
       title: 'Privacy Policy',
-      description: 'How AccessShield India collects and protects your data.',
+      description: 'How AccessibleNow collects and protects your data.',
     },
     title: 'Privacy Policy',
     description: "Last updated June 2026. We comply with India's DPDP Act principles.",
@@ -135,7 +135,7 @@ export const pages: PagesDict = {
   terms: {
     meta: {
       title: 'Terms of Service',
-      description: 'Terms governing use of AccessShield India platform and services.',
+      description: 'Terms governing use of AccessibleNow platform and services.',
     },
     title: 'Terms of Service',
     description: 'Please read these terms before using our platform.',
@@ -143,7 +143,7 @@ export const pages: PagesDict = {
   refund: {
     meta: {
       title: 'Refund Policy',
-      description: 'AccessShield India refund and cancellation policy.',
+      description: 'AccessibleNow refund and cancellation policy.',
     },
     title: 'Refund Policy',
     description: '14-day trial and subscription refund terms.',
@@ -151,7 +151,7 @@ export const pages: PagesDict = {
   accessibilityStatement: {
     meta: {
       title: 'Accessibility Statement',
-      description: 'Our commitment to WCAG 2.2 AA for the AccessShield platform.',
+      description: 'Our commitment to WCAG 2.2 AA for the AccessibleNow platform.',
     },
     title: 'Accessibility Statement',
     description: 'We hold ourselves to the same standards we help customers meet.',

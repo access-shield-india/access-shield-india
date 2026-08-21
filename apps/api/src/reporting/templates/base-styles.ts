@@ -34,7 +34,7 @@ body {
    ============================================================================ */
 
 h1, h2, h3, h4, h5, h6 {
-  color: #1A56A0;
+  color: #6D28D9;
   font-weight: 500;
   line-height: 1.25;
   margin-bottom: 0.5em;
@@ -72,7 +72,7 @@ p {
 }
 
 a {
-  color: #1A56A0;
+  color: #6D28D9;
   text-decoration: underline;
 }
 
@@ -118,7 +118,7 @@ strong {
 
 .cover-title {
   font-size: 28pt;
-  color: #1A56A0;
+  color: #6D28D9;
   margin-bottom: 8pt;
 }
 
@@ -175,7 +175,7 @@ strong {
 .score-number {
   font-size: 72pt;
   font-weight: 700;
-  color: #1A56A0;
+  color: #6D28D9;
   line-height: 1;
 }
 
@@ -292,9 +292,9 @@ strong {
   border-radius: 16pt;
   font-size: 9pt;
   font-weight: 500;
-  background-color: #F4F8FD;
-  color: #1A56A0;
-  border: 1px solid #EBF3FB;
+  background-color: #FAF5FF;
+  color: #6D28D9;
+  border: 1px solid #F3E8FF;
 }
 
 /* ============================================================================
@@ -309,7 +309,7 @@ table {
 }
 
 thead {
-  background-color: #1A56A0;
+  background-color: #6D28D9;
 }
 
 th {
@@ -317,7 +317,7 @@ th {
   font-weight: 600;
   text-align: left;
   padding: 8pt 10pt;
-  border: 1px solid #1A3A5C;
+  border: 1px solid #5B21B6;
 }
 
 td {
@@ -501,7 +501,7 @@ code {
 }
 
 .trend-bar {
-  fill: #1A56A0;
+  fill: #6D28D9;
 }
 
 .trend-label {
@@ -513,7 +513,7 @@ code {
 .trend-score {
   font-size: 8pt;
   font-weight: 600;
-  fill: #1A56A0;
+  fill: #6D28D9;
   text-anchor: middle;
 }
 
@@ -537,9 +537,9 @@ li {
 blockquote {
   margin: 12pt 0;
   padding: 12pt 16pt;
-  border-left: 4pt solid #1A56A0;
-  background-color: #F4F8FD;
-  color: #1A3A5C;
+  border-left: 4pt solid #6D28D9;
+  background-color: #FAF5FF;
+  color: #5B21B6;
 }
 
 .callout-success {

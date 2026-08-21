@@ -11,6 +11,7 @@ import type { ApiResponse, PaginationMeta } from '@accessshield/types';
 import { and, count, desc, eq } from 'drizzle-orm';
 import type { NextFunction, Request, Response, Router as ExpressRouter } from 'express';
 import { Router } from 'express';
+import type { Redis } from 'ioredis';
 import { z } from 'zod';
 import { logger } from '../lib/logger';
 import { sendProblem } from '../lib/problem-details';
@@ -19,6 +20,7 @@ import { fetchReportData, InvalidStateError, NotFoundError } from './data-fetche
 import { generatePdf, generatePdfWithTitle } from './pdf-generator';
 import {
   getReportDownloadUrl,
+  getReportObjectFromS3,
   uploadHtmlReportToS3,
   uploadReportToS3,
   resolveLocalReportPath,
@@ -30,9 +32,9 @@ import { renderSebiTemplate } from './templates/sebi';
 import { renderTechnicalTemplate } from './templates/technical';
 import { renderWcagComplianceTemplate } from './templates/wcag-compliance';
 import type { ReportFormat, ReportType } from './types';
-
-/** Plans that can generate SEBI reports */
-const SEBI_ELIGIBLE_PLANS = ['regulatory_defense', 'enterprise', 'government'];
+import { resolveWidgetUsageForReport } from './widget-usage';
+import { consumeIncludeInNextReport } from '../lib/widget-analytics';
+import { isSebiReportAllowed } from '../lib/plan-limits';
 
 /** Zod schema for POST /reports request body */
 const createReportSchema = z.object({
@@ -49,6 +51,8 @@ const createReportSchema = z.object({
   format: z.enum(['pdf', 'html']).default('pdf'),
   /** Language for accessibility statement (default: en) */
   language: z.enum(['en', 'hi']).optional(),
+  /** Include widget usage evidence table in Executive and SEBI reports */
+  widget_analytics: z.boolean().optional(),
 });
 
 /** Zod schema for GET /reports query params */
@@ -119,7 +123,7 @@ function isReportTypeImplemented(reportType: ReportType): boolean {
  *
  * @param db - Drizzle database instance
  */
-export function createReportingRouter(db: Database): ExpressRouter {
+export function createReportingRouter(db: Database, redis: Redis): ExpressRouter {
   const router = Router();
 
   /**
@@ -141,7 +145,8 @@ export function createReportingRouter(db: Database): ExpressRouter {
           return;
         }
 
-        const { scan_id, asset_id, report_type, format, language } = parseResult.data;
+        const { scan_id, asset_id, report_type, format, language, widget_analytics } =
+          parseResult.data;
         const orgId = req.user!.org_id;
         const userId = req.user!.sub;
 
@@ -157,7 +162,7 @@ export function createReportingRouter(db: Database): ExpressRouter {
         }
 
         const [scan] = await db
-          .select({ id: scans.id, status: scans.status })
+          .select({ id: scans.id, status: scans.status, standards: scans.standards })
           .from(scans)
           .where(and(eq(scans.id, scan_id), eq(scans.organisationId, orgId)))
           .limit(1);
@@ -189,7 +194,18 @@ export function createReportingRouter(db: Database): ExpressRouter {
           .limit(1);
 
         if (report_type === 'sebi') {
-          if (!org || !SEBI_ELIGIBLE_PLANS.includes(org.planTier)) {
+          const scanHasSebi = (scan.standards ?? []).includes('SEBI');
+          if (!scanHasSebi) {
+            sendProblem(
+              res,
+              422,
+              'sebi-not-scanned',
+              'SEBI report requires a SEBI scan',
+              'This scan was not run with the SEBI option. Start a new scan with SEBI selected, then generate the report.',
+            );
+            return;
+          }
+          if (!org || !isSebiReportAllowed(org.planTier)) {
             sendProblem(
               res,
               402,
@@ -235,6 +251,15 @@ export function createReportingRouter(db: Database): ExpressRouter {
             return;
           }
           throw err;
+        }
+
+        if (report_type === 'executive' || report_type === 'sebi') {
+          reportData.widgetUsage = await resolveWidgetUsageForReport(
+            db,
+            redis,
+            orgId,
+            widget_analytics,
+          );
         }
 
         // Handle accessibility_statement separately (uses different signature)
@@ -320,6 +345,10 @@ export function createReportingRouter(db: Database): ExpressRouter {
           { reportId: newReport.id, orgId, scanId: scan_id, format, fileSizeBytes },
           'Report generated successfully',
         );
+
+        if (reportData.widgetUsage) {
+          await consumeIncludeInNextReport(redis, orgId);
+        }
 
         const response: ApiResponse<{
           reportId: string;
@@ -506,26 +535,37 @@ export function createReportingRouter(db: Database): ExpressRouter {
           return;
         }
 
+        const contentType = report.format === 'pdf' ? 'application/pdf' : 'text/html';
+        const safeName = (report.title ?? 'report').replace(/[^\w.-]+/g, '_');
         const filePath = resolveLocalReportPath(report.storagePath);
-        if (!filePath) {
-          sendProblem(
-            res,
-            404,
-            'not-found',
-            'Report file is stored remotely — use the download endpoint',
+
+        if (filePath) {
+          res.setHeader('Content-Type', contentType);
+          res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="${safeName}.${report.format}"`,
           );
+          const stream = (await import('fs')).createReadStream(filePath);
+          stream.on('error', (err) => next(err));
+          stream.pipe(res);
           return;
         }
 
-        const contentType = report.format === 'pdf' ? 'application/pdf' : 'text/html';
-        const safeName = (report.title ?? 'report').replace(/[^\w.-]+/g, '_');
-
-        res.setHeader('Content-Type', contentType);
-        res.setHeader('Content-Disposition', `attachment; filename="${safeName}.${report.format}"`);
-
-        const stream = (await import('fs')).createReadStream(filePath);
-        stream.on('error', (err) => next(err));
-        stream.pipe(res);
+        // MinIO/S3 — stream through the API so the browser never hits a
+        // presigned URL (AWS SDK checksum query params → MetadataTooLarge).
+        try {
+          const object = await getReportObjectFromS3(report.storagePath);
+          res.setHeader('Content-Type', object.contentType || contentType);
+          res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="${safeName}.${report.format}"`,
+          );
+          res.setHeader('Content-Length', String(object.buffer.length));
+          res.send(object.buffer);
+        } catch (err) {
+          logger.error({ err, reportId }, 'Failed to stream report from S3');
+          sendProblem(res, 502, 'storage-error', 'Failed to download report file');
+        }
       } catch (err) {
         next(err);
       }
