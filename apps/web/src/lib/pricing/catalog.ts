@@ -25,6 +25,8 @@ export interface OneTimeSku {
   priceInr: number;
   priceNote?: string;
   originalPriceInr?: number;
+  /** Overrides default popular / highlighted pill when set. */
+  badge?: string;
   popular?: boolean;
   highlighted?: boolean;
   features: readonly string[];
@@ -165,10 +167,11 @@ export const PRICING_CATALOG = {
     id: 'assess',
     name: 'Compliance Website Audit & Scan',
     subtitle: 'Standalone or bundled with monitoring',
-    priceInr: 14999,
-    popular: true,
+    priceInr: 4999,
+    badge: 'Free for first 100 customers',
     highlighted: true,
-    priceNote: 'No subscription required · available as standalone purchase',
+    priceNote:
+      'Launch offer — free for the first 100 customers · standard price ₹4,999 one-time · no subscription required',
     features: [
       'WCAG 2.2 AA + IS 17802 automated scan',
       'Hands-on manual review by specialists',
@@ -238,7 +241,8 @@ export const PRICING_CATALOG = {
 
   rules: {
     gstRate: 0.18,
-    assessPriceInr: 14999,
+    assessPriceInr: 4999,
+    assessLaunchFreeCustomerLimit: 100,
     professionalScansPerMonth: 20,
     remediationPerPageInr: 2000,
   },

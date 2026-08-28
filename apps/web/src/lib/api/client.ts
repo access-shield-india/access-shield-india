@@ -375,11 +375,15 @@ function normalizeDocumentScanResult(data: Record<string, unknown>): DocumentSca
     document_name: (data.document_name as string) ?? (data.documentName as string) ?? '',
     document_type: parseDocumentType(data.document_type ?? data.documentType),
     total_violations: (data.total_violations as number) ?? (data.totalViolations as number) ?? 0,
+    total_findings: (data.total_findings as number) ?? (data.violations as unknown[])?.length ?? 0,
+    total_occurrences: (data.total_occurrences as number) ?? (data.total_violations as number) ?? 0,
     critical_count: (data.critical_count as number) ?? (data.criticalCount as number) ?? 0,
     serious_count: (data.serious_count as number) ?? (data.seriousCount as number) ?? 0,
     moderate_count: (data.moderate_count as number) ?? (data.moderateCount as number) ?? 0,
     minor_count: (data.minor_count as number) ?? (data.minorCount as number) ?? 0,
     compliance_score: (data.compliance_score as number) ?? (data.complianceScore as number) ?? 0,
+    score_band: (data.score_band as string) ?? '',
+    score_summary: (data.score_summary as string) ?? '',
     violations: (data.violations as DocumentScanResult['violations']) ?? [],
     violations_total:
       (data.violations_total as number) ??
@@ -390,6 +394,8 @@ function normalizeDocumentScanResult(data: Record<string, unknown>): DocumentSca
     violations_limit: (data.violations_limit as number) ?? (data.violationsLimit as number) ?? 0,
     violations_pages: (data.violations_pages as number) ?? (data.violationsPages as number) ?? 1,
     summary: (data.summary as DocumentScanResult['summary']) ?? {},
+    category_summary: (data.category_summary as DocumentScanResult['category_summary']) ?? [],
+    framework_coverage: (data.framework_coverage as DocumentScanResult['framework_coverage']) ?? [],
     gigw_checkpoint_results:
       (data.gigw_checkpoint_results as DocumentScanResult['gigw_checkpoint_results']) ??
       (data.gigwCheckpointResults as DocumentScanResult['gigw_checkpoint_results']) ??

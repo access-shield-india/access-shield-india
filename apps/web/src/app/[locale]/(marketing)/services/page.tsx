@@ -60,7 +60,7 @@ const servicesFaqs = [
   {
     question: 'What is the difference between Professional and Stay Compliant?',
     answer:
-      'Professional is for teams getting started: scans, reports, and the widget. Stay Compliant (₹4,999/mo) is ongoing monitoring after your site has been remediated and passed a Compliance Website Audit & Scan (₹14,999). It includes unlimited scans, quarterly spot-checks, and annual assessment reports.',
+      'Professional is for teams getting started: scans, reports, and the widget. Stay Compliant (₹4,999/mo) is ongoing monitoring after your site has been remediated and passed a Compliance Website Audit & Scan (free for the first 100 customers, then ₹4,999 one-time). It includes unlimited scans, quarterly spot-checks, and annual assessment reports.',
   },
   {
     question: 'Who needs Regulatory Defense?',

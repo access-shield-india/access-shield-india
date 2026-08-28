@@ -30,10 +30,18 @@ import { sendProblem } from '../lib/problem-details';
 import { requireRoles } from '../middleware/rbac';
 import { enqueueDocumentScan } from '../services/document-scan-queue';
 import { generatePdfWithTitle } from '../reporting/pdf-generator';
+import { renderDocumentScanTemplate } from '../reporting/templates/document-scan';
 import {
-  renderDocumentScanTemplate,
-  type DocumentScanViolation,
-} from '../reporting/templates/document-scan';
+  buildCategorySummary,
+  buildFrameworkCoverage,
+  buildRemediationPlan,
+  enrichFindings,
+  manualChecksFor,
+  scoreBand,
+  type EnrichedFinding,
+  type RawDocumentFinding,
+} from '../reporting/document-findings';
+import { cleanText } from '../reporting/text-clean';
 import {
   deleteDocument,
   getDocumentDownloadUrl,
@@ -79,6 +87,50 @@ function serializeScanStatus(job: {
   };
 }
 
+/**
+ * Present an enriched finding to the web app.
+ *
+ * Keys are snake_case to match the rest of this route's contract. The legacy
+ * `description`/`location`/`remediation` keys are retained so an older client
+ * still renders something sensible.
+ */
+function serializeFinding(finding: EnrichedFinding) {
+  return {
+    violation_id: finding.id,
+    severity: finding.severity,
+    severity_label: finding.severityLabel,
+    category: finding.category,
+    category_label: finding.categoryLabel,
+    title: finding.title,
+    impact: finding.impact,
+    requirement: finding.requirement,
+    fix_steps: finding.fixSteps,
+    fix_prose: finding.fixProse,
+    standard_refs: finding.standardRefs.map((ref) => ({
+      framework: ref.framework,
+      framework_label: ref.frameworkLabel,
+      ref: ref.ref,
+      title: ref.title,
+      level: ref.level ?? null,
+      scope: ref.scope ?? null,
+    })),
+    wcag_label: finding.wcagLabel,
+    auto_fixable: finding.autoFixable,
+    occurrences: finding.occurrences,
+    occurrence_count: finding.occurrenceCount,
+    occurrence_label: finding.occurrenceLabel,
+    occurrences_truncated: finding.occurrencesTruncated,
+
+    // Legacy keys, kept for backwards compatibility.
+    description: finding.title,
+    location: finding.occurrences[0]?.anchor ?? '',
+    remediation: finding.fixSteps.join('\n') || finding.fixProse,
+    checkpoint_id: finding.standardRefs[0]?.ref ?? '',
+    standard: finding.standardRefs[0]?.frameworkLabel ?? '',
+    wcag_criterion: finding.wcagLabel,
+  };
+}
+
 function serializeScanResults(
   results: {
     id: string;
@@ -99,29 +151,43 @@ function serializeScanResults(
     scanDurationSeconds: number | null;
     createdAt: string;
   },
-  violations: Array<{ severity?: string; category?: string }>,
+  findings: EnrichedFinding[],
+  extras: {
+    isGovernment: boolean;
+    scoreBand: string;
+    scoreSummary: string;
+  },
 ) {
+  const violations = findings.map(serializeFinding);
+  const totalOccurrences = findings.reduce((sum, f) => sum + f.occurrenceCount, 0);
+
   return {
     id: results.id,
     job_id: results.jobId,
     organisation_id: results.organisationId,
     document_name: results.documentName,
     document_type: results.documentType,
-    total_violations: results.totalViolations,
+    total_violations: totalOccurrences,
+    total_findings: findings.length,
+    total_occurrences: totalOccurrences,
     critical_count: results.criticalCount,
     serious_count: results.seriousCount,
     moderate_count: results.moderateCount,
     minor_count: results.minorCount,
     compliance_score: results.complianceScore,
+    score_band: extras.scoreBand,
+    score_summary: extras.scoreSummary,
     violations,
     violations_total: violations.length,
     violations_page: 1,
     violations_limit: violations.length,
     violations_pages: 1,
     summary: (results.summary as Record<string, number>) ?? {},
+    category_summary: buildCategorySummary(findings),
+    framework_coverage: buildFrameworkCoverage(findings, extras.isGovernment),
     gigw_checkpoint_results:
       (results.gigwCheckpointResults as Record<string, { status: string; count: number }>) ?? {},
-    ai_summary: results.aiSummary ?? '',
+    ai_summary: cleanText(results.aiSummary),
     scan_duration_seconds: results.scanDurationSeconds ?? 0,
     created_at: results.createdAt,
   };
@@ -585,6 +651,7 @@ export function createDocumentScansRouter(db: Database, redis: Redis): ExpressRo
             documentName: documentScanJobs.documentName,
             standards: documentScanJobs.standards,
             completedAt: documentScanJobs.completedAt,
+            pageCount: documentScanJobs.pageCount,
           })
           .from(documentScanJobs)
           .where(and(eq(documentScanJobs.id, jobId), eq(documentScanJobs.organisationId, orgId)))
@@ -614,39 +681,55 @@ export function createDocumentScansRouter(db: Database, redis: Redis): ExpressRo
         }
 
         const [org] = await db
-          .select({ name: organisations.name })
+          .select({ name: organisations.name, planTier: organisations.planTier })
           .from(organisations)
           .where(eq(organisations.id, orgId))
           .limit(1);
 
-        const violations = (results.violations as DocumentScanViolation[]) ?? [];
-        const gigwRaw =
-          (results.gigwCheckpointResults as Record<string, { status: string; count: number }>) ??
-          {};
+        const rawFindings = (results.violations as RawDocumentFinding[]) ?? [];
+        const documentType = results.documentType.toLowerCase();
 
-        const gigwCheckpoints = Object.entries(gigwRaw).map(([id, data]) => ({
-          id,
-          status: data.status,
-          count: data.count,
-        }));
+        // GIGW 3.0 only binds government bodies. Private-sector reports still
+        // include the GIGW table, but flagged as advisory rather than binding.
+        const isGovernment = org?.planTier === 'government';
+
+        const findings = enrichFindings(rawFindings, documentType);
+        const band = scoreBand(
+          results.complianceScore,
+          results.criticalCount,
+          results.seriousCount,
+        );
+
+        // Derive both counts from the enriched set rather than the stored
+        // total_violations, so "N findings across M places" is self-consistent
+        // regardless of whether the row predates engine-side aggregation.
+        const totalOccurrences = findings.reduce((sum, f) => sum + f.occurrenceCount, 0);
 
         const html = renderDocumentScanTemplate({
           organisationName: org?.name ?? 'Organisation',
           documentName: results.documentName,
           documentType: results.documentType.toUpperCase(),
+          pageCount: job.pageCount ?? null,
           complianceScore: results.complianceScore,
-          totalViolations: results.totalViolations,
+          scoreBand: band.band,
+          scoreSummary: band.summary,
+          totalFindings: findings.length,
+          totalOccurrences,
           criticalCount: results.criticalCount,
           seriousCount: results.seriousCount,
           moderateCount: results.moderateCount,
           minorCount: results.minorCount,
-          aiSummary: results.aiSummary ?? '',
-          scanDurationSeconds: results.scanDurationSeconds ?? 0,
+          aiSummary: cleanText(results.aiSummary),
+          scanDurationSeconds: Math.round(results.scanDurationSeconds ?? 0),
           scannedAt: formatIndianDate(job.completedAt ?? results.createdAt),
           generatedAt: formatIndianDate(new Date()),
           standards: job.standards ?? [...DOCUMENT_STANDARDS],
-          violations,
-          gigwCheckpoints,
+          isGovernment,
+          frameworkCoverage: buildFrameworkCoverage(findings, isGovernment),
+          categorySummary: buildCategorySummary(findings),
+          remediationPlan: buildRemediationPlan(findings),
+          findings,
+          manualChecks: manualChecksFor(documentType),
         });
 
         const pdfBuffer = await generatePdfWithTitle(
@@ -712,17 +795,37 @@ export function createDocumentScansRouter(db: Database, redis: Redis): ExpressRo
           return;
         }
 
-        type ViolationRow = { severity?: string; category?: string };
-        let violations = (results.violations as ViolationRow[]) ?? [];
+        const [org] = await db
+          .select({ planTier: organisations.planTier })
+          .from(organisations)
+          .where(eq(organisations.id, orgId))
+          .limit(1);
+
+        // Enrich before filtering so grouping, standards attribution and
+        // locations match the PDF report exactly.
+        let findings = enrichFindings(
+          (results.violations as RawDocumentFinding[]) ?? [],
+          results.documentType.toLowerCase(),
+        );
         if (typeof severity === 'string') {
-          violations = violations.filter((v) => v.severity === severity);
+          findings = findings.filter((f) => f.severity === severity);
         }
         if (typeof category === 'string') {
-          violations = violations.filter((v) => v.category === category);
+          findings = findings.filter((f) => f.category === category);
         }
 
+        const band = scoreBand(
+          results.complianceScore,
+          results.criticalCount,
+          results.seriousCount,
+        );
+
         const response: ApiResponse<ReturnType<typeof serializeScanResults>> = {
-          data: serializeScanResults(results, violations),
+          data: serializeScanResults(results, findings, {
+            isGovernment: org?.planTier === 'government',
+            scoreBand: band.band,
+            scoreSummary: band.summary,
+          }),
           timestamp: new Date().toISOString(),
         };
 

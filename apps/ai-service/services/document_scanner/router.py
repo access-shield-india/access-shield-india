@@ -12,10 +12,11 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
 from services.document_scanner.ai_summary import generate_document_summary
-from services.document_scanner.base import DocumentType, DocumentViolation
+from services.document_scanner.base import DocumentType
 from services.document_scanner.docx_engine import DocxAccessibilityEngine
 from services.document_scanner.pdf_engine import PDFAccessibilityEngine
 from services.document_scanner.pptx_engine import PptxAccessibilityEngine
+from services.document_scanner.scoring import calculate_score
 from services.document_scanner.xlsx_engine import XlsxAccessibilityEngine
 
 logger = logging.getLogger(__name__)
@@ -29,18 +30,6 @@ SUPPORTED_EXTENSIONS = {
 }
 
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024
-
-SEVERITY_PENALTY = {
-    "critical": 25,
-    "serious": 10,
-    "moderate": 5,
-    "minor": 2,
-}
-
-
-def calculate_score(violations: list[DocumentViolation]) -> int:
-    penalty = sum(SEVERITY_PENALTY.get(v.severity.value, 0) for v in violations)
-    return max(0, 100 - penalty)
 
 
 def get_engine(doc_type: DocumentType, file_path: str):
@@ -118,6 +107,11 @@ async def scan_document(file: UploadFile = File(...)):
                 "document_type": doc_type.value,
                 "compliance_score": score,
                 "total_violations": len(violations),
+                # Repeats of one defect are grouped into a single finding, so the
+                # instance total is reported separately from the finding count.
+                "total_occurrences": sum(
+                    max(v.occurrences, len(v.occurrence_list), 1) for v in violations
+                ),
                 "critical_count": severity_counts["critical"],
                 "serious_count": severity_counts["serious"],
                 "moderate_count": severity_counts["moderate"],
