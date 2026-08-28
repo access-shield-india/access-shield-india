@@ -174,6 +174,14 @@ export default function DocumentScanResultsPage() {
 
   const categoriesInResults = [...new Set(allViolations.map((v) => v.category))];
 
+  const totalFindings = results.total_findings ?? allViolations.length;
+  const totalOccurrences =
+    results.total_occurrences ??
+    allViolations.reduce((sum, v) => sum + (v.occurrence_count ?? 1), 0);
+  const frameworkCoverage = (results.framework_coverage ?? []).filter(
+    (framework) => framework.clauses.length > 0,
+  );
+
   const score = results.compliance_score ?? 0;
   const scoreColor =
     score >= 80 ? 'text-green-700' : score >= 60 ? 'text-orange-600' : 'text-red-700';
@@ -208,9 +216,9 @@ export default function DocumentScanResultsPage() {
             {results.document_name ?? 'Document scan results'}
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            {(results.document_type ?? 'document').toUpperCase()} · {results.total_violations}{' '}
-            violation
-            {results.total_violations !== 1 ? 's' : ''} · Scanned in{' '}
+            {(results.document_type ?? 'document').toUpperCase()} · {totalFindings} distinct issue
+            {totalFindings !== 1 ? 's' : ''}
+            {totalOccurrences > totalFindings && ` across ${totalOccurrences} places`} · Scanned in{' '}
             {results.scan_duration_seconds ?? 0}s
           </p>
         </div>
@@ -243,6 +251,9 @@ export default function DocumentScanResultsPage() {
         <div className="col-span-2 rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm md:col-span-1">
           <p className={cn('text-4xl font-bold', scoreColor)}>{score}</p>
           <p className="mt-1 text-xs text-gray-500">Compliance Score</p>
+          {results.score_band && (
+            <p className="mt-2 text-xs font-medium text-gray-700">{results.score_band}</p>
+          )}
         </div>
 
         {/* Severity counts */}
@@ -280,40 +291,63 @@ export default function DocumentScanResultsPage() {
         </div>
       )}
 
-      {/* GIGW checkpoint results */}
-      {results.gigw_checkpoint_results &&
-        Object.keys(results.gigw_checkpoint_results).length > 0 && (
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold text-gray-900">GIGW Checkpoint Coverage</h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-              {Object.entries(results.gigw_checkpoint_results).map(([checkpoint, data]) => (
-                <div
-                  key={checkpoint}
-                  className={cn(
-                    'rounded-lg border p-3 text-center text-xs',
-                    data.status === 'pass'
-                      ? 'border-green-200 bg-green-50 text-green-800'
-                      : data.status === 'fail'
-                        ? 'border-red-200 bg-red-50 text-red-800'
-                        : 'border-gray-200 bg-gray-50 text-gray-600',
-                  )}
-                >
-                  <p className="font-mono font-semibold">{checkpoint}</p>
-                  <p className="mt-1 capitalize">{data.status}</p>
-                  {data.count > 0 && (
-                    <p className="text-[10px] opacity-75">{data.count} issue(s)</p>
+      {/* Conformance by standard — every framework the findings map to, not just GIGW */}
+      {frameworkCoverage.length > 0 && (
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <h2 className="text-sm font-semibold text-gray-900">Conformance by standard</h2>
+          <p className="mt-1 text-xs text-gray-500">
+            The same finding usually breaches several frameworks at once, because they cross-adopt
+            each other&apos;s requirements. Clauses not listed were not tested by this scan.
+          </p>
+
+          <div className="mt-4 space-y-5">
+            {frameworkCoverage.map((framework) => (
+              <div key={framework.framework}>
+                <div className="flex flex-wrap items-baseline gap-2">
+                  <h3 className="text-sm font-semibold text-gray-900">{framework.label}</h3>
+                  {framework.advisory ? (
+                    <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800">
+                      Advisory for your organisation
+                    </span>
+                  ) : (
+                    framework.scope && (
+                      <span className="rounded bg-primary-50 px-1.5 py-0.5 text-xs text-primary-700">
+                        {framework.scope}
+                      </span>
+                    )
                   )}
                 </div>
-              ))}
-            </div>
+                <p className="mt-1 text-xs text-gray-500">{framework.description}</p>
+
+                <ul className="mt-2 divide-y divide-gray-100 rounded-lg border border-gray-200">
+                  {framework.clauses.map((clause) => (
+                    <li
+                      key={clause.ref}
+                      className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3 py-2 text-xs"
+                    >
+                      <span className="font-mono font-semibold text-gray-900">
+                        {clause.ref}
+                        {clause.level ? ` (Level ${clause.level})` : ''}
+                      </span>
+                      <span className="min-w-0 flex-1 text-gray-700">{clause.title}</span>
+                      <span className="text-gray-500">
+                        {clause.status} · {clause.occurrenceCount} place
+                        {clause.occurrenceCount !== 1 ? 's' : ''}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
-        )}
+        </div>
+      )}
 
       {/* Violations section */}
       <div>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-gray-900">
-            Violations
+            Findings
             {filteredViolations.length !== allViolations.length && (
               <span className="ml-2 text-sm font-normal text-gray-500">
                 ({filteredViolations.length} of {allViolations.length})
@@ -358,8 +392,8 @@ export default function DocumentScanResultsPage() {
         {filteredViolations.length === 0 ? (
           <div className="py-12 text-center text-gray-500">
             {allViolations.length === 0
-              ? '🎉 No violations found! This document meets accessibility standards.'
-              : 'No violations match the current filter.'}
+              ? 'No automated failures found. Complete the manual checks listed in the downloadable report before claiming conformance.'
+              : 'No findings match the current filter.'}
           </div>
         ) : (
           <div className="space-y-3">

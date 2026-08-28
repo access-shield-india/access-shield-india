@@ -8,15 +8,20 @@ function OneTimeCard({ service }: { service: OneTimeSku }) {
         service.popular || service.highlighted ? 'border-primary-600 border-2' : 'border-gray-200'
       }`}
     >
-      {service.popular && (
+      {service.badge ? (
+        <span className="absolute -top-3 left-4 inline-flex rounded-full bg-primary-600 px-3 py-0.5 text-xs font-semibold text-white">
+          {service.badge}
+        </span>
+      ) : service.popular ? (
         <span className="absolute -top-3 left-4 inline-flex rounded-full bg-primary-600 px-3 py-0.5 text-xs font-semibold text-white">
           Most popular
         </span>
-      )}
-      {service.highlighted && !service.popular && (
-        <span className="absolute -top-3 left-4 inline-flex rounded-full bg-accent-100 px-3 py-0.5 text-xs font-semibold text-accent-700">
-          Add-on · standalone
-        </span>
+      ) : (
+        service.highlighted && (
+          <span className="absolute -top-3 left-4 inline-flex rounded-full bg-accent-100 px-3 py-0.5 text-xs font-semibold text-accent-700">
+            Add-on · standalone
+          </span>
+        )
       )}
       <h3 className="text-lg font-bold text-text-primary">{service.name}</h3>
       <p className="mt-1 text-sm text-text-secondary">{service.subtitle}</p>
@@ -107,8 +112,11 @@ export function PricingStandaloneAuditSection() {
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-base leading-normal text-text-secondary">
           Know exactly where your site stands for users with disabilities — automated WCAG 2.2 + IS
-          17802 scan paired with hands-on specialist review. Available standalone; no subscription
-          required.
+          17802 scan paired with hands-on specialist review.{' '}
+          <strong className="font-semibold text-text-primary">
+            Free for the first 100 customers
+          </strong>{' '}
+          (₹4,999 one-time thereafter). Available standalone; no subscription required.
         </p>
       </div>
       <div className="mx-auto mt-10 max-w-2xl">

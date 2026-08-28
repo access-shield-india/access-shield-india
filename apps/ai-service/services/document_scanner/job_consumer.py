@@ -26,6 +26,7 @@ from services.document_scanner.db_writer import (
 from services.document_scanner.docx_engine import DocxAccessibilityEngine
 from services.document_scanner.pdf_engine import PDFAccessibilityEngine
 from services.document_scanner.pptx_engine import PptxAccessibilityEngine
+from services.document_scanner.scoring import calculate_score
 from services.document_scanner.xlsx_engine import XlsxAccessibilityEngine
 
 logger = logging.getLogger(__name__)
@@ -35,18 +36,6 @@ QUEUE_KEY = "document-scan-jobs"
 
 class DatabaseUnavailableError(RuntimeError):
     """Raised when the consumer cannot reach PostgreSQL — job should be re-queued."""
-
-SEVERITY_PENALTY = {
-    "critical": 25,
-    "serious": 10,
-    "moderate": 5,
-    "minor": 2,
-}
-
-
-def calculate_score(violations: list) -> int:
-    penalty = sum(SEVERITY_PENALTY.get(v.severity.value, 0) for v in violations)
-    return max(0, 100 - penalty)
 
 
 def get_engine(document_type: str, file_path: str):

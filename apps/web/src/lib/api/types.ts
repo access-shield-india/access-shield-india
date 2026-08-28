@@ -494,18 +494,83 @@ export interface DocumentScanJob {
   results_url: string;
 }
 
+/** One clause of one framework that a finding breaches. */
+export interface DocumentStandardRef {
+  framework: string;
+  framework_label: string;
+  ref: string;
+  title: string;
+  level: string | null;
+  /** Set when the framework is advisory rather than binding for this org. */
+  scope: string | null;
+}
+
+/** One place in the document where a grouped finding occurs. */
+export interface DocumentFindingOccurrence {
+  /** Most precise anchor available, e.g. "Page 4, line 12". */
+  anchor: string;
+  excerpt: string;
+  /** Heading trail the occurrence sits under. */
+  context: string;
+}
+
 export interface DocumentViolation {
   violation_id: string;
-  checkpoint_id: string;
-  standard: string;
   severity: ViolationSeverity;
+  severity_label: string;
   category: string;
+  category_label: string;
+  title: string;
+  impact: string;
+  /** What the criterion requires, in plain language. */
+  requirement: string | null;
+  fix_steps: string[];
+  fix_prose: string;
+  standard_refs: DocumentStandardRef[];
+  wcag_label: string | null;
+  auto_fixable: boolean;
+  occurrences: DocumentFindingOccurrence[];
+  occurrence_count: number;
+  occurrence_label: string;
+  occurrences_truncated: boolean;
+
+  // Legacy keys retained by the API for backwards compatibility.
   description: string;
   location: string;
-  wcag_criterion: string | null;
-  impact: string;
   remediation: string;
-  auto_fixable: boolean;
+  checkpoint_id: string;
+  standard: string;
+  wcag_criterion: string | null;
+}
+
+export interface DocumentCategorySummary {
+  category: string;
+  label: string;
+  distinctFindings: number;
+  totalOccurrences: number;
+  worstSeverity: string;
+  worstSeverityLabel: string;
+}
+
+export interface DocumentFrameworkCoverage {
+  framework: string;
+  label: string;
+  description: string;
+  /** Set when the framework only binds certain organisation types. */
+  scope?: string;
+  /** True when the framework is informational for this organisation. */
+  advisory: boolean;
+  clauses: Array<{
+    ref: string;
+    title: string;
+    level?: string;
+    status: string;
+    issueCount: number;
+    occurrenceCount: number;
+    worstSeverity: string;
+  }>;
+  totalIssues: number;
+  totalOccurrences: number;
 }
 
 export interface DocumentScanResult {
@@ -513,18 +578,26 @@ export interface DocumentScanResult {
   job_id: string;
   document_name: string;
   document_type: DocumentType;
+  /** Total places affected, i.e. the sum of every finding's occurrence count. */
   total_violations: number;
+  /** Distinct defects after repeats are grouped. */
+  total_findings: number;
+  total_occurrences: number;
   critical_count: number;
   serious_count: number;
   moderate_count: number;
   minor_count: number;
   compliance_score: number;
+  score_band: string;
+  score_summary: string;
   violations: DocumentViolation[];
   violations_total: number;
   violations_page: number;
   violations_limit: number;
   violations_pages: number;
   summary: Record<string, number>;
+  category_summary: DocumentCategorySummary[];
+  framework_coverage: DocumentFrameworkCoverage[];
   gigw_checkpoint_results: Record<string, { status: string; count: number }>;
   ai_summary: string;
   scan_duration_seconds: number;

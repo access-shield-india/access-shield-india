@@ -94,26 +94,73 @@ async def test_all_violations_have_required_fields():
         os.unlink(pdf_path)
 
 
-@pytest.mark.asyncio
-async def test_compliance_score_calculation():
-    from services.document_scanner.router import calculate_score
+def _violation(
+    violation_id: str = "test_001",
+    checkpoint_id: str = "GIGW_5.2.1",
+    severity: Severity = Severity.CRITICAL,
+    category: str = "alt_text",
+) -> DocumentViolation:
+    return DocumentViolation(
+        violation_id=violation_id,
+        checkpoint_id=checkpoint_id,
+        standard=Standard.WCAG_2_1_AA,
+        severity=severity,
+        category=category,
+        description="Test",
+        location="Test",
+        impact="Test impact statement",
+        remediation="Test remediation steps",
+    )
 
-    one_critical = [
-        DocumentViolation(
-            violation_id="test_001",
-            checkpoint_id="GIGW_5.2.1",
-            standard=Standard.WCAG_2_1_AA,
-            severity=Severity.CRITICAL,
-            category="alt_text",
-            description="Test",
-            location="Test",
-            impact="Test impact statement",
-            remediation="Test remediation steps",
-        )
-    ]
+
+def test_score_is_full_with_no_violations():
+    from services.document_scanner.scoring import calculate_score
+
     assert calculate_score([]) == 100
-    assert calculate_score(one_critical) == 75
-    assert calculate_score(one_critical * 10) == 0
+
+
+def test_score_deducts_severity_weight_for_a_single_defect():
+    from services.document_scanner.scoring import calculate_score
+
+    assert calculate_score([_violation()]) == 75
+
+
+def test_repeats_of_one_defect_are_damped():
+    """
+    Ten copies of the same defect are one thing to fix, so they must not sink
+    the score the way ten different critical defects would. Without damping any
+    real document scored 0 and progress between revisions was untrackable.
+    """
+    from services.document_scanner.scoring import calculate_score
+
+    ten_copies = [_violation() for _ in range(10)]
+    score = calculate_score(ten_copies)
+
+    assert score == 50, f"expected damped penalty, got {score}"
+    assert score > calculate_score(
+        [
+            _violation(checkpoint_id="GIGW_5.2.1", category="alt_text"),
+            _violation(checkpoint_id="GIGW_5.2.7", category="heading_structure"),
+            _violation(checkpoint_id="PDF_UA_1.2", category="document_structure"),
+        ]
+    ), "distinct defects must cost more than repeats of one defect"
+
+
+def test_engine_side_grouping_counts_towards_repeats():
+    from services.document_scanner.scoring import calculate_score
+
+    grouped = _violation()
+    grouped.occurrences = 10
+    grouped.occurrence_list = [{"page": n} for n in range(10)]
+
+    assert calculate_score([grouped]) == calculate_score([_violation() for _ in range(10)])
+
+
+def test_skipped_checks_do_not_reduce_the_score():
+    """A check that failed to run is unknown, not a failure."""
+    from services.document_scanner.scoring import calculate_score
+
+    assert calculate_score([_violation(category="scan_error", severity=Severity.MINOR)]) == 100
 
 
 @pytest.mark.asyncio
