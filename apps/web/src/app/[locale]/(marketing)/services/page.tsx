@@ -50,7 +50,7 @@ const servicesFaqs = [
   {
     question: 'Is there a free option?',
     answer:
-      'Yes. Run a free scan with no credit card, or sign up for a Free account — 1 website and 1 scan per month with a WCAG + IS 17802 issue summary. Upgrade to Professional (₹1,999/mo) for 20 scans, the accessibility widget, and downloadable PDF reports.',
+      'Yes. Run a free scan with no credit card, or sign up for a Free account — 1 website and 1 scan per month with a WCAG + IS 17802 issue summary. Contact sales to upgrade to Professional for more scans, the accessibility widget, and downloadable PDF reports.',
   },
   {
     question: 'Does the accessibility widget make my site compliant?',
@@ -60,22 +60,27 @@ const servicesFaqs = [
   {
     question: 'What is the difference between Professional and Stay Compliant?',
     answer:
-      'Professional is for teams getting started: scans, reports, and the widget. Stay Compliant (₹4,999/mo) is ongoing monitoring after your site has been remediated and passed a Compliance Website Audit & Scan (free for the first 100 customers, then ₹4,999 one-time). It includes unlimited scans, quarterly spot-checks, and annual assessment reports.',
+      'Professional is for teams getting started: scans, reports, and the widget. Stay Compliant is ongoing monitoring after your site has been remediated and passed a Compliance Website Audit & Scan (free for the first 100 customers). It includes unlimited scans, quarterly spot-checks, and annual assessment reports. Contact sales for a quote.',
   },
   {
     question: 'Who needs Regulatory Defense?',
     answer:
-      'Listed companies facing SEBI accessibility deadlines, BFSI firms, PSUs, and government vendors who need RPwD/GIGW evidence packs, SEBI assessment reports, and IAAP-certified sign-off. Pricing starts at ₹7,999/mo after remediation and baseline audit.',
+      'Listed companies facing SEBI accessibility deadlines, BFSI firms, PSUs, and government vendors who need RPwD/GIGW evidence packs, SEBI assessment reports, and IAAP-certified sign-off. Contact sales after remediation and baseline audit.',
   },
   {
-    question: 'How does remediation pricing work?',
+    question: 'How does remediation work?',
     answer:
-      'Brochure sites (1–15 pages) are ₹49,999 one-time. Larger sites and e-commerce flows start from ₹99,999, scoped after your assessment. Additional pages beyond 15 are billed at ₹2,000/page. All remediation prices exclude 18% GST.',
+      'Brochure sites (1–15 pages) and larger / e-commerce sites are scoped after your assessment. Contact sales for a quote tailored to your page count and flows. All paid work is invoiced with GST where applicable.',
   },
   {
     question: 'Do you provide a GST invoice?',
     answer:
-      'Yes. All paid prices exclude 18% GST. We issue GST-compliant invoices (CGST + SGST intra-state, IGST inter-state). Registered businesses may claim input tax credit where applicable. Government departments can pay via PO or annual contract.',
+      'Yes. We issue GST-compliant invoices (CGST + SGST intra-state, IGST inter-state). Registered businesses may claim input tax credit where applicable. Government departments can pay via PO or annual contract. Contact sales for details.',
+  },
+  {
+    question: 'How do I get pricing?',
+    answer:
+      'Use Contact sales on any plan or service card. Tell us which plan or add-on you need and we will send a tailored quote.',
   },
 ];
 
@@ -88,7 +93,7 @@ export default function ServicesPage() {
         <div className="grid items-center gap-10 lg:grid-cols-[1fr_minmax(240px,400px)] lg:gap-16">
           <div className="text-center lg:text-left">
             <p className="text-sm font-semibold uppercase tracking-wide text-primary-600">
-              Services &amp; Pricing
+              Services
             </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-text-primary sm:text-4xl lg:text-5xl">
               Start with an audit. Stay accessible for everyone.
@@ -96,7 +101,8 @@ export default function ServicesPage() {
             <p className="mx-auto mt-4 max-w-3xl text-lg leading-normal text-text-secondary lg:mx-0">
               Most companies begin with a Compliance Website Audit &amp; Scan — because you cannot
               fix what you cannot see. Then add the widget, ongoing monitoring, or remediation as
-              you grow. Built for people with disabilities and Indian regulators alike.
+              you grow. Built for people with disabilities and Indian regulators alike. Contact
+              sales for a quote on any plan.
             </p>
             <p className="mt-4 text-sm text-text-secondary">
               <Link
@@ -107,10 +113,10 @@ export default function ServicesPage() {
               </Link>
               {' · '}
               <Link
-                href={freeTier.signupCta.href}
+                href={enterprise.cta.href}
                 className="font-medium text-primary-600 underline hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
               >
-                {freeTier.signupCta.text}
+                Contact sales
               </Link>
             </p>
           </div>

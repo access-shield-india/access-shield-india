@@ -31,16 +31,20 @@
       "baseUrl": "http://localhost:3000",
       "redirectUris": [
         "http://localhost:3000/*",
-        "http://127.0.0.1:3000/*"
+        "http://127.0.0.1:3000/*",
+        "https://accessiblenow.in/*",
+        "https://www.accessiblenow.in/*"
       ],
       "webOrigins": [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "https://accessiblenow.in",
+        "https://www.accessiblenow.in",
         "+"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:3000/*##http://127.0.0.1:3000/*"
+        "post.logout.redirect.uris": "http://localhost:3000/*##http://127.0.0.1:3000/*##https://accessiblenow.in/*##https://www.accessiblenow.in/*"
       },
       "protocolMappers": [
         {
@@ -85,6 +89,28 @@
       "protocol": "openid-connect",
       "fullScopeAllowed": true,
       "authorizationServicesEnabled": false
+    }
+  ],
+  "identityProviders": [
+    {
+      "alias": "google",
+      "displayName": "Google",
+      "providerId": "google",
+      "enabled": true,
+      "updateProfileFirstLoginMode": "on",
+      "trustEmail": true,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "authenticateByDefault": false,
+      "linkOnly": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "REPLACE_WITH_GOOGLE_CLIENT_ID",
+        "clientSecret": "REPLACE_WITH_GOOGLE_CLIENT_SECRET",
+        "defaultScope": "openid profile email",
+        "syncMode": "IMPORT",
+        "useJwksUrl": "true"
+      }
     }
   ],
   "users": [

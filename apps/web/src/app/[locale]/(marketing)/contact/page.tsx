@@ -23,19 +23,23 @@ export default function ContactPage() {
         <p>
           <strong className="text-text-primary">Email:</strong>{' '}
           <a
-            href="mailto:support@accessshield.in"
+            href="mailto:nilesh@accessiblenow.in"
             className="text-primary-600 hover:text-primary-700"
           >
-            support@accessshield.in
+            nilesh@accessiblenow.in
+          </a>
+          {' · '}
+          <a
+            href="mailto:support@accessiblenow.in"
+            className="text-primary-600 hover:text-primary-700"
+          >
+            support@accessiblenow.in
           </a>
         </p>
         <p>
-          <strong className="text-text-primary">Sales:</strong>{' '}
-          <a
-            href="mailto:sales@accessshield.in"
-            className="text-primary-600 hover:text-primary-700"
-          >
-            sales@accessshield.in
+          <strong className="text-text-primary">Mobile:</strong>{' '}
+          <a href="tel:+919890451667" className="text-primary-600 hover:text-primary-700">
+            +91-9890451667
           </a>
         </p>
         <p>

@@ -2,10 +2,10 @@ import type { PricingDict } from '../types';
 
 export const pricing: PricingDict = {
   page: {
-    title: 'Services & Pricing',
+    title: 'Services',
     description:
-      'Accessibility widget, scanning, remediation और compliance monitoring — INR में pricing, GST invoice के साथ।',
-    eyebrow: 'Clear pricing',
+      'Accessibility widget, scanning, remediation और compliance monitoring. Quote के लिए Contact sales करें।',
+    eyebrow: 'हमारी services',
   },
   sections: {
     auditFirst: 'Audit से शुरू करें',

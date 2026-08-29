@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ButtonLink } from '@/components/marketing/ButtonLink';
-import { formatInr, PRICING_CATALOG } from '@/lib/pricing/catalog';
+import { PRICING_CATALOG } from '@/lib/pricing/catalog';
 
 /** @deprecated Use PricingStandaloneAuditSection on /services */
 export function PricingExpertReviewSection() {
@@ -14,12 +14,8 @@ export function PricingExpertReviewSection() {
           {review.name}
         </h2>
         <p className="mt-2 text-sm text-text-secondary">{review.subtitle}</p>
-        <p className="mt-4 text-3xl font-bold text-text-primary">
-          {formatInr(review.priceInr)}
-          <span className="ml-1 text-base font-normal text-text-tertiary">one-time</span>
-        </p>
         {review.priceNote && (
-          <p className="mt-1 text-xs text-text-tertiary">{review.priceNote} · + 18% GST</p>
+          <p className="mt-4 text-sm font-medium text-text-primary">{review.priceNote}</p>
         )}
         <ul className="mt-4 space-y-2">
           {review.features.map((feature) => (
