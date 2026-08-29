@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { Button } from '@accessshield/ui';
+import { signInWithGoogle } from '@/lib/auth/google-sign-in';
 
 function safeRedirectPath(value: string | null): string {
   if (!value || !value.startsWith('/') || value.startsWith('//')) {
@@ -42,7 +43,14 @@ export default function LoginPage() {
   }
 
   async function handleGoogleSignIn() {
-    await signIn('keycloak', { callbackUrl: redirectTo });
+    setError(null);
+    setIsLoading(true);
+    try {
+      await signInWithGoogle(redirectTo);
+    } catch {
+      setError('Google sign-in could not be started. Try email and password, or contact support.');
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -97,7 +105,13 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6">
-          <Button type="button" variant="outline" className="w-full" onClick={handleGoogleSignIn}>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={isLoading}
+            onClick={() => void handleGoogleSignIn()}
+          >
             Continue with Google
           </Button>
         </div>

@@ -59,7 +59,7 @@ export const PRICING_CATALOG = {
         'Widget updates & uptime monitoring',
         '10 document scans / month',
       ],
-      cta: { text: 'Get started', href: '/signup?plan=widget' },
+      cta: { text: 'Contact sales', href: '/contact?plan=widget' },
     },
     {
       id: 'professional',
@@ -78,7 +78,7 @@ export const PRICING_CATALOG = {
         'Violation severity breakdown',
         'Scan history & email export',
       ],
-      cta: { text: 'Start trial', href: '/signup?plan=professional' },
+      cta: { text: 'Contact sales', href: '/contact?plan=professional' },
     },
     {
       id: 'compliance_shield',
@@ -97,7 +97,7 @@ export const PRICING_CATALOG = {
         'Annual compliance assessment report',
         'Badge renewal & priority support',
       ],
-      cta: { text: 'Talk to sales', href: '/contact?plan=stay-compliant' },
+      cta: { text: 'Contact sales', href: '/contact?plan=stay-compliant' },
       checkoutNote: 'assess',
     },
     {
@@ -119,7 +119,7 @@ export const PRICING_CATALOG = {
         '72-hour regulatory triage',
         'IAAP-certified sign-off (annual)',
       ],
-      cta: { text: 'Book demo', href: '/contact?plan=regulatory-defense' },
+      cta: { text: 'Contact sales', href: '/contact?plan=regulatory-defense' },
       checkoutNote: 'assess',
     },
   ] satisfies MonthlyPlan[],
@@ -135,7 +135,7 @@ export const PRICING_CATALOG = {
       subtitle: '1–15 pages · one-time remediation',
       priceInr: 49999,
       popular: true,
-      priceNote: 'Additional pages beyond 15 billed at ₹2,000/page',
+      priceNote: 'Scoped after assessment · contact sales for a quote',
       features: [
         'Alt text & colour contrast fixes',
         'Heading structure & keyboard navigation',
@@ -143,14 +143,14 @@ export const PRICING_CATALOG = {
         'Accessibility statement page',
         'Re-scan verification before hand-off',
       ],
-      cta: { text: 'Book assessment call', href: '/contact?service=remediation-small' },
+      cta: { text: 'Contact sales', href: '/contact?service=remediation-small' },
     },
     {
       id: 'remediation-large',
       name: 'Larger / e-commerce site',
       subtitle: 'Transaction flows · portals',
       priceInr: 99999,
-      priceNote: 'From · scoped after assessment · additional pages quoted separately',
+      priceNote: 'Scoped after assessment · contact sales for a quote',
       features: [
         'Everything in Brochure site package',
         'Checkout & payment flow accessibility',
@@ -171,7 +171,7 @@ export const PRICING_CATALOG = {
     badge: 'Free for first 100 customers',
     highlighted: true,
     priceNote:
-      'Launch offer — free for the first 100 customers · standard price ₹4,999 one-time · no subscription required',
+      'Launch offer — free for the first 100 customers · contact sales for details',
     features: [
       'WCAG 2.2 AA + IS 17802 automated scan',
       'Hands-on manual review by specialists',
@@ -180,7 +180,7 @@ export const PRICING_CATALOG = {
       'Prioritized remediation roadmap',
       'Required before Stay Compliant & Regulatory Defense',
     ],
-    cta: { text: 'Buy assessment', href: '/contact?service=assess' },
+    cta: { text: 'Contact sales', href: '/contact?service=assess' },
   } satisfies OneTimeSku,
 
   addons: [
@@ -195,7 +195,7 @@ export const PRICING_CATALOG = {
         'Screen-by-screen violation report',
         'Included with Regulatory Defense',
       ],
-      cta: { text: 'Add mobile scan', href: '/contact?service=mobile-scan' },
+      cta: { text: 'Contact sales', href: '/contact?service=mobile-scan' },
     },
     {
       id: 'document-batch-audit',
@@ -210,7 +210,7 @@ export const PRICING_CATALOG = {
         'Priority queue (2hr turnaround)',
         'Certificate-ready evidence pack',
       ],
-      cta: { text: 'Get quote', href: '/contact?service=document-batch-audit' },
+      cta: { text: 'Contact sales', href: '/contact?service=document-batch-audit' },
     },
   ] satisfies OneTimeSku[],
 
@@ -225,7 +225,7 @@ export const PRICING_CATALOG = {
 
   indiaCompliance: {
     gstNote:
-      'All prices exclude 18% GST. Registered businesses may claim input tax credit (ITC) on qualifying purchases. Government departments can pay via PO or annual contract.',
+      'We issue GST-compliant invoices for paid engagements. Registered businesses may claim input tax credit (ITC) where applicable. Government departments can pay via PO or annual contract. Contact sales for a tailored quote.',
     links: [
       { label: 'RPwD Act 2016', href: '/rpwd-act' },
       { label: 'IS 17802', href: '/is-17802' },
@@ -235,7 +235,7 @@ export const PRICING_CATALOG = {
   },
 
   enterprise: {
-    cta: { text: 'Contact enterprise sales', href: '/contact?plan=enterprise' },
+    cta: { text: 'Contact sales', href: '/contact?plan=enterprise' },
     note: 'Multi-site portfolios, custom SLAs, and on-site training are scoped after your baseline scan.',
   },
 
@@ -287,8 +287,7 @@ export function formatPlanPrice(
 }
 
 export function assessCheckoutSubline(): string {
-  const price = formatInr(PRICING_CATALOG.rules.assessPriceInr);
-  return `Compliance Website Audit & Scan (${price}) is required before Stay Compliant or Regulatory Defense monitoring begins.`;
+  return 'A Compliance Website Audit & Scan is required before Stay Compliant or Regulatory Defense monitoring begins. Contact sales to get started.';
 }
 
 export function auditCheckoutSubline(): string {

@@ -1,12 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import { ButtonLink } from '@/components/marketing/ButtonLink';
 import {
   assessCheckoutSubline,
-  formatPlanPrice,
   MONTHLY_PLANS,
-  type BillingPeriod,
   type MonthlyPlan,
 } from '@/lib/pricing/catalog';
 
@@ -34,8 +31,6 @@ function PlanBadges({ plan }: { plan: MonthlyPlan }) {
 }
 
 export function PricingMainPlansSection() {
-  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly');
-
   return (
     <section id="step-plans" className="mt-16 scroll-mt-20" aria-labelledby="pricing-plans-heading">
       <div className="text-center">
@@ -44,47 +39,12 @@ export function PricingMainPlansSection() {
           id="pricing-plans-heading"
           className="mt-2 text-2xl font-bold text-text-primary sm:text-3xl"
         >
-          Pick your monthly plan
+          Pick your plan
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-base leading-normal text-text-secondary">
           Ongoing plans to keep your site welcoming after remediation — widget, scans, and
-          monitoring for teams and regulators. All prices exclude 18% GST. Annual billing saves
-          ~17%.
+          monitoring for teams and regulators. Contact sales for a tailored quote.
         </p>
-      </div>
-
-      <div className="mt-8 flex justify-center">
-        <div
-          role="group"
-          aria-label="Billing period"
-          className="inline-flex rounded-lg border border-gray-300 bg-white p-1 shadow-sm"
-        >
-          <button
-            type="button"
-            onClick={() => setBillingPeriod('monthly')}
-            aria-pressed={billingPeriod === 'monthly'}
-            className={`rounded-md px-6 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 ${
-              billingPeriod === 'monthly'
-                ? 'border-2 border-primary-700 bg-primary-600 text-white shadow-sm'
-                : 'border-2 border-transparent bg-white text-text-secondary hover:bg-gray-100'
-            }`}
-          >
-            Monthly
-          </button>
-          <button
-            type="button"
-            onClick={() => setBillingPeriod('annual')}
-            aria-pressed={billingPeriod === 'annual'}
-            className={`rounded-md px-6 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 ${
-              billingPeriod === 'annual'
-                ? 'border-2 border-primary-700 bg-primary-600 text-white shadow-sm'
-                : 'border-2 border-transparent bg-white text-text-secondary hover:bg-gray-100'
-            }`}
-          >
-            Annual
-            <span className="ml-1.5 text-xs">(Save ~17%)</span>
-          </button>
-        </div>
       </div>
 
       <div className="mt-12 grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 xl:grid-cols-4">
@@ -109,19 +69,6 @@ export function PricingMainPlansSection() {
               <p className="mt-2 min-h-[3rem] text-sm leading-normal text-text-secondary">
                 {plan.description}
               </p>
-
-              <div className="mt-4">
-                <div className="text-3xl font-bold text-text-primary">
-                  {formatPlanPrice(plan.monthlyPriceInr, plan.annualPriceInr, billingPeriod)}
-                </div>
-                {billingPeriod === 'annual' && (
-                  <p className="mt-1 text-sm text-text-tertiary">
-                    {formatPlanPrice(plan.annualPriceInr / 12, plan.annualPriceInr, 'monthly')}{' '}
-                    billed annually
-                  </p>
-                )}
-                <p className="mt-1 text-xs text-text-tertiary">+ 18% GST</p>
-              </div>
 
               {plan.checkoutNote === 'assess' && (
                 <p className="mt-3 text-xs leading-normal text-text-secondary">

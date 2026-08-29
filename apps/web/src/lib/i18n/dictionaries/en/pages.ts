@@ -92,12 +92,13 @@ export const pages: PagesDict = {
   },
   services: {
     meta: {
-      title: 'Services & Pricing',
-      description: 'Widget, scanning, remediation, and compliance plans in INR.',
+      title: 'Services',
+      description:
+        'Widget, scanning, remediation, and compliance plans. Contact sales for a tailored quote.',
     },
-    title: 'Services & Pricing',
+    title: 'Services',
     description:
-      'From free scan to enterprise regulatory defense — pick the path that fits your team.',
+      'From free scan to enterprise regulatory defense — pick the path that fits your team, then contact sales.',
   },
   docs: {
     meta: {

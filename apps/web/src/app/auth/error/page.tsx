@@ -12,10 +12,28 @@ const MESSAGES: Record<string, { title: string; detail: string }> = {
     detail:
       'The authentication callback did not include a valid code. Please try signing in again.',
   },
+  OAuthSignin: {
+    title: 'Google sign-in failed to start',
+    detail:
+      'Keycloak could not begin the Google login flow. Confirm Google is configured as an identity provider in Keycloak and that NEXTAUTH_URL matches your site URL.',
+  },
+  OAuthCallback: {
+    title: 'Google sign-in was rejected',
+    detail:
+      'Google or Keycloak returned an error during sign-in. Check that the Google OAuth redirect URI matches your Keycloak broker endpoint, then try again.',
+  },
+  AccessDenied: {
+    title: 'Sign-in was cancelled',
+    detail: 'You cancelled Google sign-in or do not have access to this application yet. Sign up first if you are a new customer.',
+  },
 };
 
-export default function AuthErrorPage({ searchParams }: { searchParams: { reason?: string } }) {
-  const reason = searchParams.reason ?? 'unknown';
+export default function AuthErrorPage({
+  searchParams,
+}: {
+  searchParams: { reason?: string; error?: string };
+}) {
+  const reason = searchParams.reason ?? searchParams.error ?? 'unknown';
   const message = MESSAGES[reason] ?? {
     title: 'Authentication error',
     detail: 'Something went wrong during sign-in. Please try again or contact support.',

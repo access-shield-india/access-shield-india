@@ -8,6 +8,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
  * AccessShield never mints user JWTs — Keycloak does.
  */
 export const authOptions: NextAuthOptions = {
+  trustHost: true,
   providers: [
     KeycloakProvider({
       clientId: process.env.NEXT_PUBLIC_AUTH_CLIENT_ID ?? 'accessshield-web',
@@ -107,13 +108,30 @@ export const authOptions: NextAuthOptions = {
           user_role?: string;
           org_id?: string;
         };
+
+        let accessToken = u.accessToken ?? account.access_token;
+        let userRole = u.user_role;
+        let orgId = u.org_id;
+
+        // Keycloak OIDC: pull custom claims from userinfo when not on the user object
+        // (common for Google broker logins where attributes live on the Keycloak user).
+        if (account.provider === 'keycloak' && typeof accessToken === 'string') {
+          const profile = await fetchKeycloakUserinfo(accessToken);
+          if (profile) {
+            userRole ??= profile.user_role;
+            orgId ??= profile.org_id;
+          }
+        }
+
         return {
           ...token,
-          accessToken: u.accessToken ?? account.access_token,
+          accessToken,
           refreshToken: u.refreshToken ?? account.refresh_token,
-          accessTokenExpires: u.accessTokenExpires ?? (account.expires_at ? account.expires_at * 1000 : Date.now() + 3600_000),
-          user_role: u.user_role,
-          org_id: u.org_id,
+          accessTokenExpires:
+            u.accessTokenExpires ??
+            (account.expires_at ? account.expires_at * 1000 : Date.now() + 3600_000),
+          user_role: userRole,
+          org_id: orgId,
         };
       }
 
@@ -144,6 +162,28 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
 };
+
+async function fetchKeycloakUserinfo(accessToken: string): Promise<{
+  user_role?: string;
+  org_id?: string;
+} | null> {
+  try {
+    const issuer = process.env.AUTH_ISSUER_URL ?? 'http://localhost:8080/realms/accessshield';
+    const response = await fetch(`${issuer.replace(/\/$/, '')}/protocol/openid-connect/userinfo`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) {
+      return null;
+    }
+    const profile = (await response.json()) as {
+      user_role?: string;
+      org_id?: string;
+    };
+    return profile;
+  } catch {
+    return null;
+  }
+}
 
 async function refreshAccessToken(token: Record<string, unknown>) {
   try {

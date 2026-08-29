@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { signIn } from 'next-auth/react';
 import { Button, Input, Alert } from '@accessshield/ui';
 import { BrandLogo } from '@/components/brand/BrandLogo';
+import { signInWithGoogle } from '@/lib/auth/google-sign-in';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -54,7 +55,14 @@ export function LoginForm() {
   };
 
   async function handleGoogleSignIn() {
-    await signIn('keycloak', { callbackUrl: redirectTo });
+    setError('');
+    setLoading(true);
+    try {
+      await signInWithGoogle(redirectTo);
+    } catch {
+      setError('Google sign-in could not be started. Try email and password, or contact support.');
+      setLoading(false);
+    }
   }
 
   return (
@@ -145,7 +153,9 @@ export function LoginForm() {
           <Button
             variant="secondary"
             className="mt-6 w-full"
-            onClick={handleGoogleSignIn}
+            onClick={() => void handleGoogleSignIn()}
+            disabled={loading}
+            aria-busy={loading}
             aria-label="Sign in with Google account"
           >
             Continue with Google

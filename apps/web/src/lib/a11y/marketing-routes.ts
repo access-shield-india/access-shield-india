@@ -18,7 +18,7 @@ export interface MarketingRoute {
 
 export const MARKETING_ROUTES: readonly MarketingRoute[] = [
   { path: '/', name: 'Home', kind: 'static', vitest: true },
-  { path: '/services', name: 'Services & Pricing', kind: 'static', vitest: true },
+  { path: '/services', name: 'Services', kind: 'static', vitest: true },
   { path: '/scan', name: 'Free Scan', kind: 'static', vitest: true },
   { path: '/widget', name: 'Accessibility Widget', kind: 'static', vitest: true },
   { path: '/about', name: 'About', kind: 'static', vitest: true },
