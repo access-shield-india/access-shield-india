@@ -474,7 +474,7 @@ export function createIssuesRouter(db: Database): ExpressRouter {
           return;
         }
 
-        const result = await generateIssueAiFix(db, orgId, issueId);
+        const result = await generateIssueAiFix(db, orgId, issueId, { force: true });
 
         const response: ApiResponse<typeof result> = {
           data: result,

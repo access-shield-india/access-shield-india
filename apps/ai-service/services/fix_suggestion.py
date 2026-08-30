@@ -45,18 +45,24 @@ WCAG Criterion: {wcag_criterion}
 Rules for fix generation:
 - Make the smallest possible change — don't rewrite the entire element
 - Prefer native HTML semantics over ARIA where possible
+- The "after" HTML MUST differ from the "before" HTML whenever a markup fix is possible
+- For colour-contrast: set an explicit high-contrast text colour (e.g. color:#0f172a) on the element style, and/or darken the background
+- For link-name / empty links / icon-only links: invent a REAL concise aria-label or link text from the href filename, path, host, and page context (e.g. href .../NISM-Final-1-scaled.webp → aria-label="NISM certificate image"). NEVER use placeholders like "[Describe link purpose]", "TODO", or "link".
+- For image-alt / missing alt: invent a REAL short alt from src filename and context. NEVER use "[Describe the image purpose]".
+- For button-name: invent a REAL action name. NEVER use "[Describe the action]".
+- In "explanation", include 2–3 alternative aria-label/alt options the developer can choose, e.g. Other options: "View NISM document" · "Open NISM image".
 - For IS 17802: ensure Hindi content uses Devanagari Unicode, not ASCII transliteration
 - For SEBI: ensure all financial data tables have proper headers
 - is_quick_win = true if fix only requires adding/changing 1-2 attributes
 - is_quick_win = false if fix requires structural HTML changes
 
-Respond ONLY with valid JSON:
+Respond ONLY with valid JSON (no markdown fences, no commentary):
 {{
   "fix_html": "corrected complete element HTML",
-  "aria_fix": {{"attribute_name": "value", ...}},
-  "explanation": "plain English explanation under 100 words",
+  "aria_fix": {{"attribute_name": "value"}},
+  "explanation": "plain English explanation under 120 words, including alternative label options when applicable",
   "before_after": {{"before": "original HTML", "after": "fixed HTML"}},
-  "is_quick_win": boolean
+  "is_quick_win": true
 }}"""
 
 
@@ -109,11 +115,20 @@ async def generate_fix(
             standard=request.standard,
             wcag_criterion=request.wcag_criterion,
         )
+        name_hint = ""
+        rid = (request.rule_id or "").lower()
+        if any(k in rid for k in ("link-name", "link", "image-alt", "button-name", "label")):
+            name_hint = (
+                "\nImportant: derive a concrete accessible name from the URL/filename "
+                "(strip -scaled, -final, numeric ids). Put the best name in the HTML; "
+                "list 2–3 alternatives in explanation. No bracket placeholders."
+            )
         user_message = (
             f"Fix this {request.standard} violation:\n"
             f"Rule: {request.rule_id}\n"
             f"Element: {clean_html}\n"
             f"Page context: {clean_context}"
+            f"{name_hint}"
         )
 
         client = get_client(resolved_provider, resolved_model)

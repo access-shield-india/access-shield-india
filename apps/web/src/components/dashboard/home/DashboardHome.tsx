@@ -1,31 +1,13 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { AlertCircle, Globe, TrendingUp, Calendar } from 'lucide-react';
 import { KPICard } from '@/components/dashboard/home/KPICard';
 import { ScoreRingCard } from '@/components/dashboard/home/ScoreRingCard';
+import { ScoreTrendChart } from '@/components/dashboard/home/ScoreTrendChart';
 import { AssetList } from '@/components/dashboard/home/AssetList';
 import { ActivityFeed } from '@/components/dashboard/home/ActivityFeed';
 import { useDashboardStats, useAssets } from '@/lib/hooks/useApi';
 import { LoadingState } from '@/components/dashboard/common/LoadingState';
-
-const ScoreTrendChart = dynamic(
-  () =>
-    import('@/components/dashboard/home/ScoreTrendChart').then((mod) => ({
-      default: mod.ScoreTrendChart,
-    })),
-  {
-    ssr: false,
-    loading: () => (
-      <LoadingState
-        message="Loading score chart…"
-        variant="inline"
-        size="sm"
-        className="h-80 rounded-lg"
-      />
-    ),
-  },
-);
 
 export function DashboardHome() {
   const { data: stats, isLoading: statsLoading } = useDashboardStats();

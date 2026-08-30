@@ -52,6 +52,25 @@ async function requestAiFix(token: string, issueId: string): Promise<IssueDetail
   }
 }
 
+/** True when we should auto-call /ai-fix on panel open (no useful fix yet). */
+export function issueNeedsFreshAiFix(issue: IssueDetail): boolean {
+  if (!issue.aiFixSuggestion) {
+    return true;
+  }
+  if (isIssueDevPreviewFix(issue)) {
+    return true;
+  }
+  const beforeAfter = resolveFixBeforeAfter(issue);
+  if (!beforeAfter) {
+    return true;
+  }
+  // Cached LLM echo / empty assist — regenerate automatically
+  if (beforeAfter.beforeHtml.trim() === beforeAfter.afterHtml.trim()) {
+    return true;
+  }
+  return false;
+}
+
 interface AIFixPanelProps {
   issueId: string;
 }
@@ -103,8 +122,7 @@ export function AIFixPanel({ issueId }: AIFixPanelProps) {
     if (isLoading || !issue || fixAttempted.current) {
       return;
     }
-    const hasRealFix = Boolean(issue.aiFixSuggestion) && !isIssueDevPreviewFix(issue);
-    if (hasRealFix) {
+    if (!issueNeedsFreshAiFix(issue)) {
       return;
     }
     fixAttempted.current = true;
@@ -163,6 +181,18 @@ export function AIFixPanel({ issueId }: AIFixPanelProps) {
   );
 }
 
+function GeneratingFixState() {
+  return (
+    <div className="py-8 text-center" aria-live="polite" aria-busy="true">
+      <div className="inline-flex h-12 w-12 animate-spin items-center justify-center rounded-full border-4 border-primary-200 border-t-primary-600" />
+      <p className="mt-4 text-base text-text-secondary">Generating fix suggestion…</p>
+      <p className="mt-2 text-sm text-text-tertiary">
+        First local-LLM request can take a few minutes while the model loads.
+      </p>
+    </div>
+  );
+}
+
 function AIFixTab({
   issue,
   status,
@@ -174,17 +204,43 @@ function AIFixTab({
   errorMessage: string | null;
   onRetry: () => void;
 }) {
-  if (issue.aiFixSuggestion) {
-    const devPreview = isIssueDevPreviewFix(issue);
-    const beforeAfter = resolveFixBeforeAfter(issue);
+  const beforeAfter = resolveFixBeforeAfter(issue);
+  const unchanged =
+    Boolean(beforeAfter) && beforeAfter!.beforeHtml.trim() === beforeAfter!.afterHtml.trim();
+  const hasUsefulFix = Boolean(issue.aiFixSuggestion) && !unchanged;
+
+  if (status === 'pending' || (status === 'idle' && !hasUsefulFix)) {
+    return <GeneratingFixState />;
+  }
+
+  if (status === 'error' && errorMessage) {
+    return (
+      <div className="py-8 text-center" role="alert">
+        <p className="text-base text-error-700">{errorMessage}</p>
+        <p className="mt-2 text-sm text-text-secondary">
+          Check that the API and AI service are running. First local-LLM request can take a few
+          minutes while the model loads.
+        </p>
+        <Button variant="primary" size="md" className="mt-6" onClick={onRetry}>
+          Try again
+        </Button>
+      </div>
+    );
+  }
+
+  if (hasUsefulFix) {
     const isRegenerating = status === 'pending';
 
     return (
       <div className="space-y-4">
-
+        {isIssueDevPreviewFix(issue) && <DevPreviewBanner />}
 
         {beforeAfter ? (
-          <FixBeforeAfter beforeHtml={beforeAfter.beforeHtml} afterHtml={beforeAfter.afterHtml} />
+          <FixBeforeAfter
+            beforeHtml={beforeAfter.beforeHtml}
+            afterHtml={beforeAfter.afterHtml}
+            explanation={issue.aiExplanation}
+          />
         ) : (
           <div className="rounded-md border border-border bg-bg-secondary p-4">
             <h3 className="text-sm font-semibold text-text-primary mb-2">Suggested Fix</h3>
@@ -197,7 +253,7 @@ function AIFixTab({
               </pre>
               <div className="absolute top-2 right-2">
                 <CopyButton
-                  text={issue.aiFixSuggestion}
+                  text={issue.aiFixSuggestion ?? ''}
                   label="Copy fixed HTML"
                   variant="secondary"
                 />
@@ -231,26 +287,21 @@ function AIFixTab({
     );
   }
 
-  if (status === 'error' && errorMessage) {
-    return (
-      <div className="py-8 text-center" role="alert">
-        <p className="text-base text-error-700">{errorMessage}</p>
-        <p className="mt-2 text-sm text-text-secondary">
-          Check that the API and AI service are running. First local-LLM request can take a few
-          minutes while the model loads.
-        </p>
-        <Button variant="primary" size="md" className="mt-6" onClick={onRetry}>
-          Try again
+  // Generation finished but still no useful markup change
+  return (
+    <div className="space-y-4">
+      {beforeAfter && (
+        <FixBeforeAfter
+          beforeHtml={beforeAfter.beforeHtml}
+          afterHtml={beforeAfter.afterHtml}
+          explanation={issue.aiExplanation}
+        />
+      )}
+      <div className="text-center">
+        <Button variant="primary" size="sm" onClick={onRetry}>
+          Generate AI fix
         </Button>
       </div>
-    );
-  }
-
-  return (
-    <div className="py-8 text-center" aria-live="polite" aria-busy={status === 'pending'}>
-      <div className="inline-flex h-12 w-12 animate-spin items-center justify-center rounded-full border-4 border-primary-200 border-t-primary-600" />
-      <p className="mt-4 text-base text-text-secondary">Generating fix suggestion...</p>
-      <p className="mt-2 text-sm text-text-tertiary">This usually takes 10–20 seconds</p>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { ChunkLoadRecovery } from '@/components/ChunkLoadRecovery';
 import { UiProviders } from '@/providers/UiProviders';
 import { getLocale } from '@/lib/i18n/server';
 import './globals.css';
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-screen bg-white font-sans text-gray-900 antialiased">
+        <ChunkLoadRecovery />
         <UiProviders>{children}</UiProviders>
       </body>
     </html>
