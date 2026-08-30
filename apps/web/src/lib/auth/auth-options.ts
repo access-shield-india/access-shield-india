@@ -8,7 +8,8 @@ import CredentialsProvider from 'next-auth/providers/credentials';
  * AccessShield never mints user JWTs — Keycloak does.
  */
 export const authOptions: NextAuthOptions = {
-  trustHost: true,
+  // Auth.js v5 option; cast for next-auth v4 typings used in this app
+  ...( { trustHost: true } as Partial<NextAuthOptions> ),
   providers: [
     KeycloakProvider({
       clientId: process.env.NEXT_PUBLIC_AUTH_CLIENT_ID ?? 'accessshield-web',

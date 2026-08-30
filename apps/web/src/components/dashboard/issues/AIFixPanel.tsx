@@ -209,7 +209,8 @@ function AIFixTab({
     Boolean(beforeAfter) && beforeAfter!.beforeHtml.trim() === beforeAfter!.afterHtml.trim();
   const hasUsefulFix = Boolean(issue.aiFixSuggestion) && !unchanged;
 
-  if (status === 'pending' || (status === 'idle' && !hasUsefulFix)) {
+  // Keep showing an existing fix while regenerate runs (pending + hasUsefulFix)
+  if ((status === 'pending' || status === 'idle') && !hasUsefulFix) {
     return <GeneratingFixState />;
   }
 

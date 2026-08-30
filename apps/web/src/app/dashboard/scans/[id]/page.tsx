@@ -206,7 +206,8 @@ export default function ScanDetailPage({ params }: { params: { id: string } }) {
       {scan.status === 'completed' && (
         <>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {Object.entries(SEVERITY_CONFIG).map(([severity, config]) => {
+            {(Object.keys(SEVERITY_CONFIG) as Array<keyof typeof SEVERITY_CONFIG>).map((severity) => {
+              const config = SEVERITY_CONFIG[severity];
               const Icon =
                 severity === 'critical' || severity === 'serious' ? AlertCircle : CheckCircle;
 

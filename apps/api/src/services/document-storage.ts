@@ -108,6 +108,8 @@ export async function uploadDocument(
   const s3 = getSharedS3Client();
   const bucket = getBucketName();
   const key = buildS3Key(orgId, jobId, originalFilename);
+  // MinIO rejects AWS SSE-S3 / KMS headers with NotImplemented — only set on real AWS.
+  const useMinio = Boolean(process.env.S3_ENDPOINT?.trim());
 
   try {
     await s3.send(
@@ -116,7 +118,7 @@ export async function uploadDocument(
         Key: key,
         Body: buffer,
         ContentType: mimeType,
-        ServerSideEncryption: 'AES256',
+        ...(useMinio ? {} : { ServerSideEncryption: 'AES256' as const }),
         Metadata: {
           'original-filename': originalFilename.replace(/[^a-zA-Z0-9._-]/g, '_'),
           'org-id': orgId,
