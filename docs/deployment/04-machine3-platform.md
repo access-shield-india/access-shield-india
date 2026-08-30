@@ -66,6 +66,10 @@ S3_FORCE_PATH_STYLE=true
 
 PORT=4000
 LOG_LEVEL=info
+
+# Free-scan report emails (Resend) — set on API *and* scan worker
+RESEND_API_KEY=re_…
+EMAIL_FROM=AccessibleNow <noreply@accessiblenow.in>
 ```
 
 Android / Appium keys are written by `setup-host-tools` (see [05](./05-host-tools.md)).

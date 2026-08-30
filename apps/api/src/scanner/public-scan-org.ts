@@ -1,0 +1,4 @@
+/**
+ * System org for unauthenticated marketing free scans.
+ */
+export const PUBLIC_SCANS_ORG_ID = '00000000-0000-0000-0000-000000000001';

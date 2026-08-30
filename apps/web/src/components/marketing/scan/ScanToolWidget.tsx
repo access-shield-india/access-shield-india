@@ -43,6 +43,7 @@ export function ScanToolWidget() {
   const [state, setState] = useState<ScanState>('form');
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string>('');
+  const [longScanNotice, setLongScanNotice] = useState(false);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastAnnouncedProgress = useRef(0);
 
@@ -67,7 +68,7 @@ export function ScanToolWidget() {
         const errorData = await response.json();
         if (response.status === 429) {
           setError(
-            "You've reached today's scan limit. Try again tomorrow or sign up for unlimited scans.",
+            'Too many scans from this network right now. Please try again later.',
           );
         } else if (response.status === 422) {
           setError(errorData.detail || 'Could not reach this website. Please check the URL.');
@@ -78,7 +79,18 @@ export function ScanToolWidget() {
       }
 
       const { data: result } = await response.json();
-      setScanResult({ ...result, scanId: result.scanId } as ScanResult);
+      setScanResult({
+        scanId: result.scanId,
+        status: 'pending',
+        pagesScanned: 1,
+        pagesTotal: 10,
+        criticalCount: 0,
+        seriousCount: 0,
+        moderateCount: 0,
+        minorCount: 0,
+        topViolations: [],
+        remainingViolationsCount: 0,
+      });
       setState('scanning');
       startPolling(result.scanId);
     } catch (err) {
@@ -98,7 +110,7 @@ export function ScanToolWidget() {
         }
 
         const { data } = await response.json();
-        setScanResult(data);
+        setScanResult({ ...data, scanId });
 
         const progress = data.pagesTotal > 0 ? (data.pagesScanned / data.pagesTotal) * 100 : 0;
         const progressMilestone = Math.floor(progress / 25) * 25;
@@ -125,11 +137,8 @@ export function ScanToolWidget() {
     }, 3000);
 
     setTimeout(() => {
-      if (pollIntervalRef.current && state === 'scanning') {
-        clearInterval(pollIntervalRef.current);
-        setError(
-          "This is taking longer than usual. We'll email you the results at the address you provided.",
-        );
+      if (pollIntervalRef.current) {
+        setLongScanNotice(true);
       }
     }, 180000);
   };
@@ -146,6 +155,7 @@ export function ScanToolWidget() {
     setState('form');
     setScanResult(null);
     setError('');
+    setLongScanNotice(false);
     lastAnnouncedProgress.current = 0;
   };
 
@@ -197,7 +207,7 @@ export function ScanToolWidget() {
               placeholder="you@company.com"
               aria-required="true"
               aria-invalid={!!errors.email}
-              aria-describedby={errors.email ? 'email-error' : undefined}
+              aria-describedby={errors.email ? 'email-error' : 'email-hint'}
               className="mt-1.5"
               {...register('email')}
             />
@@ -206,6 +216,9 @@ export function ScanToolWidget() {
                 {errors.email.message}
               </p>
             )}
+            <p id="email-hint" className="mt-1.5 text-sm text-text-tertiary">
+              We&apos;ll email a summary report to this address when the scan finishes.
+            </p>
           </div>
 
           {error && (
@@ -229,8 +242,9 @@ export function ScanToolWidget() {
   }
 
   if (state === 'scanning' && scanResult) {
-    const progress =
-      scanResult.pagesTotal > 0 ? (scanResult.pagesScanned / scanResult.pagesTotal) * 100 : 0;
+    const pagesTotal = Math.max(1, scanResult.pagesTotal || 10);
+    const pagesScanned = Math.min(Math.max(1, scanResult.pagesScanned || 1), pagesTotal);
+    const progress = (pagesScanned / pagesTotal) * 100;
 
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
@@ -260,7 +274,7 @@ export function ScanToolWidget() {
             </div>
             <h2 className="mt-4 text-xl font-semibold text-text-primary">Scanning your website</h2>
             <p className="mt-2 text-base text-text-secondary">
-              Scanning page {scanResult.pagesScanned} of {scanResult.pagesTotal}...
+              Scanning page {pagesScanned}/{pagesTotal}
             </p>
             {scanResult.currentUrl && (
               <p className="mt-1 truncate text-sm text-text-tertiary">{scanResult.currentUrl}</p>
@@ -269,13 +283,24 @@ export function ScanToolWidget() {
 
           <div className="mt-8">
             <Progress value={progress} max={100} aria-label="Scan progress" />
+            <p className="mt-2 text-center text-sm text-text-tertiary">
+              {pagesScanned} of {pagesTotal} pages
+            </p>
           </div>
+
+          {longScanNotice && (
+            <p role="status" className="mt-6 text-center text-sm text-text-secondary">
+              This is taking longer than usual. Keep this tab open for live results — we&apos;ll
+              also email the report to the address you provided.
+            </p>
+          )}
         </div>
       </div>
     );
   }
 
-  if (state === 'results' && scanResult && scanResult.score !== undefined) {
+  if (state === 'results' && scanResult) {
+    const score = scanResult.score ?? 0;
     const severityConfig = {
       critical: {
         label: 'Critical',
@@ -306,7 +331,10 @@ export function ScanToolWidget() {
     return (
       <div className="space-y-8">
         <div className="rounded-lg border border-gray-200 bg-white p-8 text-center shadow-sm">
-          <ScoreRing score={scanResult.score} size="lg" />
+          <ScoreRing score={score} size="lg" />
+          <p className="mt-4 text-sm text-text-secondary">
+            A summary report has also been emailed to you.
+          </p>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             {scanResult.criticalCount > 0 && (

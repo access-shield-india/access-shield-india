@@ -26,6 +26,8 @@ import { eq, and, desc } from 'drizzle-orm';
 import type { Browser } from 'playwright';
 import { logger } from '../lib/logger';
 import { getSharedS3Client } from '../lib/s3-client';
+import { maybeSendPublicScanReportEmail } from '../lib/email/public-scan-report';
+import { PUBLIC_SCANS_ORG_ID } from './public-scan-org';
 import { runAxeWithRetry, getAltTextCandidates, getFixCandidates } from './axe-runner';
 import { createConcurrencyLimit } from './concurrency';
 import { discoverUrlsWithBrowser } from './crawler';
@@ -662,6 +664,14 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
       .where(and(eq(assets.id, assetId), eq(assets.organisationId, orgId)));
 
     await clearProgress(scanId);
+
+    if (orgId === PUBLIC_SCANS_ORG_ID) {
+      try {
+        await maybeSendPublicScanReportEmail(db, getRedisClient(), { scanId, orgId });
+      } catch (err) {
+        logger.warn({ err, scanId }, 'Failed to send public scan report email — non-fatal');
+      }
+    }
 
     logger.info(
       {

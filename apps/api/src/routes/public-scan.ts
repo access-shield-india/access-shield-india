@@ -2,7 +2,7 @@
  * Public Scan Routes
  *
  * Unauthenticated endpoints for the marketing site's free scan tool.
- * Rate-limited per email and IP to prevent abuse.
+ * Soft IP rate limit only (no per-email daily cap — users may rescan freely).
  */
 
 import type { Database } from '@accessshield/db';
@@ -16,11 +16,13 @@ import { z } from 'zod';
 import { logger } from '../lib/logger';
 import { sendProblem } from '../lib/problem-details';
 import { publishScanJob } from '../scanner/queue';
+import { PUBLIC_SCANS_ORG_ID } from '../scanner/public-scan-org';
 import { isScanPipelineV2ScanJobsEnabled } from '../scanner/v2/queues';
 import { publishScanJobsMessage } from '../scanner/v2/publish';
 import { DEFAULT_SCAN_CONFIG } from '../scanner/types';
 
-const PUBLIC_SCANS_ORG_ID = '00000000-0000-0000-0000-000000000001';
+/** Soft abuse guard — not a product limit. Same email may scan many times. */
+const MAX_SCANS_PER_IP_PER_DAY = 50;
 
 const createScanSchema = z.object({
   url: z.string().url('Invalid URL format'),
@@ -42,39 +44,23 @@ async function ensurePublicScansOrg(db: Database): Promise<void> {
 
 async function checkRateLimit(
   redis: Redis,
-  email: string,
   ip: string,
 ): Promise<{ allowed: boolean; reason?: string }> {
-  const emailKey = `public-scan:email:${email}`;
   const ipKey = `public-scan:ip:${ip}`;
-
-  const emailCount = await redis.get(emailKey);
-  if (emailCount) {
-    return {
-      allowed: false,
-      reason:
-        "You've already used your free scan today. Try again tomorrow or sign up for unlimited scans.",
-    };
-  }
-
   const ipCount = parseInt((await redis.get(ipKey)) || '0', 10);
-  if (ipCount >= 3) {
+  if (ipCount >= MAX_SCANS_PER_IP_PER_DAY) {
     return {
       allowed: false,
-      reason: 'Too many scans from this IP address. Please try again tomorrow.',
+      reason: 'Too many scans from this network right now. Please try again later.',
     };
   }
 
   return { allowed: true };
 }
 
-async function setRateLimits(redis: Redis, email: string, ip: string): Promise<void> {
-  const emailKey = `public-scan:email:${email}`;
+async function setRateLimits(redis: Redis, ip: string): Promise<void> {
   const ipKey = `public-scan:ip:${ip}`;
   const ttl = 86400;
-
-  await redis.setex(emailKey, ttl, '1');
-
   const currentIpCount = parseInt((await redis.get(ipKey)) || '0', 10);
   await redis.setex(ipKey, ttl, String(currentIpCount + 1));
 }
@@ -95,7 +81,7 @@ export function createPublicScanRouter(db: Database, redis: Redis): ExpressRoute
       const { url, email } = parseResult.data;
       const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.ip || 'unknown';
 
-      const rateLimitCheck = await checkRateLimit(redis, email, ip);
+      const rateLimitCheck = await checkRateLimit(redis, ip);
       if (!rateLimitCheck.allowed) {
         sendProblem(res, 429, 'rate-limit-exceeded', rateLimitCheck.reason!);
         return;
@@ -212,7 +198,7 @@ export function createPublicScanRouter(db: Database, redis: Redis): ExpressRoute
         return;
       }
 
-      await setRateLimits(redis, email, ip);
+      await setRateLimits(redis, ip);
 
       const response: ApiResponse<{ scanId: string }> = {
         data: { scanId: scan.id },
@@ -256,19 +242,33 @@ export function createPublicScanRouter(db: Database, redis: Redis): ExpressRoute
       const progressData = await redis.get(`scan:progress:${scanId}`);
       let currentUrl: string | undefined;
       let pagesTotal = 10;
+      let pagesScanned = scan.pagesScanned ?? 0;
 
       if (progressData) {
         try {
           const progress = JSON.parse(progressData) as {
             currentUrl?: string;
             pagesTotal?: number;
+            pagesScanned?: number;
           };
           currentUrl = progress.currentUrl;
-          pagesTotal = progress.pagesTotal || 10;
+          if (typeof progress.pagesTotal === 'number' && progress.pagesTotal > 0) {
+            pagesTotal = progress.pagesTotal;
+          }
+          // Live progress is in Redis; DB pages_scanned is only written on completion
+          if (typeof progress.pagesScanned === 'number' && progress.pagesScanned >= 0) {
+            pagesScanned = progress.pagesScanned;
+          }
         } catch {
           logger.warn({ scanId }, 'Failed to parse scan progress from Redis');
         }
       }
+
+      // While running: show current page as 1-based (0 done → 1/10, 3 done → 4/10)
+      const displayPagesScanned =
+        scan.status === 'completed' || scan.status === 'failed'
+          ? pagesScanned
+          : Math.min(Math.max(pagesScanned + (pagesScanned < pagesTotal ? 1 : 0), 1), pagesTotal);
 
       const severityCounts = await db
         .select({
@@ -328,7 +328,7 @@ export function createPublicScanRouter(db: Database, redis: Redis): ExpressRoute
       }> = {
         data: {
           status: scan.status,
-          pagesScanned: scan.pagesScanned,
+          pagesScanned: displayPagesScanned,
           pagesTotal,
           currentUrl,
           score: scan.score ?? undefined,

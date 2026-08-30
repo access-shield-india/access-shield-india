@@ -96,7 +96,9 @@ sequenceDiagram
 
 ### Public free scan
 
-`POST /api/v1/public/scan` — [`apps/api/src/routes/public-scan.ts`](../../apps/api/src/routes/public-scan.ts) — rate limited, no JWT.
+`POST /api/v1/public/scan` — [`apps/api/src/routes/public-scan.ts`](../../apps/api/src/routes/public-scan.ts) — no per-email daily cap; soft IP abuse limit, no JWT.
+
+On completion, the scan worker emails a summary report (score, severity counts, top 5 issues) to the lead email in Redis (`public-scan:lead:{scanId}`) via Resend. Requires `RESEND_API_KEY` on the **API worker** (optional `EMAIL_FROM`, `NEXT_PUBLIC_APP_URL` for links). Idempotent via `public-scan:email-sent:{scanId}`.
 
 ### Run locally
 
