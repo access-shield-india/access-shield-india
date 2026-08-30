@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveAiBackend } from '../ai-client.js';
+import { resolveAiBackend } from './ai-client';
 
 describe('resolveAiBackend', () => {
   it('falls back to local GGUF when Anthropic is requested without a key', () => {
