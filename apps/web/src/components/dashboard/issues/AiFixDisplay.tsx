@@ -86,7 +86,7 @@ export function FixBeforeAfter({
           <p className="mt-2 text-sm text-text-secondary" role="note">
             {looksLikeDevPreview
               ? 'No automated change was applied. Check that the AI service is running, then click Regenerate AI fix.'
-              : 'The model did not change this HTML snippet. Colour-contrast and some CSS issues often need theme/stylesheet edits outside this fragment — see the Plain English Explanation tab, then Regenerate AI fix.'}
+              : 'Before and after match — this snippet may already have link text, or the fix needs CSS/CMS changes outside the HTML fragment. Open Plain English Explanation for options, then Regenerate AI fix.'}
           </p>
         )}
       </div>

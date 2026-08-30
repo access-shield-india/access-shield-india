@@ -105,7 +105,31 @@ describe('applyHeuristicFix link-name', () => {
     expect(result.changed).toBe(true);
     expect(result.afterHtml).toMatch(/aria-label="[^"]*NISM[^"]*"/i);
     expect(result.afterHtml).not.toContain('[Describe link purpose]');
-    expect(result.explanation).toMatch(/Other aria-label options/i);
+    expect(result.explanation).toMatch(/Other aria-label options|Suggested accessible name/i);
+  });
+
+  it('title-cases ALL CAPS Wix menu link text', () => {
+    const html =
+      '<a data-testid="linkElement" href="https://www.faithautomation.com/engineering-services" target="_self" class="G7GdaI wixui-vertical-menu__item-label">ENGINEERING SERVICES</a>';
+    const result = applyHeuristicFix('link-name', html, 'Links must have discernible text', '2.4.4');
+    expect(result.changed).toBe(true);
+    expect(result.afterHtml).toContain('Engineering Services');
+    expect(result.afterHtml).not.toContain('>ENGINEERING SERVICES<');
+    expect(result.afterHtml).not.toMatch(/aria-label=/i);
+  });
+
+  it('uniquifies RULE-005 duplicate link purpose', () => {
+    const html =
+      '<a href="https://www.faithautomation.com/engineering-services">ENGINEERING SERVICES</a>';
+    const result = applyHeuristicFix(
+      'RULE-005',
+      html,
+      '5 links share the identical text "engineering services" but point to 3 different destinations.',
+      '2.4.4',
+    );
+    expect(result.changed).toBe(true);
+    expect(result.afterHtml).toMatch(/aria-label="/i);
+    expect(result.afterHtml).toMatch(/Engineering Services/i);
   });
 });
 

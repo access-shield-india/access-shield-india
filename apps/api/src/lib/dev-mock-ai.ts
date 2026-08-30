@@ -288,6 +288,183 @@ function formatNameOptionsNote(suggestion: AccessibleNameSuggestion): string {
   return `Suggested accessible name: "${suggestion.primary}".${alts}`;
 }
 
+const VAGUE_LINK_TEXT_RE =
+  /^(click here|here|read more|learn more|more|link|info|details|this|continue|go|→|»|›)$/i;
+
+/** Visible text inside an <a> (tags stripped). */
+export function getAnchorVisibleText(elementHtml: string): string {
+  const match = elementHtml.match(/<a\b[^>]*>([\s\S]*?)<\/a>/i);
+  if (!match) return '';
+  return match[1]!.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/** Title-case for ALL-CAPS / noisy menu labels (better for screen readers). */
+export function toReadableLinkText(text: string): string {
+  const trimmed = text.replace(/\s+/g, ' ').trim();
+  if (!trimmed) return trimmed;
+  // Already mixed case with lowercase letters — leave alone
+  if (/[a-z]/.test(trimmed) && /[A-Z]/.test(trimmed)) return trimmed;
+  return titleCaseWords(trimmed.toLowerCase());
+}
+
+function isDuplicateLinkPurposeIssue(ruleId: string, description: string): boolean {
+  const rid = ruleId.toLowerCase();
+  const desc = description.toLowerCase();
+  return (
+    rid === 'rule-005' ||
+    rid.includes('identical-links') ||
+    (desc.includes('identical text') && desc.includes('link')) ||
+    (desc.includes('share') && desc.includes('destination'))
+  );
+}
+
+function isLinkNameIssue(ruleId: string): boolean {
+  const rid = ruleId.toLowerCase();
+  return rid.includes('link-name') || rid === 'rule-005' || rid.includes('identical-links');
+}
+
+/**
+ * Improve link accessible name / visible text.
+ * - Empty / icon-only / vague → aria-label from URL
+ * - Duplicate purpose (RULE-005) → unique aria-label from destination
+ * - ALL CAPS menu text → readable title case in visible text
+ * - Does NOT slap a redundant aria-label on a link that already has clear unique text
+ */
+export function fixLinkAccessibleName(
+  elementHtml: string,
+  ruleId: string,
+  description: string,
+): { html: string; suggestion: AccessibleNameSuggestion | null; detail: string } {
+  if (!/<a\b/i.test(elementHtml)) {
+    return { html: elementHtml, suggestion: null, detail: description };
+  }
+
+  const visible = getAnchorVisibleText(elementHtml);
+  const suggestion = suggestAccessibleNameOptions(elementHtml, 'link', description);
+  const fromUrl = suggestion.primary.replace(/"/g, "'");
+  const duplicate = isDuplicateLinkPurposeIssue(ruleId, description);
+  const vague = !visible || VAGUE_LINK_TEXT_RE.test(visible);
+  const emptyInner = /<a\b[^>]*>\s*<\/a>/i.test(elementHtml);
+  const hasAriaLabel = /\baria-label\s*=/i.test(elementHtml);
+
+  // 1) Empty / icon-only link → put real name as visible text (preferred) or aria-label
+  if (emptyInner || (!visible && !hasAriaLabel)) {
+    const label = fromUrl;
+    const html = emptyInner
+      ? elementHtml.replace(/<a\b([^>]*)>\s*<\/a>/i, `<a$1>${label}</a>`)
+      : elementHtml.replace(/<a\b/i, `<a aria-label="${label}"`);
+    return {
+      html,
+      suggestion,
+      detail:
+        'This link had no discernible text. Added a clear accessible name derived from the destination URL (WCAG 2.4.4).',
+    };
+  }
+
+  // 2) Vague "click here" style text → replace visible text with destination-based label
+  if (vague) {
+    const label = fromUrl;
+    const html = elementHtml.replace(
+      /(<a\b[^>]*>)([\s\S]*?)(<\/a>)/i,
+      `$1${label}$3`,
+    );
+    return {
+      html,
+      suggestion,
+      detail:
+        'Link text was too vague (e.g. "click here"). Replaced it with text that describes the destination (WCAG 2.4.4).',
+    };
+  }
+
+  // 3) Duplicate identical link text → unique aria-label from href (overrides name for AT)
+  if (duplicate) {
+    const readableVisible = toReadableLinkText(visible);
+    const pathBit = fromUrl;
+    let unique =
+      pathBit.toLowerCase() !== readableVisible.toLowerCase()
+        ? `${readableVisible}: ${pathBit}`
+        : hostHintFromHtml(elementHtml)
+          ? `${readableVisible} (${hostHintFromHtml(elementHtml)})`
+          : `${readableVisible} page`;
+    unique = unique.replace(/"/g, "'");
+
+    let html = elementHtml;
+    if (hasAriaLabel) {
+      html = html.replace(/\baria-label\s*=\s*["'][^"']*["']/i, `aria-label="${unique}"`);
+    } else {
+      html = html.replace(/<a\b/i, `<a aria-label="${unique}"`);
+    }
+    // Also soften ALL CAPS visible text when present
+    if (visible === visible.toUpperCase() && visible.length > 3 && /[A-Z]/.test(visible)) {
+      html = html.replace(
+        /(<a\b[^>]*>)([\s\S]*?)(<\/a>)/i,
+        `$1${readableVisible}$3`,
+      );
+    }
+
+    const altSuggestion: AccessibleNameSuggestion = {
+      primary: unique,
+      alternatives: [
+        readableVisible !== pathBit ? pathBit : `${readableVisible} — details`,
+        `Go to ${pathBit}`,
+        `Open ${readableVisible}`,
+      ].filter((a, i, arr) => a && arr.indexOf(a) === i && a !== unique),
+    };
+
+    return {
+      html,
+      suggestion: altSuggestion,
+      detail:
+        'Several links share the same visible text but go to different URLs. Added a unique aria-label (and clearer casing) so each destination is distinguishable (WCAG 2.4.4 / RULE-005). Prefer unique visible text in the design system when you can edit the Wix/menu CMS.',
+    };
+  }
+
+  // 4) ALL CAPS menu labels → title case (SRs often spell letter-by-letter)
+  if (visible.length > 3 && visible === visible.toUpperCase() && /[A-Z]/.test(visible)) {
+    const readable = toReadableLinkText(visible);
+    if (readable && readable !== visible) {
+      const html = elementHtml.replace(
+        /(<a\b[^>]*>)([\s\S]*?)(<\/a>)/i,
+        `$1${readable}$3`,
+      );
+      return {
+        html,
+        suggestion: {
+          primary: readable,
+          alternatives: [visible, fromUrl].filter((a) => a !== readable),
+        },
+        detail:
+          'Link already has visible text. Converted ALL CAPS to title case so screen readers announce it as words, not letter-by-letter. If this was flagged for another reason (contrast, focus, duplicate links), check the Plain English explanation.',
+      };
+    }
+  }
+
+  // 5) Already has clear text — do not invent a redundant aria-label
+  return {
+    html: elementHtml,
+    suggestion: {
+      primary: visible,
+      alternatives: [fromUrl, toReadableLinkText(visible)].filter(
+        (a, i, arr) => a && a !== visible && arr.indexOf(a) === i,
+      ),
+    },
+    detail:
+      'This link already has discernible text, so the HTML snippet does not need an aria-label. If the scanner still flagged it, the issue is likely duplicate link purpose site-wide, contrast, or focus — fix in the menu CMS / CSS rather than this fragment alone.',
+  };
+}
+
+function hostHintFromHtml(elementHtml: string): string {
+  const href = attrValue(elementHtml, 'href');
+  if (!href) return '';
+  try {
+    const host = new URL(href, 'https://example.invalid').hostname.replace(/^www\./i, '');
+    const first = host.split('.')[0] || '';
+    return first ? titleCaseWords(first) : '';
+  } catch {
+    return '';
+  }
+}
+
 /**
  * Replace leftover placeholder accessible names in AI/heuristic HTML with derived text.
  */
@@ -343,7 +520,18 @@ export function applyHeuristicFix(
   let nameNote = '';
 
   const altRules = ['image-alt', 'input-image-alt', 'area-alt', 'object-alt'];
-  if (altRules.some((r) => ruleId.includes(r))) {
+  const rid = ruleId.toLowerCase();
+
+  // Contrast before generic <a> handling — coloured menu links must not get fake aria-labels
+  if (
+    rid.includes('color-contrast') ||
+    rid.includes('contrast') ||
+    /background-color\s*:/i.test(elementHtml)
+  ) {
+    afterHtml = fixColorContrastStyles(elementHtml);
+    detail =
+      'Text and background colours must meet WCAG 1.4.3 contrast (4.5:1 for normal text). A high-contrast text colour (#0f172a) was applied on the element — also verify theme/CSS variables that may override this inline style.';
+  } else if (altRules.some((r) => ruleId.includes(r))) {
     const suggestion = suggestAccessibleNameOptions(elementHtml, 'image', description);
     const label = suggestion.primary.replace(/"/g, "'");
     afterHtml = elementHtml.includes('alt=')
@@ -353,39 +541,35 @@ export function applyHeuristicFix(
     detail =
       'Images require a text alternative under WCAG 1.1.1. Pick the best alt text from the suggestions (or refine for context).';
   } else if (
-    ruleId.includes('label') ||
-    (elementHtml.includes('<input') && !/aria-label|id=/.test(elementHtml))
+    // Prefer ruleId for "label" — do not match class names in HTML
+    rid.includes('label') &&
+    !isLinkNameIssue(ruleId) &&
+    (elementHtml.includes('<input') || elementHtml.includes('<select') || elementHtml.includes('<textarea'))
   ) {
     const suggestion = suggestAccessibleNameOptions(elementHtml, 'input', description);
     const label = suggestion.primary.replace(/"/g, "'");
-    afterHtml = elementHtml.replace(/<input\b/i, `<input aria-label="${label}"`);
+    afterHtml = elementHtml.replace(/<(input|select|textarea)\b/i, `<$1 aria-label="${label}"`);
     nameNote = formatNameOptionsNote(suggestion);
     detail =
       'Every form control needs a visible label or an accessible name via aria-label / aria-labelledby (WCAG 1.3.1, 4.1.2).';
-  } else if (ruleId.includes('link-name') || ruleId.includes('link') || /<a\b/i.test(elementHtml)) {
-    const suggestion = suggestAccessibleNameOptions(elementHtml, 'link', description);
-    const label = suggestion.primary.replace(/"/g, "'");
-    afterHtml = elementHtml.replace(/<a\b([^>]*)>(\s*)<\/a>/i, `<a$1>${label}</a>`);
-    if (afterHtml === elementHtml && /<a\b/i.test(elementHtml) && !/aria-label=/i.test(elementHtml)) {
-      afterHtml = elementHtml.replace(/<a\b/i, `<a aria-label="${label}"`);
+  } else if (
+    isLinkNameIssue(ruleId) ||
+    isDuplicateLinkPurposeIssue(ruleId, description) ||
+    ( /<a\b/i.test(elementHtml) &&
+      (rid.includes('link') || getAnchorVisibleText(elementHtml) === '' || VAGUE_LINK_TEXT_RE.test(getAnchorVisibleText(elementHtml)) || (getAnchorVisibleText(elementHtml) === getAnchorVisibleText(elementHtml).toUpperCase() && getAnchorVisibleText(elementHtml).length > 3)))
+  ) {
+    const linkFix = fixLinkAccessibleName(elementHtml, ruleId, description);
+    afterHtml = linkFix.html;
+    detail = linkFix.detail;
+    if (linkFix.suggestion) {
+      nameNote = formatNameOptionsNote(linkFix.suggestion);
     }
-    nameNote = formatNameOptionsNote(suggestion);
-    detail =
-      'Links must have discernible text that describes their purpose (WCAG 2.4.4). Prefer visible link text; use aria-label when the link wraps an image or icon only.';
-  } else if (ruleId.includes('aria-allowed-role')) {
+  } else if (rid.includes('aria-allowed-role')) {
     afterHtml = fixAriaAllowedRole(elementHtml);
     detail = afterHtml !== elementHtml
       ? 'The role on this element is not allowed for its HTML tag. rowgroup is invalid on <li>; use native listitem semantics or role="group" with aria-roledescription="slide" for carousel slides (WAI-ARIA).'
       : `${description} Review the element role against the ARIA in HTML specification and remove or replace the invalid role.`;
-  } else if (
-    ruleId.includes('color-contrast') ||
-    ruleId.includes('contrast') ||
-    /background-color\s*:/i.test(elementHtml)
-  ) {
-    afterHtml = fixColorContrastStyles(elementHtml);
-    detail =
-      'Text and background colours must meet WCAG 1.4.3 contrast (4.5:1 for normal text). A high-contrast text colour (#0f172a) was applied on the element — also verify theme/CSS variables that may override this inline style.';
-  } else if (ruleId.includes('button-name') || /<button\b/i.test(elementHtml)) {
+  } else if (rid.includes('button-name') || /<button\b/i.test(elementHtml)) {
     const suggestion = suggestAccessibleNameOptions(elementHtml, 'button', description);
     const label = suggestion.primary.replace(/"/g, "'");
     if (/<button\b[^>]*>\s*<\/button>/i.test(elementHtml)) {
@@ -399,29 +583,39 @@ export function applyHeuristicFix(
     nameNote = formatNameOptionsNote(suggestion);
     detail =
       'Buttons need an accessible name (visible text or aria-label) under WCAG 4.1.2.';
-  } else if (ruleId.includes('html-has-lang') || ruleId === 'html-lang-valid') {
+  } else if (rid.includes('html-has-lang') || rid === 'html-lang-valid') {
     afterHtml = /<html\b/i.test(elementHtml)
       ? elementHtml.replace(/<html\b(?![^>]*\blang=)/i, '<html lang="en"')
       : elementHtml;
     detail = 'Set a valid lang attribute on the document root (IS 17802 / WCAG 3.1.1).';
-  } else if (ruleId.includes('image-redundant-alt')) {
+  } else if (rid.includes('image-redundant-alt')) {
     afterHtml = withStyleAttr(elementHtml, (s) => s);
     if (/alt="[^"]+"/i.test(elementHtml)) {
       afterHtml = elementHtml.replace(/alt="[^"]*"/i, 'alt=""');
       detail =
         'Decorative images next to redundant text should use empty alt="" so screen readers are not duplicated.';
     }
+  } else if (/<a\b/i.test(elementHtml)) {
+    // Last-resort link assist when rule id is unfamiliar but snippet is an anchor
+    const linkFix = fixLinkAccessibleName(elementHtml, ruleId, description);
+    afterHtml = linkFix.html;
+    detail = linkFix.detail;
+    if (linkFix.suggestion) {
+      nameNote = formatNameOptionsNote(linkFix.suggestion);
+    }
   }
 
   const changed = afterHtml.trim() !== beforeHtml.trim();
   if (!changed) {
-    detail = `${description} No safe automatic HTML edit is available for rule "${ruleId}". Update markup or CSS manually against WCAG ${wcagCriterion}.`;
+    detail = `${detail} No automatic HTML edit changed this snippet for rule "${ruleId}". See guidance above and update CMS/CSS if needed (WCAG ${wcagCriterion}).`;
   }
 
   const explanationParts = [
     detail,
     nameNote,
-    `${HEURISTIC_MARKER} applied deterministic markup assist for ${ruleId} (WCAG ${wcagCriterion}).`,
+    changed
+      ? `${HEURISTIC_MARKER} applied deterministic markup assist for ${ruleId} (WCAG ${wcagCriterion}).`
+      : `${HEURISTIC_MARKER} no markup delta for ${ruleId} (WCAG ${wcagCriterion}).`,
   ].filter(Boolean);
 
   return {

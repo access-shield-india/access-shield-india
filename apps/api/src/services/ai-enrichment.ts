@@ -183,6 +183,11 @@ export async function generateIssueAiFix(
         fixAfter = heuristic.afterHtml;
         fixBefore = heuristic.beforeHtml;
         explanation = [explanation, heuristic.explanation].filter(Boolean).join('\n\n');
+      } else {
+        // Surface why the snippet did not change (e.g. link already has text)
+        explanation = [explanation, heuristic.explanation].filter(Boolean).join('\n\n');
+        fixHtml = fixHtml || row.elementHtml;
+        fixAfter = fixAfter || row.elementHtml;
       }
     }
   } catch (err) {
