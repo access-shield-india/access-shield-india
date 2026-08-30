@@ -38,6 +38,8 @@ export interface FixBeforeAfterProps {
   beforeHtml: string;
   afterHtml: string;
   copyAfterLabel?: string;
+  /** Optional explanation — used to tailor the "unchanged" note */
+  explanation?: string | null;
 }
 
 /** Stacked before/after HTML for accessibility fixes. */
@@ -45,8 +47,10 @@ export function FixBeforeAfter({
   beforeHtml,
   afterHtml,
   copyAfterLabel = 'Copy fixed HTML',
+  explanation,
 }: FixBeforeAfterProps) {
   const unchanged = beforeHtml.trim() === afterHtml.trim();
+  const looksLikeDevPreview = explanation?.includes('Development preview:') ?? false;
 
   return (
     <div className="flex flex-col gap-4">
@@ -80,8 +84,9 @@ export function FixBeforeAfter({
         </div>
         {unchanged && (
           <p className="mt-2 text-sm text-text-secondary" role="note">
-            No automated change was applied for this rule. Review manually or connect the AI
-            service.
+            {looksLikeDevPreview
+              ? 'No automated change was applied. Check that the AI service is running, then click Regenerate AI fix.'
+              : 'The model did not change this HTML snippet. Colour-contrast and some CSS issues often need theme/stylesheet edits outside this fragment — see the Plain English Explanation tab, then Regenerate AI fix.'}
           </p>
         )}
       </div>

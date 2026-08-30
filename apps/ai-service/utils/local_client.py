@@ -154,4 +154,11 @@ class LocalClient:
             text = text[3:]
         if text.endswith("```"):
             text = text[:-3]
+        text = text.strip()
+
+        # Small local models often wrap JSON in prose — take the outermost object.
+        start = text.find("{")
+        end = text.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            text = text[start : end + 1]
         return text.strip()

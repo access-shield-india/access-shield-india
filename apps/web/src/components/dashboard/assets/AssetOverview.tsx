@@ -1,29 +1,11 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Card } from '@accessshield/ui';
+import { ScoreTrendChart } from '@/components/dashboard/home/ScoreTrendChart';
 import { ScanHistoryTable } from '@/components/dashboard/scans/ScanHistoryTable';
 import { LoadingState } from '@/components/dashboard/common/LoadingState';
 import { useScans } from '@/lib/hooks/useApi';
-
-const ScoreTrendChart = dynamic(
-  () =>
-    import('@/components/dashboard/home/ScoreTrendChart').then((mod) => ({
-      default: mod.ScoreTrendChart,
-    })),
-  {
-    ssr: false,
-    loading: () => (
-      <LoadingState
-        message="Please wait, loading score chart…"
-        variant="inline"
-        size="sm"
-        className="h-80 rounded-lg"
-      />
-    ),
-  },
-);
 
 export interface AssetOverviewProps {
   assetId: string;

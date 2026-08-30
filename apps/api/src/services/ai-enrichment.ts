@@ -3,9 +3,11 @@ import { assets, issues, organisations, violations } from '@accessshield/db';
 import { and, eq } from 'drizzle-orm';
 import { requestAiAltText, requestAiFix } from '../lib/ai-client';
 import {
+  applyHeuristicFix,
   buildDevMockAltText,
   buildDevMockFix,
   isDevPreviewAiFix,
+  polishPlaceholderAccessibleNames,
   stripDevPreviewComment,
 } from '../lib/dev-mock-ai';
 import { getPlanFeatures } from '../lib/plan-limits';
@@ -120,6 +122,7 @@ export async function generateIssueAiFix(
   db: Database,
   orgId: string,
   issueId: string,
+  options: { force?: boolean } = {},
 ): Promise<IssueAiEnrichment> {
   const row = await loadIssueViolation(db, orgId, issueId);
   if (!row) {
@@ -131,8 +134,8 @@ export async function generateIssueAiFix(
     throw new Error('AI remediation is not available on your plan');
   }
 
-  // Skip cached dev mocks so a fixed AI service can regenerate real Claude fixes.
-  if (row.aiFix && !isDevPreviewAiFix(row.aiExplanation, row.aiFix)) {
+  // Cached fix is fine for background enrichment; explicit UI "Regenerate" must force a new call.
+  if (!options.force && row.aiFix && !isDevPreviewAiFix(row.aiExplanation, row.aiFix)) {
     return buildAiFixEnrichment(row);
   }
 
@@ -161,25 +164,84 @@ export async function generateIssueAiFix(
     explanation = response.explanation?.trim() ?? '';
     fixBefore = response.before_after?.before?.trim() || row.elementHtml || null;
     fixAfter = response.before_after?.after?.trim() || fixHtml || null;
+
+    const beforeNorm = (fixBefore ?? '').trim();
+    const afterNorm = (fixAfter ?? '').trim();
+    if (!afterNorm || afterNorm === beforeNorm) {
+      const heuristic = applyHeuristicFix(
+        row.ruleId,
+        row.elementHtml,
+        row.description,
+        row.wcagCriterion,
+      );
+      if (heuristic.changed) {
+        logger.info(
+          { issueId, ruleId: row.ruleId },
+          'AI returned unchanged HTML — applying heuristic assist',
+        );
+        fixHtml = heuristic.fixHtml;
+        fixAfter = heuristic.afterHtml;
+        fixBefore = heuristic.beforeHtml;
+        explanation = [explanation, heuristic.explanation].filter(Boolean).join('\n\n');
+      }
+    }
   } catch (err) {
-    if (process.env.NODE_ENV === 'production' || !isAiServiceUnreachable(err)) {
+    const heuristic = applyHeuristicFix(
+      row.ruleId,
+      row.elementHtml,
+      row.description,
+      row.wcagCriterion,
+    );
+
+    if (heuristic.changed) {
+      logger.warn(
+        { err, issueId, violationId: row.violationId },
+        'AI fix failed — using heuristic assist',
+      );
+      fixHtml = heuristic.fixHtml;
+      explanation = heuristic.explanation;
+      fixBefore = heuristic.beforeHtml;
+      fixAfter = heuristic.afterHtml;
+    } else if (process.env.NODE_ENV !== 'production' && isAiServiceUnreachable(err)) {
+      logger.warn(
+        { err, issueId, violationId: row.violationId },
+        'AI service unreachable — using dev fallback',
+      );
+      const mock = buildDevMockFix(row.ruleId, row.elementHtml, row.description, row.wcagCriterion);
+      fixHtml = mock.fixHtml;
+      explanation = mock.explanation;
+      fixBefore = mock.beforeHtml;
+      fixAfter = mock.afterHtml;
+      fixDevPreview = true;
+    } else {
       throw err;
     }
-    logger.warn(
-      { err, issueId, violationId: row.violationId },
-      'AI service unreachable — using dev fallback',
-    );
-    const mock = buildDevMockFix(row.ruleId, row.elementHtml, row.description, row.wcagCriterion);
-    fixHtml = mock.fixHtml;
-    explanation = mock.explanation;
-    fixBefore = mock.beforeHtml;
-    fixAfter = mock.afterHtml;
-    fixDevPreview = true;
   }
 
   if (!fixHtml && !explanation) {
     logger.warn({ issueId, violationId: row.violationId }, 'AI fix returned empty result');
     throw new Error('AI fix generation returned no content');
+  }
+
+  // Replace leftover "[Describe …]" placeholders with names derived from URL/filename
+  const pageCtx = `${row.pageUrl} — ${row.description}`;
+  const polished = polishPlaceholderAccessibleNames(
+    fixAfter || fixHtml || row.elementHtml,
+    row.ruleId,
+    pageCtx,
+  );
+  if (polished.suggestion && polished.html !== (fixAfter || fixHtml)) {
+    fixHtml = polished.html;
+    fixAfter = polished.html;
+    const optionsNote = [
+      `Suggested accessible name: "${polished.suggestion.primary}".`,
+      polished.suggestion.alternatives.length > 0
+        ? `Other aria-label options: ${polished.suggestion.alternatives.map((a) => `"${a}"`).join(' · ')}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+    explanation = [explanation, optionsNote].filter(Boolean).join('\n\n');
   }
 
   await db
