@@ -13,9 +13,11 @@ export function keycloakGoogleIdpAlias(): string {
  * the Google IdP. Requires Google to be configured in the Keycloak realm.
  */
 export async function signInWithGoogle(callbackUrl: string): Promise<{ error?: string } | undefined> {
-  return signIn(
+  const result = await signIn(
     'keycloak',
     { callbackUrl },
     { kc_idp_hint: keycloakGoogleIdpAlias() },
   );
+  if (!result) return undefined;
+  return { error: result.error ?? undefined };
 }
