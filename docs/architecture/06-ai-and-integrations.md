@@ -127,7 +127,7 @@ When `SCAN_PIPELINE_V2_SCAN_JOBS=true`, the **api scan worker** also consumes Ra
 | **Apache Tika**         | Implemented | ai-service          | Docker service port 9998; `TIKA_SERVER_URL`                                                      |
 | **Razorpay**            | Planned     | web billing UI stub | Keys in `.cursorrules`; no API SDK wired                                                         |
 | **Jira**                | Stub        | api integrations    | Returns 404 — [`apps/api/src/routes/integrations.ts`](../../apps/api/src/routes/integrations.ts) |
-| **Resend**              | Planned     | —                   | `RESEND_API_KEY` in env template only                                                            |
+| **Resend**              | Implemented | api (public free scan) | `RESEND_API_KEY`, optional `EMAIL_FROM` — summary report on free-scan complete |
 | **MSG91**               | Planned     | —                   | SMS OTP — env only                                                                               |
 | **Interakt**            | Planned     | —                   | WhatsApp — env only                                                                              |
 | **Zoho Books**          | Planned     | —                   | GST invoicing — env only                                                                         |

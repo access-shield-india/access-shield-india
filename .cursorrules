@@ -397,7 +397,7 @@ RATE LIMITING:
   - Default: 100 req/min per IP
   - Scan endpoints: 10 req/min per org
   - AI endpoints: 100 req/hour per org (Starter), 500 (Pro), 2000 (Enterprise)
-  - Public scan tool: 1 per email per 24h, 3 per IP per day
+  - Public scan tool: no per-email cap; soft IP limit (50/day) for abuse only
 
 # ============================================================================
 # 9. NEXT.JS APP ROUTER CONVENTIONS (apps/web)
