@@ -10,6 +10,8 @@ export interface SendEmailParams {
   subject: string;
   html: string;
   text: string;
+  /** Optional BCC recipients (Resend accepts string or string[]) */
+  bcc?: string | string[];
   idempotencyKey?: string;
 }
 
@@ -44,32 +46,41 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
   }
 
   try {
+    const payload: Record<string, unknown> = {
+      from: getFromAddress(),
+      to: [params.to],
+      subject: params.subject,
+      html: params.html,
+      text: params.text,
+    };
+    if (params.bcc) {
+      const bccList = Array.isArray(params.bcc) ? params.bcc : [params.bcc];
+      const filtered = bccList.map((a) => a.trim()).filter(Boolean);
+      if (filtered.length > 0) {
+        payload.bcc = filtered;
+      }
+    }
+
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        from: getFromAddress(),
-        to: [params.to],
-        subject: params.subject,
-        html: params.html,
-        text: params.text,
-      }),
+      body: JSON.stringify(payload),
       signal: AbortSignal.timeout(15_000),
     });
 
-    const body = (await response.json().catch(() => ({}))) as {
+    const responseBody = (await response.json().catch(() => ({}))) as {
       id?: string;
       message?: string;
       name?: string;
     };
 
     if (!response.ok) {
-      const error = body.message ?? body.name ?? `HTTP ${response.status}`;
+      const error = responseBody.message ?? responseBody.name ?? `HTTP ${response.status}`;
       logger.error({ status: response.status, error }, 'Resend email send failed');
       return { ok: false, error };
     }
 
-    return { ok: true, id: body.id };
+    return { ok: true, id: responseBody.id };
   } catch (err) {
     const error = err instanceof Error ? err.message : 'Unknown email error';
     logger.error({ err }, 'Resend email request failed');
