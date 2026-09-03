@@ -12,12 +12,12 @@ import { eq } from 'drizzle-orm';
 import { logger } from '../lib/logger';
 import type { RawViolation, ScanScoreResult } from './types';
 
-/** Point deductions per violation by severity */
-const SEVERITY_DEDUCTIONS: Record<string, number> = {
-  critical: 10,
+/** Saturation weights by severity. Repeated issues should hurt, but not force every noisy scan to 0. */
+const SEVERITY_WEIGHTS: Record<string, number> = {
+  critical: 12,
   serious: 5,
-  moderate: 2,
-  minor: 0.5,
+  moderate: 2.5,
+  minor: 1,
 };
 
 /** Maximum possible score */
@@ -31,11 +31,13 @@ const MIN_SCORE = 0;
  *
  * Algorithm:
  * - Start with 100 points
- * - Deduct per unique violation (not per page):
- *   - Critical: -10 points
- *   - Serious: -5 points
- *   - Moderate: -2 points
- *   - Minor: -0.5 points
+ * - Group by severity and apply a square-root penalty per bucket
+ * - This keeps repeated violations meaningful while avoiding "almost every bad site = 0"
+ * - Severity weights:
+ *   - Critical: 12 * sqrt(count)
+ *   - Serious: 5 * sqrt(count)
+ *   - Moderate: 2.5 * sqrt(count)
+ *   - Minor: 1 * sqrt(count)
  * - Score cannot go below 0
  * - Round to 2 decimal places
  *
@@ -48,11 +50,35 @@ export function calculateScore(violations: RawViolation[], _pagesScanned: number
     return MAX_SCORE;
   }
 
-  let totalDeduction = 0;
+  const counts = {
+    critical: 0,
+    serious: 0,
+    moderate: 0,
+    minor: 0,
+  };
 
   for (const violation of violations) {
-    const deduction = SEVERITY_DEDUCTIONS[violation.severity] ?? SEVERITY_DEDUCTIONS.minor ?? 0.5;
-    totalDeduction += deduction;
+    switch (violation.severity) {
+      case 'critical':
+        counts.critical++;
+        break;
+      case 'serious':
+        counts.serious++;
+        break;
+      case 'moderate':
+        counts.moderate++;
+        break;
+      case 'minor':
+      default:
+        counts.minor++;
+        break;
+    }
+  }
+
+  let totalDeduction = 0;
+  for (const [severity, count] of Object.entries(counts)) {
+    if (count === 0) continue;
+    totalDeduction += Math.sqrt(count) * (SEVERITY_WEIGHTS[severity] ?? SEVERITY_WEIGHTS.minor);
   }
 
   totalDeduction = Math.min(totalDeduction, MAX_SCORE);
