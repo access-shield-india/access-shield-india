@@ -35,62 +35,62 @@ describe('calculateScore', () => {
     expect(calculateScore([], 1)).toBe(100);
   });
 
-  it('deducts 10 points per critical violation', () => {
+  it('applies a softened penalty for repeated critical violations', () => {
     const violations = [makeViolation('critical'), makeViolation('critical')];
-    expect(calculateScore(violations, 1)).toBe(80);
+    expect(calculateScore(violations, 1)).toBe(83.03);
   });
 
-  it('deducts 5 points per serious violation', () => {
+  it('applies a softened penalty for repeated serious violations', () => {
     const violations = [makeViolation('serious'), makeViolation('serious')];
-    expect(calculateScore(violations, 1)).toBe(90);
+    expect(calculateScore(violations, 1)).toBe(92.93);
   });
 
-  it('deducts 2 points per moderate violation', () => {
-    expect(calculateScore([makeViolation('moderate')], 1)).toBe(98);
+  it('weights a single moderate violation', () => {
+    expect(calculateScore([makeViolation('moderate')], 1)).toBe(97.5);
   });
 
-  it('deducts 0.5 points per minor violation', () => {
-    expect(calculateScore([makeViolation('minor')], 1)).toBe(99.5);
+  it('weights a single minor violation', () => {
+    expect(calculateScore([makeViolation('minor')], 1)).toBe(99);
   });
 
   it('never returns negative score', () => {
     const violations = Array(15)
       .fill(null)
       .map(() => makeViolation('critical'));
-    expect(calculateScore(violations, 1)).toBe(0);
+    expect(calculateScore(violations, 1)).toBe(53.52);
   });
 
   it('handles mixed severity violations correctly', () => {
     const violations = [
-      makeViolation('critical'), // -10
-      makeViolation('serious'), // -5
-      makeViolation('moderate'), // -2
-      makeViolation('minor'), // -0.5
+      makeViolation('critical'),
+      makeViolation('serious'),
+      makeViolation('moderate'),
+      makeViolation('minor'),
     ];
-    expect(calculateScore(violations, 1)).toBe(82.5);
+    expect(calculateScore(violations, 1)).toBe(79.5);
   });
 
   it('rounds to 2 decimal places', () => {
     const violations = Array(3)
       .fill(null)
-      .map(() => makeViolation('minor')); // -1.5
-    expect(calculateScore(violations, 1)).toBe(98.5);
+      .map(() => makeViolation('minor'));
+    expect(calculateScore(violations, 1)).toBe(98.27);
   });
 
   it('handles single critical violation', () => {
-    expect(calculateScore([makeViolation('critical')], 1)).toBe(90);
+    expect(calculateScore([makeViolation('critical')], 1)).toBe(88);
   });
 
   it('handles single serious violation', () => {
     expect(calculateScore([makeViolation('serious')], 1)).toBe(95);
   });
 
-  it('caps deduction at 100 points', () => {
+  it('keeps deduction bounded for very large critical counts', () => {
     const violations = Array(20)
       .fill(null)
       .map(() => makeViolation('critical'));
     const score = calculateScore(violations, 1);
-    expect(score).toBe(0);
+    expect(score).toBe(46.33);
     expect(score).toBeGreaterThanOrEqual(0);
   });
 
@@ -103,23 +103,23 @@ describe('calculateScore', () => {
       .fill(null)
       .map(() => makeViolation('minor'));
     const score = calculateScore(violations, 1);
-    expect(score).toBe(50);
+    expect(score).toBe(90);
   });
 
-  it('handles maximum deduction scenario with mixed types', () => {
+  it('keeps a non-zero score for noisy mixed scans', () => {
     const violations = [
       ...Array(5)
         .fill(null)
-        .map(() => makeViolation('critical')), // -50
+        .map(() => makeViolation('critical')),
       ...Array(6)
         .fill(null)
-        .map(() => makeViolation('serious')), // -30
+        .map(() => makeViolation('serious')),
       ...Array(10)
         .fill(null)
-        .map(() => makeViolation('moderate')), // -20
+        .map(() => makeViolation('moderate')),
     ];
     const score = calculateScore(violations, 1);
-    expect(score).toBe(0);
+    expect(score).toBe(53.01);
   });
 });
 
@@ -153,7 +153,7 @@ describe('buildScanScoreResult', () => {
     expect(result.minorCount).toBe(1);
     expect(result.pagesScanned).toBe(5);
     expect(result.scoreDelta).toBeNull();
-    expect(result.score).toBe(68.5);
+    expect(result.score).toBe(72.7);
   });
 
   it('returns null scoreDelta when no previous scan', async () => {
@@ -207,7 +207,7 @@ describe('buildScanScoreResult', () => {
 
     const result = await buildScanScoreResult(violations, 1, 'prev-scan-id', mockDb, 'org-123');
 
-    expect(result.score).toBe(0);
-    expect(result.scoreDelta).toBe(-50);
+    expect(result.score).toBe(62.05);
+    expect(result.scoreDelta).toBe(12.05);
   });
 });
