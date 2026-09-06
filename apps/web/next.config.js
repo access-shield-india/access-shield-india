@@ -23,6 +23,7 @@ const apiProxyTarget =
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   transpilePackages: ['@accessshield/ui', '@accessshield/types'],
   experimental: {
     optimizePackageImports: ['lucide-react', '@accessshield/ui'],

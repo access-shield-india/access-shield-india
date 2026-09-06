@@ -19,7 +19,9 @@ RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 COPY . .
-RUN pnpm --filter @accessshield/api build
+RUN pnpm --filter @accessshield/types build && \
+	pnpm --filter @accessshield/db build && \
+	pnpm --filter @accessshield/api build
 
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
@@ -28,9 +30,15 @@ ENV PORT=4000
 
 RUN useradd --uid 1001 --create-home --shell /bin/bash nodeapp
 
-COPY --from=build /repo/apps/api/dist ./dist
-COPY --from=build /repo/apps/api/package.json ./package.json
+COPY --from=build /repo/node_modules ./node_modules
+COPY --from=build /repo/apps/api/dist ./apps/api/dist
+COPY --from=build /repo/apps/api/package.json ./apps/api/package.json
+COPY --from=build /repo/packages/db/dist ./packages/db/dist
+COPY --from=build /repo/packages/db/package.json ./packages/db/package.json
+COPY --from=build /repo/packages/types/dist ./packages/types/dist
+COPY --from=build /repo/packages/types/package.json ./packages/types/package.json
+COPY --from=build /repo/package.json ./package.json
 
 USER nodeapp
 EXPOSE 4000
-CMD ["node", "dist/index.js"]
+CMD ["node", "apps/api/dist/index.js"]
