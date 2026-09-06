@@ -67,9 +67,7 @@ export function ScanToolWidget() {
       if (!response.ok) {
         const errorData = await response.json();
         if (response.status === 429) {
-          setError(
-            'Too many scans from this network right now. Please try again later.',
-          );
+          setError('Too many scans from this network right now. Please try again later.');
         } else if (response.status === 422) {
           setError(errorData.detail || 'Could not reach this website. Please check the URL.');
         } else {

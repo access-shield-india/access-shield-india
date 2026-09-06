@@ -1,0 +1,15 @@
+# Keep text normalized across OSes; CI runs on Linux and expects LF.
+* text=auto
+
+# Web app source/config files should always be LF to satisfy prettier/eslint in CI.
+apps/web/**/*.ts text eol=lf
+apps/web/**/*.tsx text eol=lf
+apps/web/**/*.js text eol=lf
+apps/web/**/*.jsx text eol=lf
+apps/web/**/*.mjs text eol=lf
+apps/web/**/*.cjs text eol=lf
+apps/web/**/*.json text eol=lf
+apps/web/**/*.css text eol=lf
+apps/web/**/*.md text eol=lf
+apps/web/**/*.yml text eol=lf
+apps/web/**/*.yaml text eol=lf

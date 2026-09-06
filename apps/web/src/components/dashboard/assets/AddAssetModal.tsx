@@ -254,7 +254,11 @@ export function AddAssetModal({ open, onClose }: AddAssetModalProps) {
                 Compliance Standards
               </legend>
               <div className="space-y-2">
-                <RhfCheckbox control={webForm.control} name="standards.wcag22" label="WCAG 2.2 AA" />
+                <RhfCheckbox
+                  control={webForm.control}
+                  name="standards.wcag22"
+                  label="WCAG 2.2 AA"
+                />
                 <RhfCheckbox
                   control={webForm.control}
                   name="standards.is17802"

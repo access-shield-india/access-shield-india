@@ -62,7 +62,7 @@ export function MobileMenuToggle() {
             className="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white px-6 py-6 shadow-xl sm:max-w-sm"
           >
             <div className="flex items-center justify-between">
-            <BrandLogo variant="full" height={48} decorative />
+              <BrandLogo variant="full" height={48} decorative />
               <button
                 type="button"
                 onClick={handleClose}

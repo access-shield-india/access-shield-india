@@ -24,7 +24,8 @@ const MESSAGES: Record<string, { title: string; detail: string }> = {
   },
   AccessDenied: {
     title: 'Sign-in was cancelled',
-    detail: 'You cancelled Google sign-in or do not have access to this application yet. Sign up first if you are a new customer.',
+    detail:
+      'You cancelled Google sign-in or do not have access to this application yet. Sign up first if you are a new customer.',
   },
 };
 

@@ -1,11 +1,7 @@
 'use client';
 
 import { ButtonLink } from '@/components/marketing/ButtonLink';
-import {
-  assessCheckoutSubline,
-  MONTHLY_PLANS,
-  type MonthlyPlan,
-} from '@/lib/pricing/catalog';
+import { assessCheckoutSubline, MONTHLY_PLANS, type MonthlyPlan } from '@/lib/pricing/catalog';
 
 function PlanBadges({ plan }: { plan: MonthlyPlan }) {
   return (

@@ -55,9 +55,9 @@ export default function WidgetPage() {
             Help visitors with disabilities use your site
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-text-secondary sm:text-xl">
-            The AccessibleNow widget is a lightweight toolbar for people who need larger text, higher
-            contrast, dyslexia-friendly fonts, Hindi UI, keyboard tools, or text-to-speech — one
-            click, no login required.
+            The AccessibleNow widget is a lightweight toolbar for people who need larger text,
+            higher contrast, dyslexia-friendly fonts, Hindi UI, keyboard tools, or text-to-speech —
+            one click, no login required.
           </p>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-text-tertiary">
             <span lang="hi">सभी के लिए डिजिटल पहुँच</span> — accessibility for every visitor, on

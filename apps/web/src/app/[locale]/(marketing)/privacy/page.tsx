@@ -16,8 +16,8 @@ export default function PrivacyPage() {
       <section>
         <h2 className="text-xl font-semibold text-text-primary">1. Who we are</h2>
         <p className="mt-2">
-          AccessibleNow (&quot;we&quot;, &quot;us&quot;) provides digital accessibility
-          compliance software to organisations in India. For privacy questions, contact{' '}
+          AccessibleNow (&quot;we&quot;, &quot;us&quot;) provides digital accessibility compliance
+          software to organisations in India. For privacy questions, contact{' '}
           <a
             href="mailto:privacy@accessshield.in"
             className="text-primary-600 hover:text-primary-700"

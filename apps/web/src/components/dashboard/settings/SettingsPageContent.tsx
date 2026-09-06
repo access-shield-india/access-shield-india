@@ -85,7 +85,9 @@ const SETTINGS_TABS: TabItem[] = [
     value: 'ai',
     label: 'AI Configuration',
     content: (
-      <Suspense fallback={<LoadingState message="Please wait, loading AI settings…" variant="card" />}>
+      <Suspense
+        fallback={<LoadingState message="Please wait, loading AI settings…" variant="card" />}
+      >
         <AISettingsForm />
       </Suspense>
     ),
@@ -102,9 +104,7 @@ export function SettingsPageContent() {
         </p>
       </div>
 
-      <Suspense
-        fallback={<LoadingState message="Please wait, loading settings…" variant="card" />}
-      >
+      <Suspense fallback={<LoadingState message="Please wait, loading settings…" variant="card" />}>
         <SettingsTabs />
       </Suspense>
     </div>
@@ -119,6 +119,11 @@ function SettingsTabs() {
     : 'organisation';
 
   return (
-    <Tabs items={SETTINGS_TABS} defaultValue={defaultValue} ariaLabel="Settings sections" lazyMount />
+    <Tabs
+      items={SETTINGS_TABS}
+      defaultValue={defaultValue}
+      ariaLabel="Settings sections"
+      lazyMount
+    />
   );
 }

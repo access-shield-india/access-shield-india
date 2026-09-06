@@ -22,7 +22,9 @@ export function LoginLayoutClient({
         <div className="flex justify-end p-4">
           <LanguageSwitcher />
         </div>
-        <Suspense fallback={<div className="px-4 py-24 text-center text-text-secondary">Loading…</div>}>
+        <Suspense
+          fallback={<div className="px-4 py-24 text-center text-text-secondary">Loading…</div>}
+        >
           {children}
         </Suspense>
       </LocaleProvider>

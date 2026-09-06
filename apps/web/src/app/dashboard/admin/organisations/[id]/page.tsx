@@ -312,7 +312,12 @@ export default function AdminOrganisationDetailPage() {
       )}
 
       {activeTab === 'widget' && (
-        <section id="panel-widget" role="tabpanel" aria-labelledby="tab-widget" className="space-y-4">
+        <section
+          id="panel-widget"
+          role="tabpanel"
+          aria-labelledby="tab-widget"
+          className="space-y-4"
+        >
           <AdminCard
             title="Widget control"
             description="Disabling stops the widget on all sites using this organisation's token."

@@ -4,8 +4,7 @@ import { SignupForm } from '@/components/marketing/SignupForm';
 
 export const metadata: Metadata = {
   title: 'Start free trial',
-  description:
-    'Create your AccessibleNow account and start scanning for accessibility compliance.',
+  description: 'Create your AccessibleNow account and start scanning for accessibility compliance.',
 };
 
 export default function SignupPage() {

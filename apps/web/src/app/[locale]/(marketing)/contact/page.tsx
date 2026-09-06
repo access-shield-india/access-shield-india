@@ -5,8 +5,7 @@ import { ContactIllustration } from '@/components/marketing/visuals';
 
 export const metadata: Metadata = {
   title: 'Contact',
-  description:
-    'Contact AccessibleNow for sales, support, and accessibility compliance questions.',
+  description: 'Contact AccessibleNow for sales, support, and accessibility compliance questions.',
 };
 
 export default function ContactPage() {
