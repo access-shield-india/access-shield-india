@@ -170,8 +170,7 @@ export const PRICING_CATALOG = {
     priceInr: 4999,
     badge: 'Free for first 100 customers',
     highlighted: true,
-    priceNote:
-      'Launch offer — free for the first 100 customers · contact sales for details',
+    priceNote: 'Launch offer — free for the first 100 customers · contact sales for details',
     features: [
       'WCAG 2.2 AA + IS 17802 automated scan',
       'Hands-on manual review by specialists',
