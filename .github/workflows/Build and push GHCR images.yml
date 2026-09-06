@@ -1,10 +1,12 @@
 name: Build and push GHCR images
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - release-2026-09-R1
-  workflow_dispatch:
+      - alpha
+ 
 
 permissions:
   contents: read
