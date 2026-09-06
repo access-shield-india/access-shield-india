@@ -9,7 +9,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
  */
 export const authOptions: NextAuthOptions = {
   // Auth.js v5 option; cast for next-auth v4 typings used in this app
-  ...( { trustHost: true } as Partial<NextAuthOptions> ),
+  ...({ trustHost: true } as Partial<NextAuthOptions>),
   providers: [
     KeycloakProvider({
       clientId: process.env.NEXT_PUBLIC_AUTH_CLIENT_ID ?? 'accessshield-web',
@@ -30,8 +30,7 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const issuer =
-          process.env.AUTH_ISSUER_URL ?? 'http://localhost:8080/realms/accessshield';
+        const issuer = process.env.AUTH_ISSUER_URL ?? 'http://localhost:8080/realms/accessshield';
         const clientId = process.env.NEXT_PUBLIC_AUTH_CLIENT_ID ?? 'accessshield-web';
         const tokenUrl = `${issuer.replace(/\/$/, '')}/protocol/openid-connect/token`;
 
@@ -110,7 +109,7 @@ export const authOptions: NextAuthOptions = {
           org_id?: string;
         };
 
-        let accessToken = u.accessToken ?? account.access_token;
+        const accessToken = u.accessToken ?? account.access_token;
         let userRole = u.user_role;
         let orgId = u.org_id;
 
