@@ -6,6 +6,7 @@
  */
 
 import type { ScreenState, MobileViolation, ComplianceStandard } from './types.js';
+import type { IssueSeverity } from '@accessshield/types';
 import { getMobileRules, runRuleOnElement, flattenElementTree } from './rules/mobile-rules.js';
 import { logger } from './lib/logger.js';
 
@@ -101,7 +102,7 @@ export class MobileRuleEngine {
 }
 
 export function calculateScore(violations: MobileViolation[]): number {
-  const penalties = {
+  const penalties: Record<IssueSeverity, number> = {
     critical: 20,
     serious: 10,
     moderate: 5,
@@ -111,14 +112,14 @@ export function calculateScore(violations: MobileViolation[]): number {
   let totalPenalty = 0;
 
   for (const violation of violations) {
-    totalPenalty += penalties[violation.severity];
+    totalPenalty += penalties[violation.severity] ?? penalties.moderate;
   }
 
   return Math.max(0, 100 - totalPenalty);
 }
 
 export function countBySeverity(violations: MobileViolation[]): Record<string, number> {
-  const counts = {
+  const counts: Record<IssueSeverity, number> = {
     critical: 0,
     serious: 0,
     moderate: 0,
@@ -126,7 +127,7 @@ export function countBySeverity(violations: MobileViolation[]): Record<string, n
   };
 
   for (const violation of violations) {
-    counts[violation.severity]++;
+    counts[violation.severity] = (counts[violation.severity] ?? 0) + 1;
   }
 
   return counts;

@@ -19,7 +19,10 @@ RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 COPY . .
-RUN pnpm --filter @accessshield/web build
+RUN pnpm --filter @accessshield/types build && \
+	pnpm --filter @accessshield/db build && \
+	pnpm --filter @accessshield/ui build && \
+	pnpm --filter @accessshield/web build
 
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app

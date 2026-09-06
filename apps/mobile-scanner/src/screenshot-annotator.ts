@@ -81,7 +81,7 @@ function buildSvgOverlay(
   dpr: number,
 ): string {
   const elements = violations.map((violation) => {
-    const color = SEVERITY_COLORS[violation.severity] || SEVERITY_COLORS.moderate;
+    const color = SEVERITY_COLORS[violation.severity] ?? '#2563EB';
     const { x, y, width: w, height: h } = violation.bounds;
 
     const scaledX = Math.round(x * dpr);

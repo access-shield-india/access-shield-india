@@ -12,8 +12,10 @@ import { eq } from 'drizzle-orm';
 import { logger } from '../lib/logger';
 import type { RawViolation, ScanScoreResult } from './types';
 
+type SeverityKey = 'critical' | 'serious' | 'moderate' | 'minor';
+
 /** Saturation weights by severity. Repeated issues should hurt, but not force every noisy scan to 0. */
-const SEVERITY_WEIGHTS: Record<string, number> = {
+const SEVERITY_WEIGHTS: Record<SeverityKey, number> = {
   critical: 12,
   serious: 5,
   moderate: 2.5,
@@ -50,7 +52,7 @@ export function calculateScore(violations: RawViolation[], _pagesScanned: number
     return MAX_SCORE;
   }
 
-  const counts = {
+  const counts: Record<SeverityKey, number> = {
     critical: 0,
     serious: 0,
     moderate: 0,
@@ -76,9 +78,9 @@ export function calculateScore(violations: RawViolation[], _pagesScanned: number
   }
 
   let totalDeduction = 0;
-  for (const [severity, count] of Object.entries(counts)) {
+  for (const [severity, count] of Object.entries(counts) as Array<[SeverityKey, number]>) {
     if (count === 0) continue;
-    totalDeduction += Math.sqrt(count) * (SEVERITY_WEIGHTS[severity] ?? SEVERITY_WEIGHTS.minor);
+    totalDeduction += Math.sqrt(count) * SEVERITY_WEIGHTS[severity];
   }
 
   totalDeduction = Math.min(totalDeduction, MAX_SCORE);

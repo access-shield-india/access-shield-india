@@ -30,7 +30,9 @@ COPY packages/types ./packages/types
 COPY apps/mobile-scanner ./apps/mobile-scanner
 COPY turbo.json ./
 
-RUN pnpm --filter @accessshield/mobile-scanner build
+RUN pnpm --filter @accessshield/types build && \
+	pnpm --filter @accessshield/db build && \
+	pnpm --filter @accessshield/mobile-scanner build
 
 # Production image
 FROM node:20-alpine AS runner
