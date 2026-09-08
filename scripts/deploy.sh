@@ -412,12 +412,26 @@ run_install() {
   ok "Dependencies installed"
 }
 
+publish_widget() {
+  log "Building widget → apps/web/public/widget.js…"
+  pnpm --filter @accessshield/widget build
+  mkdir -p "$ROOT/apps/web/public"
+  cp "$ROOT/apps/widget/dist/widget.min.js" "$ROOT/apps/web/public/widget.js"
+  if [[ -f "$ROOT/apps/widget/dist/widget.min.js.map" ]]; then
+    cp "$ROOT/apps/widget/dist/widget.min.js.map" "$ROOT/apps/web/public/widget.js.map"
+  fi
+  ok "Widget published to /widget.js"
+}
+
 run_build_packages() {
   log "Building shared packages…"
   pnpm --filter @accessshield/types build
   pnpm --filter @accessshield/db build
   pnpm --filter @accessshield/ui build
   ok "Packages built"
+
+  # Always ship a fresh embed bundle (gitignored; not covered by web build alone).
+  publish_widget
 
   if [[ "$MODE" == "prod" ]]; then
     log "Building API + Web (prod mode)…"

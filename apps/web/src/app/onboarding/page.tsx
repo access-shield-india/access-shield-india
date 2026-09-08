@@ -110,7 +110,7 @@ export default function OnboardingPage() {
 
   const widgetToken = assetId ? `as_${assetId.slice(0, 8)}` : 'as_xxxxxxxx';
   const embedCode = `<script
-  src="https://cdn.accessshield.in/widget.js"
+  src="https://accessiblenow.in/widget.js"
   data-token="${widgetToken}"
   async
 ></script>`;

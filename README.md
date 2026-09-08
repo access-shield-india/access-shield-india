@@ -146,7 +146,7 @@ pnpm --filter @accessshield/widget build
 Embed on any website:
 
 ```html
-<script src="https://cdn.accessshield.in/widget/v1/accessshield.min.js"></script>
+<script src="https://accessiblenow.in/widget/v1/accessshield.min.js"></script>
 <script>
   window.accessShieldInit({
     orgId: 'your-org-uuid',
