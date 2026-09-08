@@ -768,9 +768,9 @@ Required environment variables (define in .env.local for dev,
 AWS Secrets Manager for prod). NEVER commit real values:
 
 # App
-NEXT_PUBLIC_APP_URL=https://accessshield.in
+NEXT_PUBLIC_APP_URL=https://accessiblenow.in
 NEXT_PUBLIC_API_URL=https://api.accessshield.in
-NEXT_PUBLIC_CDN_URL=https://cdn.accessshield.in
+NEXT_PUBLIC_CDN_URL=https://accessiblenow.in
 
 # Keycloak / Auth.js
 NEXT_PUBLIC_AUTH_URL=http://localhost:8080

@@ -7,13 +7,15 @@ WEB_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 NEXT_BIN="$WEB_DIR/node_modules/next/dist/bin/next"
 WIDGET_PUBLIC="$WEB_DIR/public/widget.js"
 
-# Serve marketing widget from /widget.js when NEXT_PUBLIC_CDN_URL is unset
-if [[ ! -f "$WIDGET_PUBLIC" ]]; then
-  echo "Building widget bundle for /widget.js …" >&2
-  pnpm --filter @accessshield/widget build
-  mkdir -p "$WEB_DIR/public"
-  cp "$ROOT/apps/widget/dist/widget.min.js" "$WIDGET_PUBLIC"
+# Always refresh /widget.js so local/dev deploys pick up SDK changes
+echo "Building widget bundle for /widget.js …" >&2
+pnpm --filter @accessshield/widget build
+mkdir -p "$WEB_DIR/public"
+cp "$ROOT/apps/widget/dist/widget.min.js" "$WIDGET_PUBLIC"
+if [[ -f "$ROOT/apps/widget/dist/widget.min.js.map" ]]; then
+  cp "$ROOT/apps/widget/dist/widget.min.js.map" "$WEB_DIR/public/widget.js.map"
 fi
+
 
 # macOS defaults to 256 file descriptors; Next's watcher needs thousands or
 # [locale] routes never register and every page 404s (EMFILE).
