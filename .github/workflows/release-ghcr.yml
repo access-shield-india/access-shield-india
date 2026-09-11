@@ -42,6 +42,7 @@ jobs:
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/accessshield-web:${{ github.sha }}
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/accessshield-web:${{ steps.vars.outputs.release_tag }}
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/accessshield-web:latest
+          provenance: false
 
   build-api:
     runs-on: ubuntu-latest
@@ -73,6 +74,7 @@ jobs:
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/accessshield-api:${{ github.sha }}
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/accessshield-api:${{ steps.vars.outputs.release_tag }}
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/accessshield-api:latest
+          provenance: false
 
   build-ai-service:
     runs-on: ubuntu-latest
@@ -104,6 +106,7 @@ jobs:
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/accessshield-ai-service:${{ github.sha }}
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/accessshield-ai-service:${{ steps.vars.outputs.release_tag }}
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/accessshield-ai-service:latest
+          provenance: false
 
   build-mobile-scanner:
     runs-on: ubuntu-latest
@@ -135,3 +138,4 @@ jobs:
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/accessshield-mobile-scanner:${{ github.sha }}
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/accessshield-mobile-scanner:${{ steps.vars.outputs.release_tag }}
             ghcr.io/${{ steps.vars.outputs.owner_lc }}/accessshield-mobile-scanner:latest
+          provenance: false
