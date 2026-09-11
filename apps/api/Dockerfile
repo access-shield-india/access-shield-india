@@ -31,12 +31,15 @@ ENV PORT=4000
 RUN useradd --uid 1001 --create-home --shell /bin/bash nodeapp
 
 COPY --from=build /repo/node_modules ./node_modules
+COPY --from=build /repo/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build /repo/apps/api/dist ./apps/api/dist
 COPY --from=build /repo/apps/api/package.json ./apps/api/package.json
 COPY --from=build /repo/packages/db/dist ./packages/db/dist
 COPY --from=build /repo/packages/db/package.json ./packages/db/package.json
+COPY --from=build /repo/packages/db/node_modules ./packages/db/node_modules
 COPY --from=build /repo/packages/types/dist ./packages/types/dist
 COPY --from=build /repo/packages/types/package.json ./packages/types/package.json
+COPY --from=build /repo/packages/types/node_modules ./packages/types/node_modules
 COPY --from=build /repo/package.json ./package.json
 
 USER nodeapp
