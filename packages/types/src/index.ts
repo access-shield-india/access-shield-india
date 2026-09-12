@@ -72,4 +72,4 @@ export interface ApiResponse<T> {
   timestamp: string;
 }
 
-export * from './scan-pipeline-v2';
+export * from './scan-pipeline-v2.js';

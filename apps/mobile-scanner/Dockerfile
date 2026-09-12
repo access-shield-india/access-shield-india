@@ -45,10 +45,13 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 scanner
 
 COPY --from=builder /app/apps/mobile-scanner/dist ./apps/mobile-scanner/dist
+COPY --from=builder /app/apps/mobile-scanner/node_modules ./apps/mobile-scanner/node_modules
 COPY --from=builder /app/apps/mobile-scanner/package.json ./apps/mobile-scanner/
 COPY --from=builder /app/packages/db/dist ./packages/db/dist
+COPY --from=builder /app/packages/db/node_modules ./packages/db/node_modules
 COPY --from=builder /app/packages/db/package.json ./packages/db/
 COPY --from=builder /app/packages/types/dist ./packages/types/dist
+COPY --from=builder /app/packages/types/node_modules ./packages/types/node_modules
 COPY --from=builder /app/packages/types/package.json ./packages/types/
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
