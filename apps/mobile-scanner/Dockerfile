@@ -35,10 +35,27 @@ RUN pnpm --filter @accessshield/types build && \
 	pnpm --filter @accessshield/mobile-scanner build
 
 # Production image
-FROM node:20-alpine AS runner
-RUN corepack enable && corepack prepare pnpm@9 --activate
-WORKDIR /app
+FROM node:20-bookworm-slim AS runner
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    openjdk-17-jre-headless \
+    unzip \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
 
+ENV ANDROID_SDK_ROOT=/opt/android-sdk
+ENV ANDROID_HOME=/opt/android-sdk
+ENV PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH
+
+RUN mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools" \
+    && wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O /tmp/cmdline-tools.zip \
+    && unzip -q /tmp/cmdline-tools.zip -d "$ANDROID_SDK_ROOT/cmdline-tools" \
+    && mv "$ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools/latest" \
+    && rm /tmp/cmdline-tools.zip \
+    && yes | sdkmanager --licenses >/dev/null \
+    && sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+WORKDIR /app
 ENV NODE_ENV=production
 
 RUN addgroup --system --gid 1001 nodejs
