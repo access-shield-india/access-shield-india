@@ -19,6 +19,8 @@ RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 COPY . .
+ENV API_URL=http://accessshield-api:4000
+ENV NEXT_PUBLIC_API_URL=
 RUN pnpm --filter @accessshield/types build && \
 	pnpm --filter @accessshield/db build && \
 	pnpm --filter @accessshield/ui build && \
