@@ -13,6 +13,8 @@ import {
   getScan,
   listScans,
   listViolations,
+  listIssueSummaries,
+
   cancelScan,
   pauseScan,
   resumeScan,
@@ -242,6 +244,23 @@ export function useViolations(
       if (!scanId) throw new Error('Scan ID required');
       const token = await getAccessToken();
       return listViolations(token, scanId, params);
+    },
+    enabled: Boolean(scanId) && scanStatus === 'completed',
+  });
+}
+
+/** Plain-language issue cards for a completed scan */
+export function useIssueSummaries(
+  scanId: string | null,
+  params?: { severity?: string; standard?: string },
+  scanStatus?: ScanDetail['status'],
+) {
+  return useQuery({
+    queryKey: ['issue-summaries', scanId, params],
+    queryFn: async () => {
+      if (!scanId) throw new Error('Scan ID required');
+      const token = await getAccessToken();
+      return listIssueSummaries(token, scanId, params);
     },
     enabled: Boolean(scanId) && scanStatus === 'completed',
   });

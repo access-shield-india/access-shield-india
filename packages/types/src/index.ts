@@ -73,3 +73,4 @@ export interface ApiResponse<T> {
 }
 
 export * from './scan-pipeline-v2';
+export * from './issue-plain-language';

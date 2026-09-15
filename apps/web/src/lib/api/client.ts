@@ -10,6 +10,7 @@ import type {
   ScanDetail,
   ScanListItem,
   ViolationRow,
+  IssueSummary,
   DocumentScanJob,
   DocumentScanResult,
   DocumentScanListItem,
@@ -201,6 +202,22 @@ export async function listViolations(
   const path = `/api/v1/scans/${scanId}/violations${query ? `?${query}` : ''}`;
   const response = await apiFetch<ApiResponse<ViolationRow[]>>(path, token);
   return { rows: response.data, meta: response.meta };
+}
+
+/** Grouped plain-language issue cards for a completed scan */
+export async function listIssueSummaries(
+  token: string,
+  scanId: string,
+  params?: { severity?: string; standard?: string },
+): Promise<IssueSummary[]> {
+  const search = new URLSearchParams();
+  if (params?.severity) search.set('severity', params.severity);
+  if (params?.standard && params.standard !== 'all') search.set('standard', params.standard);
+
+  const query = search.toString();
+  const path = `/api/v1/scans/${scanId}/issue-summaries${query ? `?${query}` : ''}`;
+  const response = await apiFetch<ApiResponse<IssueSummary[]>>(path, token);
+  return response.data;
 }
 
 /** Request cancellation of a pending or running scan */

@@ -127,7 +127,7 @@ export function AssetWidget({ asset }: AssetWidgetProps) {
     );
   }
 
-  const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL ?? 'https://cdn.accessshield.in';
+  const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL ?? 'https://accessiblenow.in';
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.accessshield.in';
 
   const embedCode = `<script>

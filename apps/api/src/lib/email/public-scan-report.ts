@@ -2,12 +2,14 @@
  * Build and send the free-scan summary email when a public scan completes.
  */
 
-import { and, count, desc, eq, sql } from 'drizzle-orm';
+import { and, count, eq } from 'drizzle-orm';
 import type { Database } from '@accessshield/db';
 import { assets, scans, violations } from '@accessshield/db';
+import type { IssueSummary } from '@accessshield/types';
 import type { Redis } from 'ioredis';
 import { logger } from '../logger';
 import { PUBLIC_SCANS_ORG_ID } from '../../scanner/public-scan-org';
+import { listIssueSummaries } from '../../scanner/issue-summaries';
 import { sendEmail } from './resend';
 
 const APP_URL = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://accessiblenow.in';
@@ -41,6 +43,7 @@ export interface PublicScanReportPayload {
   totalViolations: number;
   severity: SeverityCounts;
   topViolations: TopViolation[];
+  topIssues?: IssueSummary[];
 }
 
 function escapeHtml(value: string): string {
@@ -72,11 +75,36 @@ export function buildPublicScanReportHtml(payload: PublicScanReportPayload): str
   const appUrl = APP_URL();
   const resultsUrl = `${appUrl}/scan`;
   const signupUrl = `${appUrl}/signup`;
-  const remaining = Math.max(0, payload.totalViolations - payload.topViolations.length);
+  const issues = payload.topIssues ?? [];
+  const shownCount = issues.reduce((total, issue) => total + issue.count, 0);
+  const remaining =
+    issues.length > 0
+      ? Math.max(0, payload.totalViolations - shownCount)
+      : Math.max(0, payload.totalViolations - payload.topViolations.length);
 
-  const violationRows = payload.topViolations
-    .map(
-      (v) => `
+  const violationRows =
+    issues.length > 0
+      ? issues
+          .map(
+            (issue) => `
+      <tr>
+        <td style="padding:12px;border-bottom:1px solid #E5E7EB;vertical-align:top;">
+          <span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;background:#F3F4F6;color:#1A1A2E;">
+            ${escapeHtml(issue.priority)} priority
+          </span>
+        </td>
+        <td style="padding:12px;border-bottom:1px solid #E5E7EB;">
+          <div style="font-weight:600;color:#1A1A2E;font-size:15px;line-height:1.5;">${escapeHtml(issue.headline)}.</div>
+          <div style="margin-top:6px;color:#374151;font-size:14px;line-height:1.5;"><strong>Business impact:</strong> ${escapeHtml(issue.impact)}</div>
+          <div style="margin-top:4px;color:#374151;font-size:14px;line-height:1.5;"><strong>Fix:</strong> ${escapeHtml(issue.fix)}</div>
+          <div style="margin-top:4px;color:#374151;font-size:14px;line-height:1.5;"><strong>Owner:</strong> ${escapeHtml(issue.owner)}</div>
+        </td>
+      </tr>`,
+          )
+          .join('')
+      : payload.topViolations
+          .map(
+            (v) => `
       <tr>
         <td style="padding:10px 12px;border-bottom:1px solid #E5E7EB;vertical-align:top;">
           <span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;background:#F3F4F6;color:#1A1A2E;">
@@ -86,15 +114,10 @@ export function buildPublicScanReportHtml(payload: PublicScanReportPayload): str
         <td style="padding:10px 12px;border-bottom:1px solid #E5E7EB;">
           <div style="font-weight:600;color:#1A1A2E;font-size:14px;">${escapeHtml(v.ruleId)}</div>
           <div style="margin-top:4px;color:#374151;font-size:14px;line-height:1.5;">${escapeHtml(v.description)}</div>
-          ${
-            v.wcagCriteria && v.wcagCriteria.length > 0
-              ? `<div style="margin-top:6px;color:#6B7280;font-size:12px;">WCAG: ${escapeHtml(v.wcagCriteria.join(', '))}</div>`
-              : ''
-          }
         </td>
       </tr>`,
-    )
-    .join('');
+          )
+          .join('');
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -134,9 +157,9 @@ export function buildPublicScanReportHtml(payload: PublicScanReportPayload): str
                 <strong>${payload.severity.minor}</strong> minor
               </p>
               ${
-                payload.topViolations.length > 0
+                (payload.topIssues?.length ?? 0) > 0 || payload.topViolations.length > 0
                   ? `
-              <h2 style="margin:24px 0 12px;font-size:18px;color:#1A1A2E;">Top issues</h2>
+              <h2 style="margin:24px 0 12px;font-size:18px;color:#1A1A2E;">What we found</h2>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E5E7EB;border-radius:8px;overflow:hidden;">
                 ${violationRows}
               </table>
@@ -192,11 +215,20 @@ export function buildPublicScanReportText(payload: PublicScanReportPayload): str
     `Issues found: ${payload.totalViolations}`,
     `Critical: ${payload.severity.critical}, Serious: ${payload.severity.serious}, Moderate: ${payload.severity.moderate}, Minor: ${payload.severity.minor}`,
     '',
-    'Top issues:',
+    'What we found:',
   ];
 
-  if (payload.topViolations.length === 0) {
+  const issues = payload.topIssues ?? [];
+  if (issues.length === 0 && payload.topViolations.length === 0) {
     lines.push('(none from this automated pass)');
+  } else if (issues.length > 0) {
+    for (const issue of issues) {
+      lines.push(`- ${issue.headline}.`);
+      lines.push(`  Business impact: ${issue.impact}`);
+      lines.push(`  Fix: ${issue.fix}`);
+      lines.push(`  Owner: ${issue.owner}`);
+      lines.push(`  Priority: ${issue.priority}`);
+    }
   } else {
     for (const v of payload.topViolations) {
       lines.push(`- [${impactLabel(v.impact)}] ${v.ruleId}: ${v.description}`);
@@ -253,25 +285,19 @@ async function loadReportPayload(
     minor: Number(severityRows.find((r) => r.impact === 'minor')?.count ?? 0),
   };
 
-  const topViolations = await db
-    .select({
-      ruleId: violations.ruleId,
-      impact: violations.impact,
-      description: violations.description,
-      wcagCriteria: violations.wcagCriteria,
+  const topIssues = (
+    await listIssueSummaries(db, {
+      scanId,
+      organisationId: PUBLIC_SCANS_ORG_ID,
     })
-    .from(violations)
-    .where(eq(violations.scanId, scanId))
-    .orderBy(
-      sql`CASE ${violations.impact}
-        WHEN 'critical' THEN 1
-        WHEN 'serious' THEN 2
-        WHEN 'moderate' THEN 3
-        WHEN 'minor' THEN 4
-      END`,
-      desc(violations.createdAt),
-    )
-    .limit(5);
+  ).slice(0, 5);
+
+  const topViolations = topIssues.map((issue) => ({
+    ruleId: issue.ruleId,
+    impact: issue.severity,
+    description: issue.headline,
+    wcagCriteria: issue.wcagCriterion ? [issue.wcagCriterion] : null,
+  }));
 
   const [totalRow] = await db
     .select({ count: count() })
@@ -287,6 +313,7 @@ async function loadReportPayload(
     totalViolations: Number(totalRow?.count ?? 0),
     severity,
     topViolations,
+    topIssues,
   };
 }
 

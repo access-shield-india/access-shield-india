@@ -27,6 +27,24 @@ const sample: PublicScanReportPayload = {
       wcagCriteria: ['1.4.3'],
     },
   ],
+  topIssues: [
+    {
+      ruleId: 'image-alt',
+      count: 4,
+      pageCount: 2,
+      severity: 'critical',
+      standard: 'WCAG22',
+      wcagCriterion: '1.1.1',
+      headline: '4 images have no description',
+      impact: 'People who cannot see the image miss whatever it is showing.',
+      fix: 'Add a short description of what the image shows. Mark decorative images as decorative.',
+      owner: 'Content team',
+      priority: 'High',
+      pages: ['https://example.com'],
+      occurrences: [],
+      moreOccurrences: 0,
+    },
+  ],
 };
 
 describe('public scan report email', () => {
@@ -53,7 +71,9 @@ describe('public scan report email', () => {
   it('builds plain-text fallback', () => {
     const text = buildPublicScanReportText(sample);
     expect(text).toContain('Score: 72/100');
-    expect(text).toContain('image-alt');
+    expect(text).toContain('4 images have no description');
+    expect(text).toContain('Owner: Content team');
+    expect(text).toContain('Priority: High');
     expect(text).toContain('/signup');
   });
 });
