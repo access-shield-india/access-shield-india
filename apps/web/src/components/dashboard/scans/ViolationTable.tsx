@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { DataTable, Badge, type DataTableColumn } from '@accessshield/ui';
 import { ExternalLink, AlertCircle, AlertTriangle, Info, Minus } from 'lucide-react';
 import { truncate } from '@/lib/utils';
@@ -20,7 +22,12 @@ export interface ViolationTableProps {
   total: number;
 }
 
+function issueHref(violation: ViolationRow): string | null {
+  return violation.issueId ? `/dashboard/issues/${violation.issueId}` : null;
+}
+
 export function ViolationTable({ violations, isLoading, total }: ViolationTableProps) {
+  const router = useRouter();
   const columns: DataTableColumn<ViolationRow>[] = [
     {
       id: 'impact',
@@ -79,11 +86,27 @@ export function ViolationTable({ violations, isLoading, total }: ViolationTableP
     {
       id: 'description',
       header: 'Description',
-      accessor: (violation) => (
-        <span className="text-sm" title={violation.description}>
-          {truncate(violation.description, 80)}
-        </span>
-      ),
+      accessor: (violation) => {
+        const href = issueHref(violation);
+        const label = truncate(violation.description, 80);
+        if (!href) {
+          return (
+            <span className="text-sm" title={violation.description}>
+              {label}
+            </span>
+          );
+        }
+        return (
+          <Link
+            href={href}
+            title={violation.description}
+            className="inline-flex min-h-11 items-center text-sm font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
+          >
+            {label}
+            <span className="sr-only">. Open issue details and AI fix</span>
+          </Link>
+        );
+      },
     },
     {
       id: 'pageUrl',
@@ -120,12 +143,20 @@ export function ViolationTable({ violations, isLoading, total }: ViolationTableP
 
   return (
     <div>
+      <p className="mb-3 text-sm text-text-secondary">
+        Click an issue to open its details and the AI fix.
+      </p>
       <DataTable
         columns={columns}
         data={violations}
         getRowId={(row) => row.id}
         emptyMessage="No violations found"
-        caption="Scan violations"
+        caption="Scan violations. Choose a description to open the issue and its AI fix."
+        pageSize={Math.max(violations.length, 1)}
+        onRowActivate={(violation) => {
+          const href = issueHref(violation);
+          if (href) router.push(href);
+        }}
       />
       {total > 0 && (
         <p className="mt-4 text-sm text-text-tertiary" role="status">

@@ -3,6 +3,8 @@
  * Extends base types for client-side data fetching and mutations.
  */
 
+export type { IssueSummary } from '@accessshield/types';
+
 export interface ApiResponse<T> {
   data: T;
   meta?: {
@@ -155,6 +157,8 @@ export interface ViolationRow {
   pageUrl: string | null;
   standard?: ComplianceStandard | string | null;
   createdAt: string;
+  /** Tracked issue that shows details and the AI fix. */
+  issueId?: string | null;
 }
 
 // ─── Issues ───────────────────────────────────────────────────────────────

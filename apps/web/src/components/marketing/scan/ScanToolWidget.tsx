@@ -8,6 +8,7 @@ import { Input, Button, Badge, Progress } from '@accessshield/ui';
 import { ButtonLink } from '@/components/marketing/ButtonLink';
 import { apiUrl } from '@/lib/api/base';
 import { ScoreRing } from './ScoreRing';
+import type { IssueSummary } from '@/lib/api/types';
 
 const scanSchema = z.object({
   url: z.string().url('Enter a valid website URL'),
@@ -36,6 +37,7 @@ interface ScanResult {
     description: string;
     wcagCriteria: string[];
   }>;
+  topIssues?: IssueSummary[];
   remainingViolationsCount: number;
 }
 
@@ -89,6 +91,7 @@ export function ScanToolWidget() {
         moderateCount: 0,
         minorCount: 0,
         topViolations: [],
+        topIssues: [],
         remainingViolationsCount: 0,
       });
       setState('scanning');
@@ -377,43 +380,65 @@ export function ScanToolWidget() {
         </div>
 
         <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
-          <h2 className="text-xl font-semibold text-text-primary">Top violations found</h2>
-          <ul className="mt-6 space-y-4">
-            {scanResult.topViolations.map((violation) => (
-              <li
-                key={violation.id}
-                className="flex gap-4 border-b border-gray-100 pb-4 last:border-0"
-              >
-                <Badge
-                  variant="secondary"
-                  size="sm"
-                  className={`${severityConfig[violation.impact].bg} ${severityConfig[violation.impact].text} ${severityConfig[violation.impact].border} shrink-0 border`}
-                >
-                  {severityConfig[violation.impact].label}
-                </Badge>
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-text-primary">{violation.ruleId}</div>
-                  <p className="mt-1 text-sm leading-normal text-text-secondary">
-                    {violation.description}
-                  </p>
-                  {violation.wcagCriteria.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {violation.wcagCriteria.map((criterion) => (
-                        <Badge key={criterion} variant="secondary" size="sm">
-                          {criterion}
-                        </Badge>
-                      ))}
+          <h2 className="text-xl font-semibold text-text-primary">What we found</h2>
+          {(scanResult.topIssues ?? []).length === 0 && scanResult.topViolations.length === 0 ? (
+            <p className="mt-4 text-base leading-normal text-text-secondary">
+              No automated issues were found on the pages we could scan.
+            </p>
+          ) : null}
+          <ul className="mt-6 space-y-6">
+            {(scanResult.topIssues ?? []).length > 0
+              ? scanResult.topIssues!.map((issue) => (
+                  <li key={issue.ruleId} className="border-b border-gray-100 pb-6 last:border-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge
+                        variant="secondary"
+                        size="sm"
+                        className={`${severityConfig[issue.severity].bg} ${severityConfig[issue.severity].text} ${severityConfig[issue.severity].border} border`}
+                      >
+                        {issue.priority} priority
+                      </Badge>
+                      <span className="text-sm text-text-secondary">Owner: {issue.owner}</span>
                     </div>
-                  )}
-                </div>
-              </li>
-            ))}
+                    <h3 className="mt-3 text-lg font-semibold leading-normal text-text-primary">
+                      {issue.headline}.
+                    </h3>
+                    <p className="mt-2 text-base leading-normal text-text-secondary">
+                      <span className="font-medium text-text-primary">Business impact: </span>
+                      {issue.impact}
+                    </p>
+                    <p className="mt-2 text-base leading-normal text-text-secondary">
+                      <span className="font-medium text-text-primary">Fix: </span>
+                      {issue.fix}
+                    </p>
+                  </li>
+                ))
+              : scanResult.topViolations.map((violation) => (
+                  <li
+                    key={violation.id}
+                    className="flex gap-4 border-b border-gray-100 pb-4 last:border-0"
+                  >
+                    <Badge
+                      variant="secondary"
+                      size="sm"
+                      className={`${severityConfig[violation.impact].bg} ${severityConfig[violation.impact].text} ${severityConfig[violation.impact].border} shrink-0 border`}
+                    >
+                      {severityConfig[violation.impact].label}
+                    </Badge>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-text-primary">{violation.ruleId}</div>
+                      <p className="mt-1 text-sm leading-normal text-text-secondary">
+                        {violation.description}
+                      </p>
+                    </div>
+                  </li>
+                ))}
           </ul>
 
           {scanResult.remainingViolationsCount > 0 && (
             <div
               role="region"
-              aria-label="Additional violations locked"
+              aria-label="Additional issues locked"
               className="mt-8 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center"
             >
               <svg
@@ -431,10 +456,10 @@ export function ScanToolWidget() {
                 />
               </svg>
               <h3 className="mt-4 text-lg font-semibold text-text-primary">
-                {scanResult.remainingViolationsCount} more violations found
+                {scanResult.remainingViolationsCount} more issues found
               </h3>
               <p className="mt-2 text-base leading-normal text-text-secondary">
-                Sign up free to see all violations, get AI fix suggestions, and generate your
+                Sign up free to see every issue, get AI fix suggestions, and generate your
                 compliance report.
               </p>
               <ButtonLink href="/signup" size="lg" variant="primary" className="mt-6">

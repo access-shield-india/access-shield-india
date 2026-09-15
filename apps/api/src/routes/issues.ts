@@ -204,11 +204,13 @@ export function createIssuesRouter(db: Database): ExpressRouter {
             assigneeName: users.fullName,
             assigneeEmail: users.email,
             violationRuleId: violations.ruleId,
+            violationDescription: violations.description,
             violationWcag: violations.wcagCriteria,
             violationSelector: violations.selector,
             violationHtml: violations.html,
             violationPageUrl: violations.pageUrl,
             violationHelpUrl: violations.helpUrl,
+            violationStandard: violations.standard,
           })
           .from(issues)
           .leftJoin(assets, eq(issues.assetId, assets.id))
@@ -251,13 +253,15 @@ export function createIssuesRouter(db: Database): ExpressRouter {
                 scanId: '',
                 ruleId: row.violationRuleId ?? '',
                 impact: row.severity,
-                description: row.description ?? '',
+                description: row.violationDescription ?? row.description ?? '',
                 helpUrl: row.violationHelpUrl,
                 wcagCriteria: row.violationWcag,
                 selector: row.violationSelector,
                 html: row.violationHtml,
                 pageUrl: row.violationPageUrl,
+                standard: row.violationStandard,
                 createdAt: row.createdAt,
+                issueId: row.id,
               }
             : undefined,
         }));

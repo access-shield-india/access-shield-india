@@ -24,6 +24,8 @@ export interface DataTableProps<T> {
   emptyMessage?: string;
   caption?: string;
   className?: string;
+  /** Called when the row is clicked, except when the click is on a link or button inside it. */
+  onRowActivate?: (row: T) => void;
 }
 
 type SortDirection = 'ascending' | 'descending' | 'none';
@@ -39,6 +41,7 @@ export function DataTable<T>({
   emptyMessage = 'No data available',
   caption,
   className,
+  onRowActivate,
 }: DataTableProps<T>) {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('none');
@@ -168,7 +171,21 @@ export function DataTable<T>({
               return (
                 <tr
                   key={rowId}
-                  className={cn('border-t border-border', isSelected && 'bg-primary-light/50')}
+                  className={cn(
+                    'border-t border-border',
+                    isSelected && 'bg-primary-light/50',
+                    onRowActivate && 'cursor-pointer hover:bg-bg-secondary',
+                  )}
+                  onClick={
+                    onRowActivate
+                      ? (event) => {
+                          const target = event.target;
+                          if (!(target instanceof Element)) return;
+                          if (target.closest('a, button, input, label')) return;
+                          onRowActivate(row);
+                        }
+                      : undefined
+                  }
                 >
                   {selectable && (
                     <td className="px-4 py-3">

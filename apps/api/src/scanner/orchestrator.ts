@@ -7,8 +7,8 @@
  */
 
 import type { Database } from '@accessshield/db';
-import { assets, lookupUserByAuthId, organisations, scans, violations } from '@accessshield/db';
-import type { ApiResponse, IssueSeverity, PaginationMeta } from '@accessshield/types';
+import { assets, issues, lookupUserByAuthId, organisations, scans, violations } from '@accessshield/db';
+import type { ApiResponse, IssueSeverity, IssueSummary, PaginationMeta } from '@accessshield/types';
 import { and, count, desc, eq, gte, isNull, sql } from 'drizzle-orm';
 import type { NextFunction, Request, Response, Router as ExpressRouter } from 'express';
 import { Router } from 'express';
@@ -33,6 +33,8 @@ import {
 } from './v2/redis-keys';
 import { isScanPipelineV2ScanJobsEnabled } from './v2/queues';
 import { publishScanJobsMessage } from './v2/publish';
+import { listIssueSummaries } from './issue-summaries';
+import { syncIssuesFromViolations } from '../services/issue-sync';
 
 /** Zod schema for POST /scans request body */
 const createScanSchema = z.object({
@@ -644,6 +646,10 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
 
         const total = totalResult?.count ?? 0;
 
+        // Older scans may not have a tracked issue yet. Create those rows so
+        // the technical list can open the issue details page.
+        await syncIssuesFromViolations(db, orgId, scanId);
+
         const violationRows = await db
           .select({
             id: violations.id,
@@ -657,8 +663,13 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
             pageUrl: violations.pageUrl,
             standard: violations.standard,
             createdAt: violations.createdAt,
+            issueId: issues.id,
           })
           .from(violations)
+          .leftJoin(
+            issues,
+            and(eq(issues.violationId, violations.id), eq(issues.organisationId, orgId)),
+          )
           .where(and(...conditions))
           .orderBy(
             sql`CASE ${violations.impact}
@@ -682,6 +693,65 @@ export function createScannerRouter(db: Database, redis: Redis): ExpressRouter {
         const response: ApiResponse<typeof violationRows> = {
           data: violationRows,
           meta,
+          timestamp: new Date().toISOString(),
+        };
+
+        res.json(response);
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  /**
+   * GET /scans/:id/issue-summaries
+   *
+   * Groups every violation for this scan into plain-language cards
+   * (what is wrong, who it affects, how to fix it, which team owns it).
+   */
+  router.get(
+    '/:id/issue-summaries',
+    requireRoles('auditor', 'developer', 'accessibility_officer', 'customer_admin'),
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const scanId = req.params.id ?? '';
+        const orgId = req.user!.org_id;
+
+        if (!scanId || !z.string().uuid().safeParse(scanId).success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid scan ID format');
+          return;
+        }
+
+        const parseResult = listViolationsSchema
+          .pick({ severity: true, standard: true })
+          .safeParse(req.query);
+        if (!parseResult.success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid query parameters', undefined, {
+            errors: parseResult.error.flatten().fieldErrors,
+          });
+          return;
+        }
+
+        const [scanCheck] = await db
+          .select({ id: scans.id })
+          .from(scans)
+          .where(and(eq(scans.id, scanId), eq(scans.organisationId, orgId)))
+          .limit(1);
+
+        if (!scanCheck) {
+          sendProblem(res, 404, 'not-found', 'Scan not found');
+          return;
+        }
+
+        const summaries = await listIssueSummaries(db, {
+          scanId,
+          organisationId: orgId,
+          severity: parseResult.data.severity,
+          standard: parseResult.data.standard,
+        });
+
+        const response: ApiResponse<IssueSummary[]> = {
+          data: summaries,
           timestamp: new Date().toISOString(),
         };
 

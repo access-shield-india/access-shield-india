@@ -36,11 +36,11 @@ export function ViolationFilters({ filters, onFiltersChange }: ViolationFiltersP
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex-1 min-w-[200px]">
           <Input
-            label="Search violations"
-            placeholder="Search by URL or description..."
+            label="Search issues"
+            placeholder="Search issues, pages, or teams..."
             value={filters.search}
             onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
-            aria-label="Search violations by URL or description"
+            aria-label="Search issues by description, page, or team"
             leftIcon={<Search className="h-4 w-4 text-gray-400" aria-hidden="true" />}
           />
         </div>
