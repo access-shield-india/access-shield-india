@@ -27,6 +27,7 @@ RUN pnpm --filter @accessshield/types build && \
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 
 RUN useradd --uid 1001 --create-home --shell /bin/bash nextjs
