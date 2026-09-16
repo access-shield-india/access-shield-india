@@ -1,4 +1,4 @@
-# AccessShield India
+# AccessibleNow India
 
 AI-powered digital accessibility compliance SaaS platform for Indian organisations. Built for WCAG 2.2 AA, RPwD Act 2016, and GIGW 3.0 compliance.
 
@@ -219,4 +219,4 @@ Infrastructure mapping:
 
 ## License
 
-Proprietary — AccessShield India Pvt. Ltd.
+Proprietary — Digiaccess Private. Ltd.
