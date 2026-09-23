@@ -1,164 +1,186 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { PricingMainPlansSection } from '@/components/marketing/pricing/PricingMainPlansSection';
-import { WidgetComplianceDisclaimer } from '@/components/marketing/pricing/WidgetComplianceDisclaimer';
 import {
-  PricingRemediationSection,
-  PricingStandaloneAuditSection,
-  PricingAddonsSection,
-} from '@/components/marketing/pricing/PricingRemediationSection';
-import { PricingReportFeaturesSection } from '@/components/marketing/pricing/PricingReportFeaturesSection';
-import { PricingIndiaComplianceSection } from '@/components/marketing/pricing/PricingIndiaComplianceSection';
-import { FAQSection } from '@/components/marketing/pricing/FAQSection';
-import { MarketingVisual } from '@/components/marketing/visuals';
-import { MarketingImage } from '@/components/marketing/visuals/MarketingImage';
-import { MARKETING_IMAGES } from '@/lib/marketing/images';
-import { PRICING_CATALOG } from '@/lib/pricing/catalog';
+  FileCheck,
+  UserCheck,
+  GraduationCap,
+  FileText,
+  TestTube,
+  Languages,
+} from 'lucide-react';
+import { LocaleLink } from '@/components/common/LocaleLink';
+import { ButtonLink } from '@/components/marketing/ButtonLink';
+import { ComplianceStrip } from '@/components/marketing/ComplianceStrip';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
-import { localeFromParams } from '@/lib/i18n/server';
-import { localizedHref } from '@/lib/i18n/paths';
-
-/** ISR — pricing/services content refreshes hourly. */
-export const revalidate = 3600;
+import type { Locale } from '@/lib/i18n/config';
 
 export async function generateMetadata({
   params,
 }: {
-  params: { locale: string };
+  params: Promise<{ locale: Locale }>;
 }): Promise<Metadata> {
-  const locale = localeFromParams(params);
-  const { pages } = getDictionary(locale);
-  const base = 'https://accessshield.in';
-  const path = localizedHref('/services', locale);
+  const { locale } = await params;
+  const dict = getDictionary(locale);
 
   return {
-    title: pages.services.meta.title,
-    description: pages.services.meta.description,
+    title: dict.pages.servicesHub.meta.title,
+    description: dict.pages.servicesHub.meta.description,
     openGraph: {
-      title: `${pages.services.meta.title} | AccessibleNow`,
-      description: pages.services.meta.description,
+      title: `${dict.pages.servicesHub.meta.title} | ${dict.common.brand}`,
+      description: dict.pages.servicesHub.meta.description,
       type: 'website',
     },
     alternates: {
-      canonical: path === '/services' ? `${base}/services` : `${base}${path}`,
-      languages: { en: `${base}/services`, hi: `${base}/hi/services` },
+      canonical: 'https://accessshield.in/services',
     },
   };
 }
 
-const servicesFaqs = [
-  {
-    question: 'Is there a free option?',
-    answer:
-      'Yes. Run a free scan with no credit card, or sign up for a Free account — 1 website and 1 scan per month with a WCAG + IS 17802 issue summary. Contact sales to upgrade to Professional for more scans, the accessibility widget, and downloadable PDF reports.',
-  },
-  {
-    question: 'Does the accessibility widget make my site compliant?',
-    answer:
-      'No. The widget improves usability for visitors (font size, contrast, dyslexia-friendly fonts, keyboard tools) but does not fix underlying code issues or satisfy RPwD, SEBI, or GIGW requirements on its own. True compliance requires assessment, remediation, and documented evidence.',
-  },
-  {
-    question: 'What is the difference between Professional and Stay Compliant?',
-    answer:
-      'Professional is for teams getting started: scans, reports, and the widget. Stay Compliant is ongoing monitoring after your site has been remediated and passed a Compliance Website Audit & Scan (free for the first 100 customers). It includes unlimited scans, quarterly spot-checks, and annual assessment reports. Contact sales for a quote.',
-  },
-  {
-    question: 'Who needs Regulatory Defense?',
-    answer:
-      'Listed companies facing SEBI accessibility deadlines, BFSI firms, PSUs, and government vendors who need RPwD/GIGW evidence packs, SEBI assessment reports, and IAAP-certified sign-off. Contact sales after remediation and baseline audit.',
-  },
-  {
-    question: 'How does remediation work?',
-    answer:
-      'Brochure sites (1–15 pages) and larger / e-commerce sites are scoped after your assessment. Contact sales for a quote tailored to your page count and flows. All paid work is invoiced with GST where applicable.',
-  },
-  {
-    question: 'Do you provide a GST invoice?',
-    answer:
-      'Yes. We issue GST-compliant invoices (CGST + SGST intra-state, IGST inter-state). Registered businesses may claim input tax credit where applicable. Government departments can pay via PO or annual contract. Contact sales for details.',
-  },
-  {
-    question: 'How do I get pricing?',
-    answer:
-      'Use Contact sales on any plan or service card. Tell us which plan or add-on you need and we will send a tailored quote.',
-  },
-];
+const SERVICE_ICONS = {
+  auditing: FileCheck,
+  consulting: UserCheck,
+  training: GraduationCap,
+  reports: FileText,
+  testing: TestTube,
+  multilingual: Languages,
+} as const;
 
-export default function ServicesPage() {
-  const { freeTier, enterprise } = PRICING_CATALOG;
+export default async function ServicesHubPage({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}) {
+  const { locale } = await params;
+  const dict = getDictionary(locale);
+  const { servicesHub } = dict.pages;
 
   return (
-    <div className="px-4 py-16 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="grid items-center gap-10 lg:grid-cols-[1fr_minmax(240px,400px)] lg:gap-16">
-          <div className="text-center lg:text-left">
-            <p className="text-sm font-semibold uppercase tracking-wide text-primary-600">
-              Services
-            </p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-text-primary sm:text-4xl lg:text-5xl">
-              Start with an audit. Stay accessible for everyone.
-            </h1>
-            <p className="mx-auto mt-4 max-w-3xl text-lg leading-normal text-text-secondary lg:mx-0">
-              Most companies begin with a Compliance Website Audit &amp; Scan — because you cannot
-              fix what you cannot see. Then add the widget, ongoing monitoring, or remediation as
-              you grow. Built for people with disabilities and Indian regulators alike. Contact
-              sales for a quote on any plan.
-            </p>
-            <p className="mt-4 text-sm text-text-secondary">
-              <Link
-                href={freeTier.cta.href}
-                className="font-medium text-primary-600 underline hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
-              >
-                {freeTier.cta.text}
-              </Link>
-              {' · '}
-              <Link
-                href={enterprise.cta.href}
-                className="font-medium text-primary-600 underline hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
-              >
-                Contact sales
-              </Link>
-            </p>
+    <>
+      {/* JSON-LD Service schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Service',
+            name: 'AccessShield India Accessibility Services',
+            description: servicesHub.meta.description,
+            provider: {
+              '@type': 'Organization',
+              name: dict.common.brand,
+              url: 'https://accessshield.in',
+            },
+            areaServed: {
+              '@type': 'Country',
+              name: 'India',
+            },
+            serviceType: 'Digital Accessibility Compliance',
+          }),
+        }}
+      />
+
+      {/* Hero */}
+      <header className="border-b border-gray-200 bg-gradient-to-b from-primary-50 via-white to-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto max-w-4xl text-center">
+          <h1 className="text-4xl font-bold tracking-tight text-text-primary sm:text-5xl lg:text-[3.25rem] lg:leading-tight">
+            {servicesHub.hero.title}
+          </h1>
+          <p className="mx-auto mt-6 max-w-3xl text-lg leading-relaxed text-text-secondary sm:text-xl">
+            {servicesHub.hero.subtitle}
+          </p>
+          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <ButtonLink
+              href="/scan"
+              size="lg"
+              variant="primary"
+              className="min-w-[240px]"
+            >
+              {servicesHub.hero.primaryCta}
+            </ButtonLink>
+            <ButtonLink
+              href="/contact?type=consultation"
+              size="lg"
+              variant="secondary"
+              className="min-w-[240px]"
+            >
+              {servicesHub.hero.secondaryCta}
+            </ButtonLink>
           </div>
-
-          <MarketingVisual
-            label="Government and enterprise teams reviewing accessibility compliance reports"
-            className="mx-auto w-full max-w-md overflow-hidden p-0 lg:max-w-none"
-          >
-            <div className="relative aspect-[4/3] w-full">
-              <MarketingImage
-                src={MARKETING_IMAGES.enterpriseCompliance}
-                alt="Indian enterprise and government stakeholders reviewing digital accessibility compliance in a conference room"
-                fill
-                sizes="(max-width: 1024px) 100vw, 400px"
-                className="object-cover object-center"
-              />
-            </div>
-          </MarketingVisual>
         </div>
+      </header>
 
-        <PricingStandaloneAuditSection />
-        <PricingMainPlansSection />
-        <WidgetComplianceDisclaimer />
-        <PricingRemediationSection />
-        <PricingAddonsSection />
-        <PricingReportFeaturesSection />
-        <PricingIndiaComplianceSection />
-
-        <p className="mt-12 text-center text-sm text-text-secondary">
-          {enterprise.note}{' '}
-          <Link
-            href={enterprise.cta.href}
-            className="font-medium text-primary-600 underline hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
-          >
-            {enterprise.cta.text}
-          </Link>
-        </p>
-
-        <div className="mt-24">
-          <FAQSection items={servicesFaqs} />
+      {/* Services Grid */}
+      <section
+        aria-labelledby="services-grid-heading"
+        className="border-b border-gray-200 bg-white px-4 py-16 sm:px-6 lg:px-8"
+      >
+        <div className="mx-auto max-w-7xl">
+          <h2 id="services-grid-heading" className="sr-only">
+            Our services
+          </h2>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {servicesHub.servicesGrid.map(({ id, name, description, href }) => {
+              const Icon = SERVICE_ICONS[id as keyof typeof SERVICE_ICONS];
+              return (
+                <LocaleLink
+                  key={id}
+                  href={href}
+                  className="group flex flex-col gap-4 rounded-xl border border-border bg-bg-secondary p-6 transition-all hover:border-primary-600 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                >
+                  <article>
+                    <div
+                      className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-100 text-primary-600 transition-colors group-hover:bg-primary-600 group-hover:text-white"
+                      aria-hidden="true"
+                    >
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <h3 className="mt-4 text-xl font-semibold text-text-primary">
+                      {name}
+                    </h3>
+                    <p className="mt-2 text-base leading-normal text-text-secondary">
+                      {description}
+                    </p>
+                    <span className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary-600 group-hover:underline">
+                      {dict.common.actions.learnMore}
+                      <span aria-hidden="true">→</span>
+                    </span>
+                  </article>
+                </LocaleLink>
+              );
+            })}
+          </div>
         </div>
-      </div>
-    </div>
+      </section>
+
+      {/* Why India-specific matters */}
+      <section
+        aria-labelledby="why-india-heading"
+        className="border-b border-gray-200 bg-bg-secondary px-4 py-16 sm:px-6 lg:px-8"
+      >
+        <div className="mx-auto max-w-7xl">
+          <h2
+            id="why-india-heading"
+            className="text-center text-3xl font-bold text-text-primary"
+          >
+            {servicesHub.whyIndia.title}
+          </h2>
+          <div className="mt-12 grid gap-8 sm:grid-cols-3">
+            {servicesHub.whyIndia.stats.map(({ value, label }) => (
+              <LocaleLink
+                key={value}
+                href="/rpwd-act"
+                className="flex flex-col items-center rounded-xl border border-border bg-white p-8 text-center transition-all hover:border-primary-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+              >
+                <p className="text-4xl font-bold text-primary-600">{value}</p>
+                <p className="mt-3 text-base leading-normal text-text-secondary">
+                  {label}
+                </p>
+              </LocaleLink>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <ComplianceStrip />
+    </>
   );
 }

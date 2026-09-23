@@ -31,6 +31,7 @@ import { PUBLIC_SCANS_ORG_ID } from './public-scan-org';
 import { runAxeWithRetry, getAltTextCandidates, getFixCandidates } from './axe-runner';
 import { createConcurrencyLimit } from './concurrency';
 import { discoverUrlsWithBrowser } from './crawler';
+import { summarisePageScanFailures } from './browser-identity';
 import { createBrowser, scanPage, closeScanContext, closeBrowser } from './playwright-runner';
 import { runGIGWChecks } from './rules/gigw';
 import { runIS17802Rules } from './rules/is17802';
@@ -513,10 +514,7 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
     }
 
     if (pagesScanned === 0 && urls.length > 0) {
-      const summary =
-        pageFailureMessages.slice(0, 3).join('; ') ||
-        'No pages could be analyzed. Check site availability and scanner logs.';
-      throw new Error(`All ${urls.length} page(s) failed to scan. ${summary}`.substring(0, 1000));
+      throw new Error(summarisePageScanFailures(urls.length, pageFailureMessages));
     }
 
     const seenFingerprints = new Set<string>();

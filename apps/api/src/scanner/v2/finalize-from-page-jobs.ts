@@ -15,6 +15,7 @@ import {
   ScanRedisKeys,
 } from './redis-keys';
 import { clearScanBarrier, getScanBarrier } from './barrier';
+import { summarisePageScanFailures } from '../browser-identity';
 
 const TERMINAL = new Set(['completed', 'failed', 'cancelled', 'skipped']);
 
@@ -39,7 +40,11 @@ export async function tryFinalizeScanFromPageJobs(
   const { scanId, orgId, assetId } = params;
 
   const jobs = await db
-    .select({ status: scanPageJobs.status })
+    .select({
+      status: scanPageJobs.status,
+      url: scanPageJobs.url,
+      errorMessage: scanPageJobs.errorMessage,
+    })
     .from(scanPageJobs)
     .where(and(eq(scanPageJobs.scanId, scanId), eq(scanPageJobs.organisationId, orgId)));
 
@@ -89,12 +94,16 @@ export async function tryFinalizeScanFromPageJobs(
   const failedCount = jobs.filter((j) => j.status === 'failed').length;
 
   if (completedCount === 0) {
+    const failureMessages = jobs
+      .filter((j) => j.status === 'failed')
+      .map((j) => (j.errorMessage ? `${j.url}: ${j.errorMessage}` : j.url));
+
     await db
       .update(scans)
       .set({
         status: 'failed',
         completedAt: new Date().toISOString(),
-        errorMessage: `All ${jobs.length} page(s) failed to scan.`,
+        errorMessage: summarisePageScanFailures(jobs.length, failureMessages),
       })
       .where(and(eq(scans.id, scanId), eq(scans.organisationId, orgId)));
     await clearProgressKey(scanId);

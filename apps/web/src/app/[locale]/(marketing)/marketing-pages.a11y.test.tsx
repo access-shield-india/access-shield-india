@@ -26,7 +26,7 @@ import BlogPage from '@/app/[locale]/(marketing)/blog/page';
 
 const PAGE_COMPONENTS: Record<string, () => React.ReactNode | Promise<React.ReactNode>> = {
   '/': () => HomePage({ params: { locale: 'en' } }),
-  '/services': ServicesPage,
+  '/services': () => ServicesPage({ params: Promise.resolve({ locale: 'en' }) }),
   '/scan': ScanPage,
   '/widget': WidgetPage,
   '/about': () => AboutPage({ params: { locale: 'en' } }),

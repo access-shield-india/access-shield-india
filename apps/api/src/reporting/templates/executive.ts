@@ -347,8 +347,8 @@ sorted by severity and frequency across pages.</p>
 <h2>Contact AccessibleNow</h2>
 <p>
   For remediation support, certification queries, or to discuss enterprise compliance programs:<br>
-  <strong>Email:</strong> compliance@accessshield.in<br>
-  <strong>Website:</strong> https://accessshield.in
+  <strong>Email:</strong> nilesh@accessiblenow.in<br>
+  <strong>Website:</strong> https://accessiblenow.in/
 </p>
 
 <div class="report-footer">
