@@ -19,8 +19,20 @@ RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 COPY . .
+ARG NEXT_PUBLIC_AUTH_URL=https://auth.accessiblenow.in
+ARG NEXT_PUBLIC_AUTH_CLIENT_ID=accessshield-web
+ARG AUTH_ISSUER_URL=https://auth.accessiblenow.in/realms/accessshield
+ARG NEXTAUTH_URL=https://accessiblenow.in
+ARG NEXT_PUBLIC_APP_URL=https://accessiblenow.in
+ARG NEXT_PUBLIC_CDN_URL=https://accessiblenow.in
 ENV API_URL=http://accessshield-api:4000
 ENV NEXT_PUBLIC_API_URL=
+ENV NEXT_PUBLIC_AUTH_URL=$NEXT_PUBLIC_AUTH_URL
+ENV NEXT_PUBLIC_AUTH_CLIENT_ID=$NEXT_PUBLIC_AUTH_CLIENT_ID
+ENV AUTH_ISSUER_URL=$AUTH_ISSUER_URL
+ENV NEXTAUTH_URL=$NEXTAUTH_URL
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_CDN_URL=$NEXT_PUBLIC_CDN_URL
 RUN pnpm --filter @accessshield/types build && \
 	pnpm --filter @accessshield/db build && \
 	pnpm --filter @accessshield/ui build && \
