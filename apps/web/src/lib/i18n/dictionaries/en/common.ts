@@ -9,6 +9,7 @@ export const common: CommonDict = {
     widget: 'Widget',
     documentScanner: 'Documents',
     blog: 'Blog',
+    pricing: 'Pricing',
     scan: 'Free Scan',
     signIn: 'Sign in',
     startTrial: 'Start free trial',

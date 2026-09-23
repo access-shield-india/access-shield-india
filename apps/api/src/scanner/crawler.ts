@@ -10,6 +10,13 @@
  */
 
 import { logger } from '../lib/logger';
+import {
+  SCANNER_HTTP_HEADERS,
+  SCANNER_USER_AGENT,
+  SiteBlockedError,
+  isBlockedHttpStatus,
+  looksLikeBlockedPage,
+} from './browser-identity';
 import type { ScanJobConfig } from './types';
 
 /** Playwright types */
@@ -223,8 +230,9 @@ async function fetchText(url: string, accept: string, timeoutMs: number): Promis
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        'User-Agent': 'AccessShield-Scanner/1.0',
+        'User-Agent': SCANNER_USER_AGENT,
         Accept: accept,
+        'Accept-Language': SCANNER_HTTP_HEADERS['Accept-Language'] ?? 'en-IN,en;q=0.9',
       },
       redirect: 'follow',
     });
@@ -232,6 +240,12 @@ async function fetchText(url: string, accept: string, timeoutMs: number): Promis
     clearTimeout(timeout);
 
     if (!response.ok) {
+      if (isBlockedHttpStatus(response.status)) {
+        logger.warn(
+          { url, status: response.status },
+          'URL discovery fetch blocked by site firewall',
+        );
+      }
       return null;
     }
 
@@ -421,17 +435,26 @@ async function crawlHomepage(browser: Browser, baseUrl: string): Promise<string[
 
   try {
     const context = await browser.newContext({
-      userAgent: 'AccessShield-Scanner/1.0',
+      userAgent: SCANNER_USER_AGENT,
       viewport: { width: 1280, height: 800 },
+      locale: 'en-IN',
+      timezoneId: 'Asia/Kolkata',
+      extraHTTPHeaders: SCANNER_HTTP_HEADERS,
+      ignoreHTTPSErrors: true,
       bypassCSP: true,
     });
 
     page = await context.newPage();
 
-    await page.goto(baseUrl, {
+    const response = await page.goto(baseUrl, {
       waitUntil: 'domcontentloaded',
       timeout: 30000,
     });
+
+    const status = response?.status() ?? null;
+    if (isBlockedHttpStatus(status)) {
+      throw new SiteBlockedError(undefined, status ?? undefined);
+    }
 
     // Wix / SPA nav often hydrates after first paint — give it time, then try networkidle.
     await page.waitForTimeout(2500);
@@ -439,6 +462,17 @@ async function crawlHomepage(browser: Browser, baseUrl: string): Promise<string[
       await page.waitForLoadState('networkidle', { timeout: 8000 });
     } catch {
       // Heavy sites never go idle; continue with whatever DOM we have.
+    }
+
+    const bodySample = await page
+      .evaluate(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const doc = (globalThis as any).document as Document;
+        return (doc.body?.innerText ?? '').slice(0, 4000);
+      })
+      .catch(() => '');
+    if (looksLikeBlockedPage(bodySample) || looksLikeBlockedPage(await page.content().catch(() => ''))) {
+      throw new SiteBlockedError(undefined, status ?? undefined);
     }
 
     // Expand common disclosure menus so hidden nav links enter the DOM.

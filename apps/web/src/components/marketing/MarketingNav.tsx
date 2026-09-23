@@ -1,17 +1,31 @@
 'use client';
 
+import { useState } from 'react';
 import { LocaleLink } from '@/components/common/LocaleLink';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { ButtonLink } from '@/components/marketing/ButtonLink';
 import { MobileMenuToggle } from './MobileMenuToggle';
 import { useDictionary } from '@/lib/i18n/locale-context';
+import { ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const navLinkClass =
   'text-base font-medium text-text-secondary hover:text-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded-sm';
 
+const SERVICES_LINKS = [
+  { href: '/services', label: 'Services overview' },
+  { href: '/services/accessibility-auditing', label: 'Accessibility Auditing' },
+  { href: '/services/accessibility-consulting', label: 'Consulting' },
+  { href: '/services/accessibility-training', label: 'Training' },
+  { href: '/services/compliance-reports', label: 'Compliance Reports' },
+  { href: '/services/accessibility-testing', label: 'Testing' },
+  { href: '/services/multilingual-accessibility', label: 'Multilingual' },
+] as const;
+
 export function MarketingNav() {
   const { common } = useDictionary();
+  const [servicesOpen, setServicesOpen] = useState(false);
 
   return (
     <header className="border-b border-primary-100 bg-white">
@@ -35,9 +49,66 @@ export function MarketingNav() {
           <LocaleLink href="/" className={navLinkClass}>
             {common.nav.home}
           </LocaleLink>
-          <LocaleLink href="/services" className={navLinkClass}>
-            {common.nav.services}
-          </LocaleLink>
+
+          {/* Services dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setServicesOpen(!servicesOpen)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setServicesOpen(false);
+                } else if (e.key === 'ArrowDown' && !servicesOpen) {
+                  e.preventDefault();
+                  setServicesOpen(true);
+                }
+              }}
+              aria-expanded={servicesOpen}
+              aria-haspopup="true"
+              className={cn(navLinkClass, 'inline-flex items-center gap-1')}
+            >
+              {common.nav.services}
+              <ChevronDown
+                className={cn('h-4 w-4 transition-transform', servicesOpen && 'rotate-180')}
+                aria-hidden="true"
+              />
+            </button>
+
+            {servicesOpen && (
+              <>
+                {/* Invisible backdrop to close dropdown */}
+                <button
+                  type="button"
+                  className="fixed inset-0 z-10"
+                  onClick={() => setServicesOpen(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setServicesOpen(false);
+                    }
+                  }}
+                  tabIndex={-1}
+                  aria-hidden="true"
+                />
+                <div
+                  className="absolute left-0 top-full z-20 mt-2 w-64 rounded-lg border border-border bg-white py-2 shadow-xl"
+                  role="menu"
+                >
+                  {SERVICES_LINKS.map(({ href, label }) => (
+                    <LocaleLink
+                      key={href}
+                      href={href}
+                      className="block px-4 py-2.5 text-base font-medium text-text-secondary hover:bg-primary-50 hover:text-primary-600 focus-visible:bg-primary-50 focus-visible:text-primary-600 focus-visible:outline-none"
+                      role="menuitem"
+                      onClick={() => setServicesOpen(false)}
+                    >
+                      {label}
+                    </LocaleLink>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
           <LocaleLink href="/widget" className={navLinkClass}>
             {common.nav.widget}
           </LocaleLink>
@@ -52,6 +123,9 @@ export function MarketingNav() {
           </LocaleLink>
           <LocaleLink href="/blog" className={navLinkClass}>
             {common.nav.blog}
+          </LocaleLink>
+          <LocaleLink href="/pricing" className={navLinkClass}>
+            {common.nav.pricing}
           </LocaleLink>
           <LocaleLink href="/scan" className={navLinkClass}>
             {common.nav.scan}

@@ -94,11 +94,464 @@ export const pages: PagesDict = {
     meta: {
       title: 'Services',
       description:
-        'Widget, scanning, remediation, and compliance plans. Contact sales for a tailored quote.',
+        'Accessibility auditing, consulting, training, compliance reports, and testing services built for Indian compliance.',
     },
     title: 'Services',
     description:
       'From free scan to enterprise regulatory defense — pick the path that fits your team, then contact sales.',
+  },
+  servicesHub: {
+    meta: {
+      title: 'Accessibility Services Built for Indian Compliance',
+      description:
+        'From automated scanning to human audits, developer training, and done-for-you remediation — every service mapped to RPwD Act, IS 17802, GIGW 3.0, and SEBI 2024 mandate.',
+    },
+    hero: {
+      title: 'Accessibility services built for Indian compliance',
+      subtitle:
+        "From automated scanning to human audits, developer training, and done-for-you remediation — every service mapped to the RPwD Act, IS 17802, GIGW 3.0, and SEBI's 2024 mandate.",
+      primaryCta: 'Get a free scan',
+      secondaryCta: 'Book a free consultation',
+    },
+    servicesGrid: [
+      {
+        id: 'auditing',
+        name: 'Accessibility Auditing',
+        description: 'Automated + manual audits by IAAP-certified experts',
+        href: '/services/accessibility-auditing',
+      },
+      {
+        id: 'consulting',
+        name: 'Accessibility Consulting',
+        description: 'Strategy, roadmaps, and regulatory guidance',
+        href: '/services/accessibility-consulting',
+      },
+      {
+        id: 'training',
+        name: 'Accessibility Training',
+        description: 'Live sessions for developers, QA, and designers',
+        href: '/services/accessibility-training',
+      },
+      {
+        id: 'reports',
+        name: 'Compliance Reports & VPAT',
+        description: 'Audit-ready reports for regulators and stakeholders',
+        href: '/services/compliance-reports',
+      },
+      {
+        id: 'testing',
+        name: 'Accessibility Testing',
+        description: 'Screen reader and keyboard testing services',
+        href: '/services/accessibility-testing',
+      },
+      {
+        id: 'multilingual',
+        name: 'Multilingual Accessibility',
+        description: 'Hindi, Bengali, Tamil support and Devanagari testing',
+        href: '/services/multilingual-accessibility',
+      },
+    ],
+    whyIndia: {
+      title: 'Why India-specific matters',
+      stats: [
+        {
+          value: '155',
+          label: 'Organisations penalised by CCPD by 2025',
+        },
+        {
+          value: '2024 INSC 858',
+          label: 'Supreme Court ruling making standards enforceable',
+        },
+        {
+          value: 'July 2026',
+          label: 'SEBI phased compliance deadlines',
+        },
+      ],
+    },
+  },
+  accessibilityAuditing: {
+    meta: {
+      title: 'Accessibility Auditing for Indian Standards',
+      description:
+        'Automated scanning plus a 50-item manual WCAG 2.2 AA audit, signed off by IAAP-certified auditors.',
+    },
+    hero: {
+      title: 'Accessibility auditing for Indian standards',
+      subtitle:
+        'Automated scanning plus a 50-item manual WCAG 2.2 AA audit, signed off by IAAP-certified auditors.',
+    },
+    whatCovered: {
+      title: 'What an audit covers',
+      automated: {
+        title: 'Automated layer',
+        items: [
+          'axe-core engine (same engine used by Google and Microsoft)',
+          'IS 17802 custom rule set (unique to AccessShield)',
+          'GIGW 3.0 checks for government sites',
+          'Full-site crawl, screenshot evidence per violation',
+        ],
+      },
+      manual: {
+        title: 'Manual layer',
+        items: [
+          '50-item WCAG 2.2 AA checklist',
+          'Screen reader walkthroughs (NVDA, TalkBack, VoiceOver)',
+          'Keyboard-only navigation testing',
+          'Colour and zoom testing at 200%',
+        ],
+      },
+    },
+    process: {
+      title: 'Process timeline',
+      steps: [
+        {
+          step: '1',
+          title: 'Scan',
+          description: 'Instant automated results',
+        },
+        {
+          step: '2',
+          title: 'Manual audit',
+          description: '3-5 business days',
+        },
+        {
+          step: '3',
+          title: 'Report',
+          description: 'WCAG Compliance Report + prioritised fix list',
+        },
+        {
+          step: '4',
+          title: 'Certification',
+          description: 'Public verify URL once score ≥ 80 with zero critical issues',
+        },
+      ],
+    },
+    deliverables: {
+      title: 'Deliverables',
+      items: [
+        'Score report',
+        'Violation list with AI fix suggestions',
+        'WCAG Compliance Report (VPAT-style)',
+        'IS 17802 evidence pack',
+        'Certificate with public verification page',
+      ],
+    },
+    pricing: {
+      automated: 'Included free with every scan',
+      certification: 'Certification Pass from ₹19,999',
+      linkText: 'View pricing',
+    },
+    faq: {
+      title: 'Frequently asked questions',
+      questions: [
+        {
+          question: 'What is the difference between automated and manual auditing?',
+          answer:
+            'Automated auditing uses software to detect common issues like missing alt text and colour contrast problems. Manual auditing involves human testers using screen readers and keyboards to catch issues machines miss — like confusing navigation or inaccessible workflows.',
+        },
+        {
+          question: 'Is an AccessShield audit accepted for SEBI compliance?',
+          answer:
+            'Yes. SEBI requires WCAG 2.1 AA compliance. Our Certification Pass includes a WCAG Compliance Report and evidence pack that meets regulatory documentation requirements. We recommend consulting with your legal team for final sign-off.',
+        },
+        {
+          question: 'How long does a full audit take?',
+          answer:
+            'Automated scanning is instant. Manual audits take 3-5 business days depending on the size and complexity of your site. We provide a timeline estimate before you purchase.',
+        },
+        {
+          question: 'Do you audit mobile apps too?',
+          answer:
+            'Yes. We offer mobile app accessibility auditing for iOS and Android. Contact us for pricing and timelines.',
+        },
+        {
+          question: 'What happens if my site fails the audit?',
+          answer:
+            'Every audit includes a prioritised fix list with AI-generated suggestions. You can remediate issues in-house or purchase our Remediation service where our developers implement the fixes for you.',
+        },
+      ],
+    },
+  },
+  accessibilityConsulting: {
+    meta: {
+      title: 'Accessibility Consulting for Regulated Entities',
+      description:
+        'Strategy, roadmaps, and regulatory guidance from teams who work with Indian accessibility law every day.',
+    },
+    hero: {
+      title: 'Accessibility consulting for regulated entities',
+      subtitle:
+        'Strategy, roadmaps, and regulatory guidance from teams who work with Indian accessibility law every day.',
+    },
+    tracks: {
+      title: 'Consulting tracks',
+      items: [
+        {
+          id: 'sebi',
+          title: 'SEBI compliance roadmap',
+          description:
+            'For listed companies, brokers, AMCs, depositories. Gap assessment → phased remediation plan → evidence pack for SEBI submission.',
+        },
+        {
+          id: 'rpwd',
+          title: 'RPwD Act risk assessment',
+          description:
+            'For enterprises. Exposure analysis across web, mobile, documents; CCPD complaint-readiness review.',
+        },
+        {
+          id: 'gigw',
+          title: 'GIGW 3.0 for government',
+          description:
+            'Ministries, departments, PSUs. Compliance assessment against the mandatory 2023 guidelines.',
+        },
+        {
+          id: 'design',
+          title: 'Accessible-by-design product consulting',
+          description:
+            'For teams building new products. Design reviews, component library audits, CI integration planning.',
+        },
+      ],
+    },
+    howItWorks: {
+      title: 'How engagements work',
+      steps: [
+        'Free 30-min consultation',
+        'Scoped proposal with fixed price',
+        'Delivery with weekly checkpoints',
+      ],
+    },
+    team: {
+      title: 'Who you work with',
+      description:
+        'IAAP-certified consultants (CPACC/WAS), experience across BFSI/government/e-commerce. Our consultants hold multiple accessibility certifications and have hands-on experience with RPwD, SEBI, and GIGW compliance.',
+    },
+    cta: {
+      title: 'Book a free 30-minute consultation',
+      description: 'No commitment. We respond within one business day.',
+    },
+  },
+  accessibilityTraining: {
+    meta: {
+      title: 'Accessibility Training for Indian Development Teams',
+      description:
+        'Live, practical sessions that leave your team able to build and test accessible products — priced per session, not per seat.',
+    },
+    hero: {
+      title: 'Accessibility training for Indian development teams',
+      subtitle:
+        'Live, practical sessions that leave your team able to build and test accessible products — priced per session, not per seat.',
+    },
+    catalogue: {
+      title: 'Training catalogue',
+      items: [
+        {
+          id: 'wcag',
+          title: 'WCAG 2.2 AA Foundations',
+          duration: '2 hours',
+          price: '₹4,999/session',
+          capacity: 'up to 25 participants',
+          description: 'Semantic HTML, ARIA, forms, images, contrast, the 9 new WCAG 2.2 criteria',
+        },
+        {
+          id: 'is17802',
+          title: 'IS 17802 & Indian Compliance Deep-Dive',
+          duration: '2 hours',
+          price: '₹4,999/session',
+          capacity: 'up to 25 participants',
+          description:
+            'What IS 17802 adds beyond WCAG, Devanagari Unicode requirements, DD/MM/YYYY announcements, GIGW 3.0 for government teams, SEBI evidence expectations',
+        },
+        {
+          id: 'screenreader',
+          title: 'Screen Reader Testing Workshop',
+          duration: '2 hours',
+          price: '₹4,999/session',
+          capacity: 'up to 25 participants',
+          description:
+            'Hands-on NVDA + TalkBack + VoiceOver, testing OTP flows, testing data tables and charts',
+        },
+      ],
+    },
+    format: {
+      title: 'Format',
+      items: [
+        'Live online (Google Meet/Zoom)',
+        'Recording provided',
+        'Certificate of participation',
+        'Follow-up Q&A channel for 30 days',
+      ],
+    },
+    whoFor: {
+      title: "Who it's for",
+      roles: ['Developers', 'QA Engineers', 'Designers', 'Product Managers'],
+    },
+    bundle: {
+      text: 'Training is included in the Professional plan onboarding and available as an add-on to any plan',
+      linkText: 'View pricing',
+    },
+  },
+  complianceReports: {
+    meta: {
+      title: 'Compliance Reports Regulators Actually Accept',
+      description:
+        'Every report AccessShield generates is mapped to the Indian regulation it satisfies — ready for SEBI submissions, government tenders, and CCPD responses.',
+    },
+    hero: {
+      title: 'Compliance reports regulators actually accept',
+      subtitle:
+        'Every report AccessShield generates is mapped to the Indian regulation it satisfies — ready for SEBI submissions, government tenders, and CCPD responses.',
+    },
+    catalogue: {
+      title: 'Report catalogue',
+      reports: [
+        {
+          id: 'wcag',
+          title: 'WCAG Compliance Report (VPAT-style)',
+          description:
+            'Criterion-by-criterion conformance table, Supports/Partially Supports/Does Not Support, auditor sign-off block.',
+          includedIn: 'Professional+',
+        },
+        {
+          id: 'sebi',
+          title: 'SEBI Digital Accessibility Report',
+          description:
+            'Formatted for SEBI submission: scope, standards, findings, remediation timeline, annual re-audit schedule.',
+          includedIn: 'Enterprise / SEBI bundle',
+        },
+        {
+          id: 'is17802',
+          title: 'IS 17802 Evidence Pack',
+          description: 'Per-rule evidence with screenshots, the exact clause each check maps to.',
+          includedIn: 'Professional+',
+        },
+        {
+          id: 'rpwd',
+          title: 'RPwD Act Compliance Statement',
+          description:
+            'Plain-language statement for legal/procurement teams referencing Sections 40-46.',
+          includedIn: 'All paid plans',
+        },
+      ],
+    },
+    howGenerated: {
+      title: 'How reports are generated',
+      description:
+        'Automated data + manual audit findings + IAAP auditor review → PDF + shareable link',
+    },
+    sample: {
+      title: 'Download a sample WCAG Compliance Report',
+      description: 'See what a full compliance report looks like',
+      ctaText: 'Get sample report',
+    },
+  },
+  accessibilityTesting: {
+    meta: {
+      title: 'Testing That Goes Beyond Automated Scans',
+      description:
+        'Automated tools catch at most 40% of accessibility issues. Our layered testing methodology covers the rest.',
+    },
+    hero: {
+      title: 'Testing that goes beyond automated scans',
+      subtitle:
+        'Automated tools catch at most 40% of accessibility issues. Our layered testing methodology covers the rest.',
+    },
+    layers: {
+      title: 'The four testing layers',
+      subtitle: 'A comprehensive testing pyramid that catches what automated tools miss',
+      items: [
+        {
+          layer: '1',
+          title: 'Automated',
+          description: 'axe-core + IS 17802 + GIGW rules, every page, continuous. Catches ~35-40%.',
+        },
+        {
+          layer: '2',
+          title: 'Manual expert',
+          description:
+            '50-item WCAG 2.2 AA checklist, screen reader walkthroughs, keyboard-only journeys.',
+        },
+        {
+          layer: '3',
+          title: 'Assistive technology matrix',
+          description:
+            'NVDA + JAWS (Windows), VoiceOver (macOS/iOS), TalkBack (Android) across top user journeys.',
+        },
+        {
+          layer: '4',
+          title: 'PwD user testing',
+          description:
+            'Real users with visual, motor, and cognitive disabilities complete your critical journeys and report friction. Add-on ₹8,999 · delivered with our disability-organisation partners.',
+        },
+      ],
+    },
+    whySebi: {
+      title: 'Why this matters for SEBI',
+      description:
+        "SEBI's circular expects testing by certified professionals and ongoing validation. Our layered approach maps directly to these requirements — automated monitoring (Layer 1), professional audit (Layers 2-3), and real user validation (Layer 4).",
+    },
+    mobileDocuments: {
+      title: 'Beyond web: mobile + documents',
+      description:
+        'The same methodology covers Android/iOS apps (Appium-based scanning) and PDF/Office documents. Every platform, one consistent testing approach.',
+    },
+  },
+  multilingualAccessibility: {
+    meta: {
+      title: 'Accessibility in the Languages India Actually Speaks',
+      description:
+        'Screen readers cannot read transliterated text. We make accessibility work in Hindi and regional languages — as IS 17802 requires.',
+    },
+    hero: {
+      title: 'Accessibility in the languages India actually speaks',
+      subtitle:
+        'Screen readers cannot read transliterated text. We make accessibility work in Hindi and regional languages — as IS 17802 requires.',
+    },
+    problem: {
+      title: 'The transliteration problem',
+      description:
+        'ASCII transliteration ("namaste" written in Latin letters) is announced incorrectly by TalkBack/NVDA, while true Devanagari Unicode (U+0900–U+097F) is announced correctly. IS 17802 IS-002 makes correct Unicode a compliance requirement, not a nice-to-have.',
+      example: {
+        wrong: 'namaste (Latin letters) → "en-ay-em-ay-es-tee-ee"',
+        right: 'नमस्ते (Unicode) → "namaste" (correct pronunciation)',
+      },
+    },
+    whatWeProvide: {
+      title: 'What AccessShield provides',
+      items: [
+        {
+          id: 'widget',
+          title: 'Widget in Hindi today',
+          description: 'Tamil, Telugu, Kannada, Marathi, Bengali rolling out through 2026',
+        },
+        {
+          id: 'scanner',
+          title: 'Scanner rule IS-002',
+          description: 'Automatically detects transliteration-instead-of-Unicode in your content',
+        },
+        {
+          id: 'statements',
+          title: 'Bilingual accessibility statements',
+          description: 'EN + HI generated by our AI service',
+        },
+        {
+          id: 'consulting',
+          title: 'Multilingual content strategy',
+          description: 'Consulting for regional language accessibility',
+        },
+      ],
+    },
+    languageCoverage: {
+      title: 'Language coverage',
+      columns: ['Language', 'Widget status', 'Scanner detection'],
+      rows: [
+        { language: 'Hindi (हिन्दी)', widget: 'Live', scanner: 'Live' },
+        { language: 'Tamil (தமிழ்)', widget: 'Q3 2026', scanner: 'Live' },
+        { language: 'Telugu (తెలుగు)', widget: 'Q3 2026', scanner: 'Live' },
+        { language: 'Kannada (ಕನ್ನಡ)', widget: 'Q4 2026', scanner: 'Live' },
+        { language: 'Marathi (मराठी)', widget: 'Q4 2026', scanner: 'Live' },
+        { language: 'Bengali (বাংলা)', widget: 'Q4 2026', scanner: 'Live' },
+      ],
+    },
   },
   docs: {
     meta: {

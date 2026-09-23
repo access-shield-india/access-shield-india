@@ -10,7 +10,7 @@ import { logger } from '../lib/logger';
 import { fetchReportData } from './data-fetcher';
 import { generatePdfWithTitle } from './pdf-generator';
 import { getReportDownloadUrl, uploadHtmlReportToS3, uploadReportToS3 } from './s3-upload';
-import { renderAccessibilityStatementTemplate } from './templates/accessibility-statement';
+import { renderAccessibilityStatementTemplate, DEFAULT_GRIEVANCE_OFFICER } from './templates/accessibility-statement';
 import { renderExecutiveTemplate } from './templates/executive';
 import { renderLegalRpwdTemplate } from './templates/legal-rpwd';
 import { renderSebiTemplate } from './templates/sebi';
@@ -127,11 +127,7 @@ export async function generateAndStoreReport(
   if (reportType === 'accessibility_statement') {
     html = renderAccessibilityStatementTemplate(reportData, {
       language,
-      grievanceOfficer: {
-        name: 'Not configured',
-        email: org?.billingEmail ?? 'contact@example.com',
-        phone: 'Not configured',
-      },
+      grievanceOfficer: DEFAULT_GRIEVANCE_OFFICER,
     });
   } else {
     const renderer = getTemplateRenderer(reportType);
