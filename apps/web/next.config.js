@@ -37,9 +37,7 @@ const nextConfig = {
     NEXT_PUBLIC_AUTH_URL: process.env.NEXT_PUBLIC_AUTH_URL ?? '',
     NEXT_PUBLIC_AUTH_CLIENT_ID: process.env.NEXT_PUBLIC_AUTH_CLIENT_ID ?? '',
     AUTH_ISSUER_URL: process.env.AUTH_ISSUER_URL ?? '',
-    AUTH_SECRET: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? '',
     NEXTAUTH_URL: process.env.NEXTAUTH_URL ?? 'http://localhost:3000',
-    NEXTAUTH_SECRET: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? '',
     // Empty = browser uses same-origin /api/v1/* (rewritten to Express API below)
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? '',
     NEXT_PUBLIC_WIDGET_ENABLED: process.env.NEXT_PUBLIC_WIDGET_ENABLED ?? '',
@@ -62,7 +60,7 @@ const nextConfig = {
       // English URLs stay unprefixed in the browser; internally route to /en/...
       beforeFiles: [
         // `/` is apps/web/src/app/page.tsx — do not rewrite it to /en (Next 14.2
-        // skips beforeFiles after middleware, which made `/` 404).
+        // skips beforeFiles after middleware, which made `/` 404s).
         // Legacy /hi/dashboard links → real dashboard routes (locale via cookie)
         { source: '/hi/dashboard', destination: '/dashboard' },
         { source: '/hi/dashboard/:path*', destination: '/dashboard/:path*' },
