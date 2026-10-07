@@ -280,6 +280,10 @@ export class MobileWorker {
     }
 
     this.isRunning = true;
+
+    // Connect to Redis once before the retry loop
+    await connectRedis();
+
     let retries = 0;
 
     while (retries < MAX_CONNECTION_RETRIES) {
@@ -288,8 +292,6 @@ export class MobileWorker {
           { attempt: retries + 1, maxRetries: MAX_CONNECTION_RETRIES },
           'Connecting to RabbitMQ',
         );
-
-        await connectRedis();
 
         await consumeMobileScanJobs(async (message, ack, nack) => {
           try {
