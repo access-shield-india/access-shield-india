@@ -2,9 +2,14 @@
 
 import { useEffect, useId, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { FileText, X, Download, Loader } from 'lucide-react';
+import { FileText, X, Download, Loader, Archive } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getAccessToken, listScans, downloadReportFile } from '@/lib/api/client';
+import {
+  getAccessToken,
+  listScans,
+  downloadReportFile,
+  downloadAllReports,
+} from '@/lib/api/client';
 import { useAssets } from '@/lib/hooks/useApi';
 import type { ReportType, ReportFormat, GenerateReportInput } from '@/lib/api/types';
 import { Button } from '@accessshield/ui';
@@ -149,6 +154,8 @@ export function GenerateReportPanel() {
     format: ReportFormat;
   } | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [bundleState, setBundleState] = useState<'idle' | 'working' | 'done' | 'error'>('idle');
+  const [bundleMessage, setBundleMessage] = useState('');
 
   const { data: assets = [] } = useAssets();
 
@@ -220,6 +227,27 @@ export function GenerateReportPanel() {
     generateMutation.reset();
   }
 
+  async function handleDownloadAll() {
+    if (!assetId || !scanId || bundleState === 'working') return;
+    setBundleState('working');
+    setBundleMessage('');
+    try {
+      const { included } = await downloadAllReports({ assetId, scanId, format });
+      setBundleState('done');
+      setBundleMessage(
+        included
+          ? `ZIP downloaded with ${included} report${included === 1 ? '' : 's'}. Each report is also saved in the list below.`
+          : 'ZIP downloaded. Each report is also saved in the list below.',
+      );
+      queryClient.invalidateQueries({ queryKey: ['reports'] });
+    } catch (err) {
+      setBundleState('error');
+      setBundleMessage(
+        err instanceof Error ? err.message : 'Failed to generate the reports bundle',
+      );
+    }
+  }
+
   async function handleDownloadReport() {
     if (!generatedReport) return;
     setIsDownloading(true);
@@ -246,7 +274,9 @@ export function GenerateReportPanel() {
     })} — Score: ${scan.score ?? 'N/A'}/100 (${scan.violationCount} issues)`,
   }));
 
-  const canGenerate = Boolean(assetId && scanId && !generateMutation.isPending);
+  const canGenerate = Boolean(
+    assetId && scanId && !generateMutation.isPending && bundleState !== 'working',
+  );
 
   return (
     <>
@@ -331,6 +361,31 @@ export function GenerateReportPanel() {
                         Generate Another
                       </Button>
                     </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      disabled={bundleState === 'working'}
+                      aria-busy={bundleState === 'working'}
+                      onClick={() => void handleDownloadAll()}
+                    >
+                      {bundleState === 'working' ? (
+                        <Loader className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Archive className="mr-2 h-5 w-5" aria-hidden="true" />
+                      )}
+                      {bundleState === 'working' ? 'Preparing ZIP…' : 'Download All Reports (ZIP)'}
+                    </Button>
+                    <div aria-live="polite">
+                      {bundleState === 'done' && (
+                        <p className="text-sm font-medium text-success-700">{bundleMessage}</p>
+                      )}
+                      {bundleState === 'error' && (
+                        <p role="alert" className="text-sm text-error-700">
+                          {bundleMessage}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 ) : generateMutation.isPending ? (
                   <div className="space-y-4 text-center py-8" aria-live="polite" aria-busy="true">
@@ -359,49 +414,51 @@ export function GenerateReportPanel() {
                           const needsSebiScan = 'requiresSebiScan' in type && type.requiresSebiScan;
                           const locked = Boolean(needsSebiScan) && !sebiAllowed;
                           return (
-                          <label
-                            key={type.value}
-                            className={`flex items-start gap-3 rounded-lg border p-4 transition-colors ${
-                              locked
-                                ? 'cursor-not-allowed opacity-50'
-                                : 'cursor-pointer'
-                            } ${
-                              reportType === type.value
-                                ? 'border-primary-600 bg-primary-50'
-                                : 'border-border hover:bg-gray-50'
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="reportType"
-                              value={type.value}
-                              checked={reportType === type.value}
-                              onChange={(e) => setReportType(e.target.value as ReportType)}
-                              disabled={locked}
-                              aria-label={type.label}
-                              className="mt-1 h-4 w-4 shrink-0 text-primary-600 focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
-                              required
-                            />
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-text-primary">{type.label}</span>
-                                {needsSebiScan && (
-                                  <Tooltip
-                                    content={
-                                      sebiAllowed
-                                        ? 'This scan included the SEBI option'
-                                        : 'Available only when the selected scan was run with SEBI checked'
-                                    }
-                                  >
-                                    <Badge variant="outline" className="text-xs">
-                                      SEBI scan
-                                    </Badge>
-                                  </Tooltip>
-                                )}
+                            <label
+                              key={type.value}
+                              className={`flex items-start gap-3 rounded-lg border p-4 transition-colors ${
+                                locked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                              } ${
+                                reportType === type.value
+                                  ? 'border-primary-600 bg-primary-50'
+                                  : 'border-border hover:bg-gray-50'
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name="reportType"
+                                value={type.value}
+                                checked={reportType === type.value}
+                                onChange={(e) => setReportType(e.target.value as ReportType)}
+                                disabled={locked}
+                                aria-label={type.label}
+                                className="mt-1 h-4 w-4 shrink-0 text-primary-600 focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
+                                required
+                              />
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-text-primary">
+                                    {type.label}
+                                  </span>
+                                  {needsSebiScan && (
+                                    <Tooltip
+                                      content={
+                                        sebiAllowed
+                                          ? 'This scan included the SEBI option'
+                                          : 'Available only when the selected scan was run with SEBI checked'
+                                      }
+                                    >
+                                      <Badge variant="outline" className="text-xs">
+                                        SEBI scan
+                                      </Badge>
+                                    </Tooltip>
+                                  )}
+                                </div>
+                                <p className="mt-1 text-sm text-text-secondary">
+                                  {type.description}
+                                </p>
                               </div>
-                              <p className="mt-1 text-sm text-text-secondary">{type.description}</p>
-                            </div>
-                          </label>
+                            </label>
                           );
                         })}
                       </div>
@@ -493,6 +550,51 @@ export function GenerateReportPanel() {
                       <FileText className="mr-2 h-5 w-5" aria-hidden="true" />
                       Generate Report
                     </Button>
+
+                    <div className="border-t border-border pt-5">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="lg"
+                        className="w-full"
+                        disabled={!canGenerate}
+                        aria-busy={bundleState === 'working'}
+                        onClick={() => void handleDownloadAll()}
+                      >
+                        {bundleState === 'working' ? (
+                          <Loader className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" />
+                        ) : (
+                          <Archive className="mr-2 h-5 w-5" aria-hidden="true" />
+                        )}
+                        {bundleState === 'working'
+                          ? 'Preparing ZIP…'
+                          : 'Download All Reports (ZIP)'}
+                      </Button>
+                      <p className="mt-2 text-sm text-text-secondary">
+                        Generates every report type for the selected scan in one ZIP.
+                        {sebiAllowed
+                          ? ' SEBI report included.'
+                          : ' SEBI is included only for SEBI scans.'}{' '}
+                        Takes about 1–3 minutes.
+                      </p>
+                      <div aria-live="polite">
+                        {bundleState === 'working' && (
+                          <p className="mt-2 text-sm text-text-secondary">
+                            Generating all reports — keep this tab open…
+                          </p>
+                        )}
+                        {bundleState === 'done' && (
+                          <p className="mt-2 text-sm font-medium text-success-700">
+                            {bundleMessage}
+                          </p>
+                        )}
+                        {bundleState === 'error' && (
+                          <p role="alert" className="mt-2 text-sm text-error-700">
+                            {bundleMessage}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </form>
                 )}
               </div>

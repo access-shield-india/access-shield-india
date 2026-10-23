@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -49,13 +50,22 @@ export function ScanToolWidget() {
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastAnnouncedProgress = useRef(0);
 
+  const prefillUrl = useSearchParams().get('url') ?? '';
+
   const {
     register,
     handleSubmit,
+    setFocus,
     formState: { errors, isSubmitting },
   } = useForm<ScanFormData>({
     resolver: zodResolver(scanSchema),
+    defaultValues: { url: prefillUrl, email: '' },
   });
+
+  // A11Y: when arriving from the homepage with a URL, the next thing to fill is email.
+  useEffect(() => {
+    if (prefillUrl) setFocus('email');
+  }, [prefillUrl, setFocus]);
 
   const onSubmit = async (data: ScanFormData) => {
     try {

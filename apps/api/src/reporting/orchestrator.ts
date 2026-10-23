@@ -16,8 +16,11 @@ import { z } from 'zod';
 import { logger } from '../lib/logger';
 import { sendProblem } from '../lib/problem-details';
 import { requireRoles } from '../middleware/rbac';
-import { fetchReportData, InvalidStateError, NotFoundError } from './data-fetcher';
+import fs from 'fs/promises';
+import { fetchReportData, formatIndianDate, InvalidStateError, NotFoundError } from './data-fetcher';
+import { generateAndStoreReport } from './generate-report';
 import { generatePdf, generatePdfWithTitle } from './pdf-generator';
+import { createZipArchive, sanitizeZipFileName } from './zip-bundle';
 import {
   getReportDownloadUrl,
   getReportObjectFromS3,
@@ -54,6 +57,33 @@ const createReportSchema = z.object({
   /** Include widget usage evidence table in Executive and SEBI reports */
   widget_analytics: z.boolean().optional(),
 });
+
+/** Zod schema for POST /reports/download-all request body */
+const downloadAllReportsSchema = z.object({
+  scan_id: z.string().uuid('Invalid scan ID format'),
+  asset_id: z.string().uuid('Invalid asset ID format'),
+  format: z.enum(['pdf', 'html']).default('pdf'),
+  language: z.enum(['en', 'hi']).optional(),
+});
+
+/** Report types always included in a Download All bundle (SEBI is conditional). */
+const BUNDLE_REPORT_TYPES: ReportType[] = [
+  'executive',
+  'technical',
+  'wcag_compliance',
+  'legal_rpwd',
+  'accessibility_statement',
+];
+
+/** Read a stored report file (local dev storage or S3/MinIO) into memory. */
+async function readStoredReportFile(storagePath: string): Promise<Buffer> {
+  const localPath = resolveLocalReportPath(storagePath);
+  if (localPath) {
+    return fs.readFile(localPath);
+  }
+  const object = await getReportObjectFromS3(storagePath);
+  return object.buffer;
+}
 
 /** Zod schema for GET /reports query params */
 const listReportsSchema = z.object({
@@ -368,6 +398,185 @@ export function createReportingRouter(db: Database, redis: Redis): ExpressRouter
         res.status(201).json(response);
       } catch (err) {
         logger.error({ err }, 'Unhandled error in report generation');
+        next(err);
+      }
+    },
+  );
+
+  /**
+   * POST /reports/download-all - Generate every report type and return one ZIP.
+   *
+   * Each report is also saved as an individual report record (same as
+   * POST /reports). SEBI is included only when the scan was run with SEBI
+   * and the plan allows it; otherwise it is listed as skipped in the
+   * bundle README instead of failing the whole download.
+   */
+  router.post(
+    '/download-all',
+    requireRoles('customer_admin', 'accessibility_officer', 'auditor'),
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const parseResult = downloadAllReportsSchema.safeParse(req.body);
+        if (!parseResult.success) {
+          sendProblem(res, 400, 'validation-error', 'Invalid request body', undefined, {
+            errors: parseResult.error.flatten().fieldErrors,
+          });
+          return;
+        }
+
+        const { scan_id, asset_id, format, language } = parseResult.data;
+        const orgId = req.user!.org_id;
+        const userId = req.user!.sub;
+
+        const [scan] = await db
+          .select({ id: scans.id, status: scans.status, standards: scans.standards })
+          .from(scans)
+          .where(and(eq(scans.id, scan_id), eq(scans.organisationId, orgId)))
+          .limit(1);
+
+        if (!scan) {
+          sendProblem(res, 404, 'not-found', 'Scan not found or access denied');
+          return;
+        }
+
+        if (scan.status !== 'completed') {
+          sendProblem(
+            res,
+            400,
+            'invalid-state',
+            'Scan is not completed yet',
+            'Wait for the scan to finish before generating reports.',
+          );
+          return;
+        }
+
+        const [asset] = await db
+          .select({ id: assets.id, name: assets.name })
+          .from(assets)
+          .where(and(eq(assets.id, asset_id), eq(assets.organisationId, orgId)))
+          .limit(1);
+
+        if (!asset) {
+          sendProblem(res, 404, 'not-found', 'Asset not found or access denied');
+          return;
+        }
+
+        const [org] = await db
+          .select({ planTier: organisations.planTier })
+          .from(organisations)
+          .where(eq(organisations.id, orgId))
+          .limit(1);
+
+        const [user] = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(and(eq(users.authUserId, userId), eq(users.organisationId, orgId)))
+          .limit(1);
+
+        const skipped: string[] = [];
+        const reportTypes: ReportType[] = [...BUNDLE_REPORT_TYPES];
+        const scanHasSebi = (scan.standards ?? []).includes('SEBI');
+        if (scanHasSebi && org && isSebiReportAllowed(org.planTier)) {
+          reportTypes.push('sebi');
+        } else {
+          skipped.push(
+            scanHasSebi
+              ? 'SEBI Accessibility Compliance Report (plan does not include SEBI reports)'
+              : 'SEBI Accessibility Compliance Report (scan was not run with SEBI)',
+          );
+        }
+
+        logger.info(
+          { orgId, scanId: scan_id, assetId: asset_id, format, reportTypes },
+          'Starting Download All reports bundle',
+        );
+
+        const entries: { name: string; data: Buffer }[] = [];
+        const included: string[] = [];
+        const failed: string[] = [];
+        const usedNames = new Set<string>();
+
+        // Sequential on purpose: each PDF render spins up a headless browser.
+        for (const reportType of reportTypes) {
+          try {
+            const result = await generateAndStoreReport(
+              db,
+              {
+                orgId,
+                scanId: scan_id,
+                assetId: asset_id,
+                reportType,
+                format,
+                generatedBy: user?.id ?? null,
+                language: language ?? 'en',
+              },
+              redis,
+            );
+
+            const buffer = await readStoredReportFile(result.storagePath);
+            const ext = result.format === 'pdf' ? 'pdf' : 'html';
+            let fileName = `${sanitizeZipFileName(result.title)}.${ext}`;
+            let dedupe = 2;
+            while (usedNames.has(fileName.toLowerCase())) {
+              fileName = `${sanitizeZipFileName(result.title)} (${dedupe}).${ext}`;
+              dedupe++;
+            }
+            usedNames.add(fileName.toLowerCase());
+            entries.push({ name: fileName, data: buffer });
+            included.push(result.title);
+          } catch (err) {
+            logger.error({ err, orgId, scanId: scan_id, reportType }, 'Bundle report failed');
+            failed.push(REPORT_TITLES[reportType] ?? reportType);
+          }
+        }
+
+        if (entries.length === 0) {
+          sendProblem(
+            res,
+            500,
+            'generation-error',
+            'Failed to generate reports',
+            'None of the reports in the bundle could be generated. Please try again.',
+          );
+          return;
+        }
+
+        const manifest = [
+          'AccessibleNow — Reports Bundle',
+          `Asset: ${asset.name}`,
+          `Generated: ${formatIndianDate(new Date())}`,
+          '',
+          'Included reports:',
+          ...included.map((title) => `- ${title}`),
+          ...(skipped.length > 0
+            ? ['', 'Not included:', ...skipped.map((reason) => `- ${reason}`)]
+            : []),
+          ...(failed.length > 0
+            ? [
+                '',
+                'Failed to generate (please generate individually from the Reports page):',
+                ...failed.map((title) => `- ${title}`),
+              ]
+            : []),
+          '',
+        ].join('\n');
+        entries.push({ name: 'README.txt', data: Buffer.from(manifest, 'utf-8') });
+
+        const zipBuffer = createZipArchive(entries);
+        const zipName = `AccessibleNow-Reports-${sanitizeZipFileName(asset.name)}-${formatIndianDate(new Date()).replace(/\//g, '-')}.zip`;
+
+        logger.info(
+          { orgId, scanId: scan_id, included: included.length, failed, skipped, zipName },
+          'Download All reports bundle ready',
+        );
+
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="${zipName}"`);
+        res.setHeader('Content-Length', String(zipBuffer.length));
+        res.setHeader('X-Reports-Included', String(included.length));
+        res.send(zipBuffer);
+      } catch (err) {
+        logger.error({ err }, 'Unhandled error in Download All reports');
         next(err);
       }
     },

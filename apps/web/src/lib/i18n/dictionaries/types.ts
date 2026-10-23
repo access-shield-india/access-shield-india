@@ -168,6 +168,78 @@ export interface HomeDict {
     scanCta: string;
     expertCta: string;
   };
+  storyCarousel: {
+    title: string;
+    subtitle: string;
+    regionAria: string;
+    pause: string;
+    play: string;
+    previous: string;
+    next: string;
+    /** "{n}" and "{title}" are replaced at runtime. */
+    goTo: string;
+    /** "{current}" and "{total}" are replaced at runtime. */
+    slideOf: string;
+    slides: {
+      id: 'screenReader' | 'lowVision' | 'keyboard' | 'deaf' | 'compliance';
+      eyebrow: string;
+      title: string;
+      body: string;
+      stat: string;
+      statLabel: string;
+      imageAlt: string;
+      cta: string;
+      href: string;
+    }[];
+  };
+  heroScan: {
+    label: string;
+    placeholder: string;
+    submit: string;
+    invalidUrl: string;
+    hint: string;
+  };
+  simulator: {
+    title: string;
+    subtitle: string;
+    groupAria: string;
+    previewTitle: string;
+    previewAmount: string;
+    previewStatusLabel: string;
+    previewPay: string;
+    modes: { id: 'normal' | 'lowVision' | 'colourBlind' | 'cataract'; label: string; insight: string }[];
+    cta: string;
+  };
+  calculator: {
+    title: string;
+    subtitle: string;
+    visitorsLabel: string;
+    orderLabel: string;
+    resultLabel: string;
+    resultNote: string;
+    legalLabel: string;
+    legalValue: string;
+    legalNote: string;
+    cta: string;
+  };
+  quiz: {
+    title: string;
+    subtitle: string;
+    yes: string;
+    no: string;
+    questions: { id: 'sebi' | 'government' | 'public'; question: string }[];
+    resultTitle: string;
+    resultPending: string;
+    resultNone: string;
+    laws: {
+      id: 'rpwd' | 'sebi' | 'gigw' | 'is17802';
+      name: string;
+      reason: string;
+      href: string;
+    }[];
+    learnMore: string;
+    cta: string;
+  };
 }
 
 export interface DashboardDict {

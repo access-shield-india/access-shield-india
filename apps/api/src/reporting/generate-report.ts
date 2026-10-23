@@ -111,7 +111,9 @@ export async function generateAndStoreReport(
     scanId,
     assetId,
     reportType,
-    generatedBy ?? 'system',
+    // fetchReportData looks this up in users.id (uuid) — a placeholder string
+    // like 'system' crashes Postgres, so use the nil UUID when unknown.
+    generatedBy ?? '00000000-0000-0000-0000-000000000000',
   );
 
   if (redis && (reportType === 'executive' || reportType === 'sebi')) {

@@ -14,4 +14,9 @@ describe('formatStatementOrgName', () => {
   it('leaves other organisation names unchanged', () => {
     expect(formatStatementOrgName('Acme Corp')).toBe('Acme Corp');
   });
+
+  it('shows internal/seed orgs as AccessibleNow', () => {
+    expect(formatStatementOrgName('AccessShield Test Org')).toBe('AccessibleNow');
+    expect(formatStatementOrgName('Public Scans')).toBe('AccessibleNow');
+  });
 });

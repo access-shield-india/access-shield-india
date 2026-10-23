@@ -2,7 +2,8 @@
 
 import { Building2, FileCheck, Landmark, ShieldCheck } from 'lucide-react';
 import { Badge } from '@accessshield/ui';
-import { ButtonAnchor, ButtonLink } from '@/components/marketing/ButtonLink';
+import { ButtonAnchor } from '@/components/marketing/ButtonLink';
+import { HeroScanInput } from '@/components/marketing/home/HeroScanInput';
 import { MarketingImage } from '@/components/marketing/visuals/MarketingImage';
 import { MARKETING_IMAGES } from '@/lib/marketing/images';
 import { useDictionary } from '@/lib/i18n/locale-context';
@@ -103,24 +104,18 @@ export function HeroSection() {
               ))}
             </ul>
 
-            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
+            <HeroScanInput />
+
+            <div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
               <ButtonAnchor
                 href={calendlyUrl || '/contact?plan=enterprise'}
                 size="lg"
-                variant="primary"
+                variant="secondary"
                 className="w-full min-w-[240px] sm:w-auto"
                 {...(calendlyUrl ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
               >
                 {common.actions.bookDemo}
               </ButtonAnchor>
-              <ButtonLink
-                href="/scan"
-                size="lg"
-                variant="secondary"
-                className="w-full min-w-[240px] sm:w-auto"
-              >
-                {common.actions.runFreeScan}
-              </ButtonLink>
             </div>
 
             <p className="mt-4 text-sm text-text-tertiary">{hero.footnote}</p>

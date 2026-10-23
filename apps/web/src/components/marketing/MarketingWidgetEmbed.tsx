@@ -6,7 +6,14 @@ import { useLocale } from '@/lib/i18n/locale-context';
 function resolveWidgetScriptSrc(): string {
   const cdn = process.env.NEXT_PUBLIC_CDN_URL?.replace(/\/$/, '');
 
-  // Dev dogfood: serve bundled widget from Next public/ (same origin)
+  // Dev dogfood: serve the locally published bundle from Next public/ (same
+  // origin). NEXT_PUBLIC_CDN_URL points at the prod domain even in local
+  // .env.local, so without this the dev preview silently loads (or fails to
+  // load) the production widget.js instead of the one deploy just built.
+  if (process.env.NODE_ENV === 'development') {
+    return '/widget.js';
+  }
+
   if (!cdn || cdn.includes('localhost') || cdn.includes('127.0.0.1')) {
     return '/widget.js';
   }

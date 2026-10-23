@@ -10,6 +10,7 @@ import { assets, organisations, scans, users, violations } from '@accessshield/d
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { logger } from '../lib/logger';
 import { isDevPreviewAiFix, stripDevPreviewComment } from '../lib/dev-mock-ai';
+import { formatReportOrgName } from './report-org-name';
 import type { ReportTemplateData, ReportType, ScanTrendPoint, ViolationSummary } from './types';
 
 /** Custom error for resource not found scenarios */
@@ -300,7 +301,8 @@ export async function fetchReportData(
 
   const reportData: ReportTemplateData = {
     organisation: {
-      name: org.name,
+      // Internal/seed orgs (e.g. AccessShield Test Org) print as AccessibleNow
+      name: formatReportOrgName(org.name),
       logoUrl: null,
       gstin: org.gstin,
     },

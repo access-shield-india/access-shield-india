@@ -6,6 +6,7 @@
  */
 
 import Handlebars from 'handlebars';
+import { formatReportOrgName } from '../report-org-name';
 import type { ReportTemplateData } from '../types';
 
 /** Grievance officer contact information */
@@ -27,6 +28,9 @@ export interface AccessibilityStatementOptions {
  */
 export function formatStatementOrgName(orgName: string): string {
   const trimmed = orgName.trim();
+  // Internal/seed orgs (AccessShield Test Org, Public Scans, …) → brand name
+  const reportName = formatReportOrgName(trimmed);
+  if (reportName !== trimmed) return reportName;
   if (/^digiaccess\s+private\s+limited$/i.test(trimmed)) {
     return 'AccessibleNow (Digiaccess Private Limited)';
   }

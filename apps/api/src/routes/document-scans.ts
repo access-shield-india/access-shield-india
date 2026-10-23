@@ -30,6 +30,7 @@ import { sendProblem } from '../lib/problem-details';
 import { requireRoles } from '../middleware/rbac';
 import { enqueueDocumentScan } from '../services/document-scan-queue';
 import { generatePdfWithTitle } from '../reporting/pdf-generator';
+import { formatReportOrgName } from '../reporting/report-org-name';
 import { renderDocumentScanTemplate } from '../reporting/templates/document-scan';
 import {
   buildCategorySummary,
@@ -706,7 +707,8 @@ export function createDocumentScansRouter(db: Database, redis: Redis): ExpressRo
         const totalOccurrences = findings.reduce((sum, f) => sum + f.occurrenceCount, 0);
 
         const html = renderDocumentScanTemplate({
-          organisationName: org?.name ?? 'Organisation',
+          // Internal/seed orgs (AccessShield Test Org, …) print as AccessibleNow
+          organisationName: formatReportOrgName(org?.name),
           documentName: results.documentName,
           documentType: results.documentType.toUpperCase(),
           pageCount: job.pageCount ?? null,
