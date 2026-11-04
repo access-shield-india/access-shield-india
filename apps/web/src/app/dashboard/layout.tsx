@@ -1,18 +1,20 @@
 import { SkipLink } from '@accessshield/ui';
 import { Sidebar } from '@/components/dashboard/layout/Sidebar';
+import { SuperAdminShellGuard } from '@/components/dashboard/layout/SuperAdminShellGuard';
 import { TopBar } from '@/components/dashboard/layout/TopBar';
 import { DashboardActivityBar } from '@/components/dashboard/common/DashboardActivityBar';
 import { DashboardProviders } from '@/providers/DashboardProviders';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { requireServerAccessToken } from '@/lib/auth/session';
-import { getDashboardRole } from '@/lib/dashboard/session';
+import { getServerDashboardRole } from '@/lib/dashboard/session';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { LocaleProvider } from '@/lib/i18n/locale-context';
 import { getLocale } from '@/lib/i18n/server';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   await requireServerAccessToken();
-  const userRole = getDashboardRole();
+  // Prefer JWT header, fall back to Postgres role (Keycloak often lacks user_role mappers in local)
+  const userRole = await getServerDashboardRole();
   const locale = getLocale();
   const dictionary = getDictionary(locale);
 
@@ -20,6 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <LocaleProvider locale={locale} dictionary={dictionary}>
       <DashboardProviders>
         <SkipLink href="#main-content" />
+        <SuperAdminShellGuard userRole={userRole} />
         <div className="dashboard-shell flex h-screen overflow-hidden bg-gray-50">
           <Sidebar userRole={userRole} />
           <div className="flex flex-1 flex-col overflow-hidden">
@@ -33,7 +36,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
               className="flex-1 overflow-y-auto p-5 md:p-6"
               aria-label="Main content"
             >
-              <div className="mx-auto max-w-6xl">{children}</div>
+              <div
+                className={
+                  userRole === 'super_admin' ? 'mx-auto max-w-7xl' : 'mx-auto max-w-6xl'
+                }
+              >
+                {children}
+              </div>
             </main>
           </div>
         </div>

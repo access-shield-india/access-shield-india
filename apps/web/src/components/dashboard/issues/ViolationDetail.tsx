@@ -65,12 +65,33 @@ export function ViolationDetail({ issueId }: ViolationDetailProps) {
   }
 
   const severityConfig = SEVERITY_CONFIG[issue.severity];
+  const reviewStatus =
+    issue.reviewStatus ?? issue.violation?.reviewStatus ?? 'confirmed';
+  const metadata = (issue.metadata ?? issue.violation?.metadata ?? null) as {
+    contrast?: {
+      fgColor?: string;
+      bgColor?: string;
+      contrastRatio?: number;
+      expectedContrastRatio?: number;
+      wcagLevel?: string;
+    };
+    link?: { href?: string | null; visibleText?: string | null; accessibleName?: string | null };
+    frame?: { context?: string; frameUrl?: string | null; crossOrigin?: boolean };
+    image?: { role?: string; alt?: string | null; guidance?: string };
+  } | null;
+
+  const reviewLabel =
+    reviewStatus === 'needs_manual'
+      ? 'Needs manual review'
+      : reviewStatus === 'potential'
+        ? 'Potential'
+        : 'Confirmed';
 
   return (
     <div className="space-y-6 rounded-lg border border-border bg-white p-6">
       {/* Header */}
       <div>
-        <div className="flex items-start gap-3">
+        <div className="flex flex-wrap items-start gap-3">
           <Badge
             className={cn(
               'inline-flex items-center gap-1.5 border',
@@ -81,12 +102,132 @@ export function ViolationDetail({ issueId }: ViolationDetailProps) {
           >
             {severityConfig.label}
           </Badge>
+          <Badge
+            className={cn(
+              'inline-flex items-center gap-1.5 border',
+              reviewStatus === 'needs_manual'
+                ? 'border-amber-200 bg-amber-100 text-amber-900'
+                : reviewStatus === 'potential'
+                  ? 'border-primary-200 bg-primary-50 text-primary-800'
+                  : 'border-emerald-200 bg-emerald-50 text-emerald-800',
+            )}
+          >
+            {reviewLabel}
+          </Badge>
         </div>
         <h1 className="mt-3 text-2xl font-bold text-text-primary">{issue.title}</h1>
         {issue.description && (
           <p className="mt-2 text-base text-text-secondary">{issue.description}</p>
         )}
       </div>
+
+      {metadata?.contrast && (
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-text-secondary">
+            Colour contrast
+          </h2>
+          <dl className="mt-2 grid gap-3 sm:grid-cols-2 text-sm">
+            {metadata.contrast.fgColor && (
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-8 w-8 rounded-md border border-border"
+                  style={{ backgroundColor: metadata.contrast.fgColor }}
+                  aria-hidden="true"
+                />
+                <div>
+                  <dt className="text-text-tertiary">Foreground</dt>
+                  <dd className="font-mono text-text-primary">{metadata.contrast.fgColor}</dd>
+                </div>
+              </div>
+            )}
+            {metadata.contrast.bgColor && (
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-8 w-8 rounded-md border border-border"
+                  style={{ backgroundColor: metadata.contrast.bgColor }}
+                  aria-hidden="true"
+                />
+                <div>
+                  <dt className="text-text-tertiary">Background</dt>
+                  <dd className="font-mono text-text-primary">{metadata.contrast.bgColor}</dd>
+                </div>
+              </div>
+            )}
+            {metadata.contrast.contrastRatio != null && (
+              <div>
+                <dt className="text-text-tertiary">Contrast ratio</dt>
+                <dd className="font-medium text-text-primary">
+                  {metadata.contrast.contrastRatio}:1
+                  {metadata.contrast.expectedContrastRatio != null &&
+                    ` (requires ${metadata.contrast.expectedContrastRatio}:1 ${metadata.contrast.wcagLevel ?? 'AA'})`}
+                </dd>
+              </div>
+            )}
+          </dl>
+        </div>
+      )}
+
+      {metadata?.link && (
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-text-secondary">
+            Link purpose
+          </h2>
+          <dl className="mt-2 space-y-1 text-sm">
+            {metadata.link.href && (
+              <div>
+                <dt className="inline text-text-tertiary">Href: </dt>
+                <dd className="inline break-all font-mono text-text-primary">{metadata.link.href}</dd>
+              </div>
+            )}
+            {metadata.link.visibleText != null && (
+              <div>
+                <dt className="inline text-text-tertiary">Visible text: </dt>
+                <dd className="inline text-text-primary">
+                  {metadata.link.visibleText || '(empty)'}
+                </dd>
+              </div>
+            )}
+            {metadata.link.accessibleName != null && (
+              <div>
+                <dt className="inline text-text-tertiary">Accessible name: </dt>
+                <dd className="inline text-text-primary">
+                  {metadata.link.accessibleName || '(empty)'}
+                </dd>
+              </div>
+            )}
+          </dl>
+        </div>
+      )}
+
+      {metadata?.frame && (
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-text-secondary">
+            Document context
+          </h2>
+          <p className="mt-2 text-sm text-text-primary">
+            {metadata.frame.context === 'iframe' ? 'Embedded frame' : 'Main webpage'}
+            {metadata.frame.frameUrl ? ` — ${metadata.frame.frameUrl}` : ''}
+            {metadata.frame.crossOrigin ? ' (cross-origin; content not fully inspectable)' : ''}
+          </p>
+        </div>
+      )}
+
+      {metadata?.image && (
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-text-secondary">
+            Image alternative text
+          </h2>
+          <p className="mt-2 text-sm text-text-primary">
+            Classification: <strong>{metadata.image.role?.replace(/_/g, ' ')}</strong>
+            {metadata.image.alt != null && metadata.image.alt !== ''
+              ? ` · alt="${metadata.image.alt}"`
+              : ''}
+          </p>
+          {metadata.image.guidance && (
+            <p className="mt-1 text-sm text-text-secondary">{metadata.image.guidance}</p>
+          )}
+        </div>
+      )}
 
       {/* WCAG Criterion */}
       {issue.wcagCriterion && (

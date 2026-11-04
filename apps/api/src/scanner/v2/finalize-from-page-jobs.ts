@@ -119,7 +119,7 @@ export async function tryFinalizeScanFromPageJobs(
     ruleId: v.ruleId,
     wcagCriterion: v.wcagCriteria?.[0] ?? 'N/A',
     wcagLevel: 'AA',
-    standard: 'WCAG22',
+    standard: (v.standard as RawViolation['standard']) ?? 'WCAG22',
     severity: v.impact,
     elementType: 'unknown',
     elementHtml: v.html ?? '',
@@ -128,6 +128,8 @@ export async function tryFinalizeScanFromPageJobs(
     helpUrl: v.helpUrl ?? '',
     fingerprint: `${v.ruleId}:${v.selector ?? ''}:${v.pageUrl ?? ''}`,
     pageUrl: v.pageUrl ?? '',
+    reviewStatus: v.reviewStatus ?? 'confirmed',
+    metadata: (v.metadata as RawViolation['metadata']) ?? null,
   }));
 
   const [previousScan] = await db

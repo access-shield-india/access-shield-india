@@ -62,6 +62,8 @@ export const scanPipelineFindingSchema = z.object({
   helpUrl: z.string(),
   fingerprint: z.string().min(1),
   pageUrl: z.string(),
+  reviewStatus: z.enum(['confirmed', 'potential', 'needs_manual']).optional(),
+  metadata: z.record(z.unknown()).nullable().optional(),
 });
 
 export const findingsPersistQueueMessageSchema = z.object({

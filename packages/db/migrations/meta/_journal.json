@@ -78,6 +78,34 @@
       "when": 1783518300000,
       "tag": "0010_violation_standard",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1783519000000,
+      "tag": "0011_revenue_model",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1783520000000,
+      "tag": "0012_admin_inbox",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1783521000000,
+      "tag": "0013_violation_review_metadata",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1783522000000,
+      "tag": "0014_priority_configs",
+      "breakpoints": true
     }
   ]
 }

@@ -101,9 +101,7 @@ export default async function AccessibilityAuditingPage({
                       className="mt-0.5 h-5 w-5 shrink-0 text-primary-600"
                       aria-hidden="true"
                     />
-                    <span className="text-base leading-normal text-text-secondary">
-                      {item}
-                    </span>
+                    <span className="text-base leading-normal text-text-secondary">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -121,9 +119,7 @@ export default async function AccessibilityAuditingPage({
                       className="mt-0.5 h-5 w-5 shrink-0 text-primary-600"
                       aria-hidden="true"
                     />
-                    <span className="text-base leading-normal text-text-secondary">
-                      {item}
-                    </span>
+                    <span className="text-base leading-normal text-text-secondary">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -138,10 +134,7 @@ export default async function AccessibilityAuditingPage({
         className="border-b border-gray-200 bg-bg-secondary px-4 py-16 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-7xl">
-          <h2
-            id="process-heading"
-            className="text-center text-3xl font-bold text-text-primary"
-          >
+          <h2 id="process-heading" className="text-center text-3xl font-bold text-text-primary">
             {page.process.title}
           </h2>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -157,12 +150,8 @@ export default async function AccessibilityAuditingPage({
                   {step}
                 </span>
                 <div>
-                  <h3 className="text-xl font-semibold text-text-primary">
-                    {title}
-                  </h3>
-                  <p className="mt-2 text-base leading-normal text-text-secondary">
-                    {description}
-                  </p>
+                  <h3 className="text-xl font-semibold text-text-primary">{title}</h3>
+                  <p className="mt-2 text-base leading-normal text-text-secondary">{description}</p>
                 </div>
               </div>
             ))}
@@ -188,13 +177,8 @@ export default async function AccessibilityAuditingPage({
                 key={index}
                 className="flex items-center gap-3 rounded-lg border border-border bg-bg-secondary p-4"
               >
-                <CheckCircle2
-                  className="h-5 w-5 shrink-0 text-primary-600"
-                  aria-hidden="true"
-                />
-                <span className="text-base font-medium text-text-primary">
-                  {item}
-                </span>
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-primary-600" aria-hidden="true" />
+                <span className="text-base font-medium text-text-primary">{item}</span>
               </div>
             ))}
           </div>
@@ -207,36 +191,22 @@ export default async function AccessibilityAuditingPage({
         className="border-b border-gray-200 bg-primary-50 px-4 py-12 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-4xl text-center">
-          <h2
-            id="pricing-heading"
-            className="text-2xl font-bold text-text-primary"
-          >
+          <h2 id="pricing-heading" className="text-2xl font-bold text-text-primary">
             Pricing
           </h2>
           <div className="mt-6 flex flex-col items-center justify-center gap-6 sm:flex-row">
             <div className="rounded-lg border border-border bg-white px-6 py-4">
-              <p className="text-sm font-medium text-text-secondary">
-                Automated scanning
-              </p>
-              <p className="mt-1 text-xl font-bold text-primary-600">
-                {page.pricing.automated}
-              </p>
+              <p className="text-sm font-medium text-text-secondary">Automated scanning</p>
+              <p className="mt-1 text-xl font-bold text-primary-600">{page.pricing.automated}</p>
             </div>
             <div className="rounded-lg border border-border bg-white px-6 py-4">
-              <p className="text-sm font-medium text-text-secondary">
-                Full audit + certification
-              </p>
+              <p className="text-sm font-medium text-text-secondary">Full audit + certification</p>
               <p className="mt-1 text-xl font-bold text-primary-600">
                 {page.pricing.certification}
               </p>
             </div>
           </div>
-          <ButtonLink
-            href="/pricing"
-            size="md"
-            variant="secondary"
-            className="mt-8"
-          >
+          <ButtonLink href="/pricing" size="md" variant="secondary" className="mt-8">
             {page.pricing.linkText}
           </ButtonLink>
         </div>
@@ -248,17 +218,10 @@ export default async function AccessibilityAuditingPage({
         className="border-b border-gray-200 bg-white px-4 py-16 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-3xl">
-          <h2
-            id="faq-heading"
-            className="text-center text-3xl font-bold text-text-primary"
-          >
+          <h2 id="faq-heading" className="text-center text-3xl font-bold text-text-primary">
             {page.faq.title}
           </h2>
-          <Accordion.Root
-            type="single"
-            collapsible
-            className="mt-12 space-y-4"
-          >
+          <Accordion.Root type="single" collapsible className="mt-12 space-y-4">
             {page.faq.questions.map(({ question, answer }, index) => (
               <Accordion.Item
                 key={index}
@@ -286,9 +249,7 @@ export default async function AccessibilityAuditingPage({
                 </Accordion.Header>
                 <Accordion.Content className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
                   <div className="px-6 pb-4 pt-2">
-                    <p className="text-base leading-normal text-text-secondary">
-                      {answer}
-                    </p>
+                    <p className="text-base leading-normal text-text-secondary">{answer}</p>
                   </div>
                 </Accordion.Content>
               </Accordion.Item>

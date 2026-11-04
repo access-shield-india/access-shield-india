@@ -75,6 +75,26 @@ export function IssueList({ searchParams }: IssueListProps) {
 
   const columns: DataTableColumn<Issue>[] = [
     {
+      id: 'priority',
+      header: 'Priority',
+      accessor: (issue) => {
+        const score = issue.priorityScore;
+        if (score == null) return <span className="text-text-tertiary">—</span>;
+        const tone =
+          score >= 80 ? 'error' : score >= 60 ? 'warning' : score >= 40 ? 'info' : 'secondary';
+        return (
+          <Badge
+            variant={tone}
+            className="inline-flex min-w-[3rem] justify-center tabular-nums"
+            title={issue.scoreExplanation ?? `Priority score ${score}`}
+          >
+            <span className="sr-only">Priority score </span>
+            {score}
+          </Badge>
+        );
+      },
+    },
+    {
       id: 'impact',
       header: 'Severity',
       accessor: (issue) => {
@@ -193,6 +213,9 @@ export function IssueList({ searchParams }: IssueListProps) {
     <div className="space-y-4">
       <p className="text-sm text-text-secondary">
         Click an issue to open its details and the AI fix.
+        {searchParams.sort === 'priority'
+          ? ' Ranked by Priority Score (tune weights in Settings → Priority Score).'
+          : ''}
       </p>
       <DataTable
         columns={columns}

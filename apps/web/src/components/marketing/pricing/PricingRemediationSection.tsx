@@ -1,5 +1,11 @@
 import { ButtonLink } from '@/components/marketing/ButtonLink';
-import { PRICING_CATALOG, type OneTimeSku } from '@/lib/pricing/catalog';
+import {
+  EXPERT_ADDONS,
+  formatInr,
+  REMEDIATION_SKUS,
+  STANDALONE_AUDIT,
+  type OneTimeSku,
+} from '@/lib/pricing/catalog';
 
 function OneTimeCard({ service }: { service: OneTimeSku }) {
   return (
@@ -25,8 +31,11 @@ function OneTimeCard({ service }: { service: OneTimeSku }) {
       )}
       <h3 className="text-lg font-bold text-text-primary">{service.name}</h3>
       <p className="mt-1 text-sm text-text-secondary">{service.subtitle}</p>
+      <p className="mt-3 text-2xl font-bold text-primary-600">
+        from {formatInr(service.priceInr)}
+      </p>
       {service.priceNote && (
-        <p className="mt-3 text-sm font-medium text-text-primary">{service.priceNote}</p>
+        <p className="mt-1 text-sm font-medium text-text-secondary">{service.priceNote}</p>
       )}
       <ul className="mt-4 flex-1 space-y-2">
         {service.features.map((feature) => (
@@ -64,20 +73,22 @@ export function PricingRemediationSection() {
       aria-labelledby="remediation-heading"
     >
       <div className="text-center">
-        <p className="text-sm font-semibold uppercase tracking-wide text-primary-600">Step 02</p>
+        <p className="text-sm font-semibold uppercase tracking-wide text-primary-600">
+          Compliance services
+        </p>
         <h2
           id="remediation-heading"
           className="mt-2 text-2xl font-bold text-text-primary sm:text-3xl"
         >
-          Remediation by site size
+          Expert remediation
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-base leading-normal text-text-secondary">
-          Remove code-level barriers so people with disabilities can pay, sign up, and read your
-          content — then move to ongoing monitoring. Contact sales for a quote scoped to your site.
+          Project-based fixes after audit — then keep improving with Professional or Enterprise
+          monitoring. Contact sales for a scoped quote.
         </p>
       </div>
       <div className="mt-10 grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
-        {PRICING_CATALOG.remediation.map((tier) => (
+        {REMEDIATION_SKUS.map((tier) => (
           <OneTimeCard key={tier.id} service={tier} />
         ))}
       </div>
@@ -86,46 +97,38 @@ export function PricingRemediationSection() {
 }
 
 export function PricingStandaloneAuditSection() {
-  const audit = PRICING_CATALOG.standaloneAssessment;
-
   return (
     <section id="step-audit" className="mt-16 scroll-mt-20" aria-labelledby="audit-addon-heading">
       <div className="text-center">
         <p className="text-sm font-semibold uppercase tracking-wide text-primary-600">
-          Most companies start here
+          Compliance services
         </p>
         <h2
           id="audit-addon-heading"
           className="mt-2 text-2xl font-bold text-text-primary sm:text-3xl"
         >
-          Compliance Website Audit &amp; Scan
+          Documented accessibility audit
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-base leading-normal text-text-secondary">
-          Know exactly where your site stands for users with disabilities — automated WCAG 2.2 + IS
-          17802 scan paired with hands-on specialist review.{' '}
-          <strong className="font-semibold text-text-primary">
-            Free for the first 100 customers
-          </strong>
-          . Contact sales to claim the offer or get a quote.
+          Automated WCAG 2.2 + IS 17802 plus hands-on specialist review — the engagement banks and
+          PSUs actually need after a free scan. Launch offer may apply for early customers.
         </p>
       </div>
       <div className="mx-auto mt-10 max-w-2xl">
-        <OneTimeCard service={audit} />
+        <OneTimeCard service={STANDALONE_AUDIT} />
       </div>
     </section>
   );
 }
 
 export function PricingAddonsSection() {
-  const addons = PRICING_CATALOG.addons;
-
   return (
     <section className="mt-16" aria-labelledby="extra-addons-heading">
       <h2 id="extra-addons-heading" className="text-center text-xl font-bold text-text-primary">
-        More add-ons
+        More expert services
       </h2>
-      <div className="mx-auto mt-8 grid max-w-4xl grid-cols-1 gap-6 lg:grid-cols-2">
-        {addons.map((addon) => (
+      <div className="mx-auto mt-8 grid max-w-5xl grid-cols-1 gap-6 lg:grid-cols-3">
+        {EXPERT_ADDONS.map((addon) => (
           <OneTimeCard key={addon.id} service={addon} />
         ))}
       </div>

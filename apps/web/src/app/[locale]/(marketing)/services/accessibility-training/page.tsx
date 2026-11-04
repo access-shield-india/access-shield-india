@@ -87,38 +87,27 @@ export default async function AccessibilityTrainingPage({
         className="border-b border-gray-200 bg-white px-4 py-16 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-7xl">
-          <h2
-            id="catalogue-heading"
-            className="text-center text-3xl font-bold text-text-primary"
-          >
+          <h2 id="catalogue-heading" className="text-center text-3xl font-bold text-text-primary">
             {page.catalogue.title}
           </h2>
           <div className="mt-12 space-y-6">
-            {page.catalogue.items.map(
-              ({ id, title, duration, price, capacity, description }) => (
-                <div
-                  key={id}
-                  className="flex flex-col gap-4 rounded-xl border border-border bg-bg-secondary p-8 lg:flex-row lg:items-start lg:justify-between"
-                >
-                  <div className="flex-1">
-                    <h3 className="text-2xl font-semibold text-text-primary">
-                      {title}
-                    </h3>
-                    <p className="mt-3 text-base leading-normal text-text-secondary">
-                      {description}
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-2 lg:min-w-[240px] lg:text-right">
-                    <p className="text-sm font-medium text-text-secondary">
-                      {duration} · {capacity}
-                    </p>
-                    <p className="text-2xl font-bold text-primary-600">
-                      {price}
-                    </p>
-                  </div>
+            {page.catalogue.items.map(({ id, title, duration, price, capacity, description }) => (
+              <div
+                key={id}
+                className="flex flex-col gap-4 rounded-xl border border-border bg-bg-secondary p-8 lg:flex-row lg:items-start lg:justify-between"
+              >
+                <div className="flex-1">
+                  <h3 className="text-2xl font-semibold text-text-primary">{title}</h3>
+                  <p className="mt-3 text-base leading-normal text-text-secondary">{description}</p>
                 </div>
-              ),
-            )}
+                <div className="flex flex-col gap-2 lg:min-w-[240px] lg:text-right">
+                  <p className="text-sm font-medium text-text-secondary">
+                    {duration} · {capacity}
+                  </p>
+                  <p className="text-2xl font-bold text-primary-600">{price}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -129,20 +118,14 @@ export default async function AccessibilityTrainingPage({
         className="border-b border-gray-200 bg-bg-secondary px-4 py-16 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-5xl">
-          <h2
-            id="format-heading"
-            className="text-center text-3xl font-bold text-text-primary"
-          >
+          <h2 id="format-heading" className="text-center text-3xl font-bold text-text-primary">
             {page.format.title}
           </h2>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {page.format.items.map((item, index) => {
-              const iconKey = [
-                'video',
-                'recording',
-                'certificate',
-                'qa',
-              ][index] as keyof typeof FORMAT_ICONS;
+              const iconKey = ['video', 'recording', 'certificate', 'qa'][
+                index
+              ] as keyof typeof FORMAT_ICONS;
               const Icon = FORMAT_ICONS[iconKey];
               return (
                 <div
@@ -155,9 +138,7 @@ export default async function AccessibilityTrainingPage({
                   >
                     <Icon className="h-6 w-6" />
                   </div>
-                  <p className="text-base font-medium text-text-primary">
-                    {item}
-                  </p>
+                  <p className="text-base font-medium text-text-primary">{item}</p>
                 </div>
               );
             })}
@@ -171,10 +152,7 @@ export default async function AccessibilityTrainingPage({
         className="border-b border-gray-200 bg-white px-4 py-16 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-5xl">
-          <h2
-            id="who-for-heading"
-            className="text-center text-3xl font-bold text-text-primary"
-          >
+          <h2 id="who-for-heading" className="text-center text-3xl font-bold text-text-primary">
             {page.whoFor.title}
           </h2>
           <div className="mt-12 flex flex-wrap justify-center gap-4">
@@ -183,13 +161,8 @@ export default async function AccessibilityTrainingPage({
                 key={index}
                 className="flex items-center gap-2 rounded-full border border-border bg-bg-secondary px-6 py-3"
               >
-                <CheckCircle2
-                  className="h-5 w-5 text-primary-600"
-                  aria-hidden="true"
-                />
-                <span className="text-base font-medium text-text-primary">
-                  {role}
-                </span>
+                <CheckCircle2 className="h-5 w-5 text-primary-600" aria-hidden="true" />
+                <span className="text-base font-medium text-text-primary">{role}</span>
               </div>
             ))}
           </div>
@@ -205,15 +178,8 @@ export default async function AccessibilityTrainingPage({
           <h2 id="bundle-heading" className="sr-only">
             Training pricing
           </h2>
-          <p className="text-lg leading-normal text-text-secondary">
-            {page.bundle.text}
-          </p>
-          <ButtonLink
-            href="/pricing"
-            size="md"
-            variant="secondary"
-            className="mt-6"
-          >
+          <p className="text-lg leading-normal text-text-secondary">{page.bundle.text}</p>
+          <ButtonLink href="/pricing" size="md" variant="secondary" className="mt-6">
             {page.bundle.linkText}
           </ButtonLink>
         </div>

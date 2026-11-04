@@ -76,9 +76,10 @@ export function calculateScore(violations: RawViolation[], _pagesScanned: number
   }
 
   let totalDeduction = 0;
+  const minorWeight = SEVERITY_WEIGHTS.minor ?? 1;
   for (const [severity, count] of Object.entries(counts)) {
     if (count === 0) continue;
-    totalDeduction += Math.sqrt(count) * (SEVERITY_WEIGHTS[severity] ?? SEVERITY_WEIGHTS.minor);
+    totalDeduction += Math.sqrt(count) * (SEVERITY_WEIGHTS[severity] ?? 1);
   }
 
   totalDeduction = Math.min(totalDeduction, MAX_SCORE);
@@ -140,7 +141,7 @@ export async function computeScoreDelta(
   currentScore: number,
   previousScanId: string | null,
   db: Database,
-  orgId: string,
+  _orgId: string,
 ): Promise<number | null> {
   if (!previousScanId) {
     return null;
@@ -227,10 +228,6 @@ export function estimateScore(
   }
 
   const currentScore = calculateScore(violations, pagesScannedSoFar);
-
-  const violationsPerPage = violations.length / pagesScannedSoFar;
-
-  const estimatedTotalViolations = Math.round(violationsPerPage * totalPages);
 
   const scaleFactor = totalPages / pagesScannedSoFar;
   const estimatedDeduction = (MAX_SCORE - currentScore) * scaleFactor;

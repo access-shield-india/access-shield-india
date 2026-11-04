@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { BrandLogo } from '@/components/brand/BrandLogo';
+import { LocaleLink } from '@/components/common/LocaleLink';
 import { SignupForm } from '@/components/marketing/SignupForm';
 
 export const metadata: Metadata = {
@@ -14,7 +15,13 @@ export default function SignupPage() {
       <div className="mx-auto max-w-2xl">
         <div className="text-center">
           <div className="mb-8 flex justify-center">
-            <BrandLogo variant="full" height={72} priority />
+            <LocaleLink
+              href="/"
+              className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+              aria-label="AccessibleNow — Home"
+            >
+              <BrandLogo variant="full" height={72} priority decorative />
+            </LocaleLink>
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-text-primary sm:text-4xl">
             Start your free trial

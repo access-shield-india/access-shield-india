@@ -1,5 +1,7 @@
-import { ScanToolWidget } from '@/components/marketing/scan/ScanToolWidget';
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
+import { MarketingSectionSkeleton } from '@/components/marketing/MarketingSectionSkeleton';
+import { ScanToolWidget } from '@/components/marketing/scan/ScanToolWidget';
 
 export const metadata: Metadata = {
   title: 'Free Website Accessibility Scan',
@@ -31,7 +33,9 @@ export default function ScanPage() {
         </div>
 
         <div className="mt-12">
-          <ScanToolWidget />
+          <Suspense fallback={<MarketingSectionSkeleton className="min-h-[360px]" />}>
+            <ScanToolWidget />
+          </Suspense>
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { Badge, Progress } from '@accessshield/ui';
 import { ViolationFilters } from '@/components/dashboard/scans/ViolationFilters';
 import { ViolationTable } from '@/components/dashboard/scans/ViolationTable';
 import { IssueSummaryList } from '@/components/dashboard/scans/IssueSummaryList';
+import { ScanPrioritizedPanel } from '@/components/dashboard/scans/ScanPrioritizedPanel';
 import { ScanLiveControls } from '@/components/dashboard/scans/ScanLiveControls';
 import { MobileScanSummary } from '@/components/dashboard/mobile/MobileScanSummary';
 import { LoadingState } from '@/components/dashboard/common/LoadingState';
@@ -214,25 +215,29 @@ export default function ScanDetailPage({ params }: { params: { id: string } }) {
       {scan.status === 'completed' && (
         <>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {(Object.keys(SEVERITY_CONFIG) as Array<keyof typeof SEVERITY_CONFIG>).map((severity) => {
-              const config = SEVERITY_CONFIG[severity];
-              const Icon =
-                severity === 'critical' || severity === 'serious' ? AlertCircle : CheckCircle;
+            {(Object.keys(SEVERITY_CONFIG) as Array<keyof typeof SEVERITY_CONFIG>).map(
+              (severity) => {
+                const config = SEVERITY_CONFIG[severity];
+                const Icon =
+                  severity === 'critical' || severity === 'serious' ? AlertCircle : CheckCircle;
 
-              return (
-                <div
-                  key={severity}
-                  className={`flex items-center gap-3 rounded-lg border p-4 ${config.color}`}
-                >
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                  <div>
-                    <p className="text-2xl font-bold">{severityCounts[severity] ?? 0}</p>
-                    <p className="text-sm">{config.label}</p>
+                return (
+                  <div
+                    key={severity}
+                    className={`flex items-center gap-3 rounded-lg border p-4 ${config.color}`}
+                  >
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                    <div>
+                      <p className="text-2xl font-bold">{severityCounts[severity] ?? 0}</p>
+                      <p className="text-sm">{config.label}</p>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              },
+            )}
           </div>
+
+          <ScanPrioritizedPanel scanId={scan.id} />
 
           <ViolationFilters filters={filters} onFiltersChange={setFilters} />
 
@@ -287,7 +292,9 @@ export default function ScanDetailPage({ params }: { params: { id: string } }) {
             <AlertCircle className="h-5 w-5 text-text-secondary" aria-hidden="true" />
             <h3 className="font-medium text-text-primary">Scan cancelled</h3>
           </div>
-          <p className="mt-2 text-sm text-text-secondary">You stopped this scan before it finished.</p>
+          <p className="mt-2 text-sm text-text-secondary">
+            You stopped this scan before it finished.
+          </p>
         </div>
       )}
 

@@ -10,6 +10,10 @@ import { HowItWorksSection } from '@/components/marketing/home/HowItWorksSection
 import { StandardsSection } from '@/components/marketing/home/StandardsSection';
 import { TestimonialsSection } from '@/components/marketing/home/TestimonialsSection';
 import { BlogPreviewSection } from '@/components/marketing/home/BlogPreviewSection';
+import { ComplianceQuiz } from '@/components/marketing/home/ComplianceQuiz';
+import { DisabilitySimulator } from '@/components/marketing/home/DisabilitySimulator';
+import { RiskCalculator } from '@/components/marketing/home/RiskCalculator';
+import { StoryCarousel } from '@/components/marketing/home/StoryCarousel';
 import { MarketingSectionSkeleton } from '@/components/marketing/MarketingSectionSkeleton';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { localeFromParams } from '@/lib/i18n/server';
@@ -59,12 +63,16 @@ export default function HomePage({ params }: { params: { locale: string } }) {
 
   return (
     <>
+      <StoryCarousel />
       <HeroSection />
-      <LiveTicker />
       <RiskStatsBar locale={locale} />
+      <DisabilitySimulator />
+      <RiskCalculator />
+      <HowItWorksSection locale={locale} />
+      <ComplianceQuiz />
       <FeaturesSection locale={locale} />
       <WhoWeBuildForSection locale={locale} />
-      <HowItWorksSection locale={locale} />
+      <LiveTicker />
       <StandardsSection locale={locale} />
       <TestimonialsSection locale={locale} />
       <Suspense fallback={<MarketingSectionSkeleton className="min-h-[320px]" />}>

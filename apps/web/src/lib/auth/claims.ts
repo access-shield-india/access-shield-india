@@ -36,7 +36,10 @@ export function decodeJwtPayload(accessToken: string): JwtPayload {
 }
 
 /** True when the access token is missing, malformed, or past `exp`. */
-export function isAccessTokenExpired(accessToken: string | null | undefined, skewMs = 5_000): boolean {
+export function isAccessTokenExpired(
+  accessToken: string | null | undefined,
+  skewMs = 5_000,
+): boolean {
   if (!accessToken) {
     return true;
   }

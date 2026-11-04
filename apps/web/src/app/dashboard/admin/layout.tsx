@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { AdminSubNav } from '@/components/dashboard/admin';
 import { getServerDashboardRole } from '@/lib/dashboard/session';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -20,7 +19,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           this console.
         </p>
         <p className="mt-2 text-sm text-text-secondary">
-          Sign in as <strong>sysadmin@accessshield.in</strong> after running{' '}
+          Sign in as <strong>sysadmin@accessiblenow.in</strong> after running{' '}
           <code className="rounded bg-gray-100 px-1.5 py-0.5 text-xs">
             bash scripts/seed-sysadmin.sh
           </code>
@@ -36,10 +35,5 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <AdminSubNav />
-      {children}
-    </div>
-  );
+  return children;
 }

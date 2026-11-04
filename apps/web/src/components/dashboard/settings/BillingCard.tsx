@@ -1,22 +1,27 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CreditCard, Download, TrendingUp } from 'lucide-react';
+import { useState } from 'react';
 import { getAccessToken } from '@/lib/api/client';
 import type { Organisation, Invoice } from '@/lib/api/types';
 import { Button, Badge, Progress, getButtonStyle, getButtonThemeClassName } from '@accessshield/ui';
 import { cn } from '@/lib/utils';
 import { LoadingState } from '@/components/dashboard/common/LoadingState';
+import { AUTOMATION_DISCLAIMER, formatInr } from '@/lib/pricing/catalog';
 
 const PLAN_NAMES: Record<string, string> = {
   trial: 'Trial',
-  starter: 'Free',
-  widget: 'Widget Only',
-  compliance_shield: 'Stay Compliant',
-  regulatory_defense: 'Regulatory Defense',
+  free: 'Free',
+  starter: 'Developer',
+  developer: 'Developer',
+  widget: 'Widget add-on',
+  widget_addon: 'Widget add-on',
+  compliance_shield: 'Professional',
+  regulatory_defense: 'Enterprise',
   professional: 'Professional',
   enterprise: 'Enterprise',
-  government: 'Government',
+  government: 'Government / Enterprise',
 };
 
 const STATUS_CONFIG = {
@@ -68,6 +73,10 @@ async function fetchUsage(token: string) {
 }
 
 export function BillingCard() {
+  const queryClient = useQueryClient();
+  const [period, setPeriod] = useState<'monthly' | 'annual'>('monthly');
+  const [checkoutMessage, setCheckoutMessage] = useState<string | null>(null);
+
   const { data: org, isLoading: orgLoading } = useQuery({
     queryKey: ['organisation'],
     queryFn: async () => {
@@ -92,12 +101,71 @@ export function BillingCard() {
     },
   });
 
+  const checkoutMutation = useMutation({
+    mutationFn: async (planId: 'developer' | 'professional') => {
+      const token = await getAccessToken();
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/checkout`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ planId, period }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.title ?? 'Checkout failed');
+      }
+      return res.json() as Promise<{
+        data: {
+          mode: string;
+          checkoutUrl?: string;
+          message?: string;
+          amountPaise: number;
+          razorpayOrderId?: string;
+          razorpayKeyId?: string;
+          invoiceId: string;
+          planId: string;
+        };
+      }>;
+    },
+    onSuccess: (json) => {
+      const d = json.data;
+      void queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      if (d.mode === 'invoice_draft' && d.checkoutUrl) {
+        setCheckoutMessage(d.message ?? 'Draft invoice created — complete via sales.');
+        window.open(d.checkoutUrl, '_blank');
+        return;
+      }
+      if (d.mode === 'razorpay' && d.razorpayOrderId) {
+        setCheckoutMessage(
+          `Order ${d.razorpayOrderId} created for ${formatInr(d.amountPaise / 100)} (incl. GST). Pay via Manage billing / Razorpay — plan upgrades after payment confirm.`,
+        );
+        return;
+      }
+      setCheckoutMessage(d.message ?? 'Checkout started');
+    },
+    onError: (err: Error) => setCheckoutMessage(err.message),
+  });
+
   if (orgLoading || invoicesLoading || usageLoading || !org || !usage) {
     return <LoadingState message="Loading billing information…" variant="card" />;
   }
 
   const planName = PLAN_NAMES[org.planTier as keyof typeof PLAN_NAMES] ?? org.planTier;
   const isUnlimited = usage.assetsLimit === null;
+  const normalizedTier =
+    org.planTier === 'starter'
+      ? 'developer'
+      : org.planTier === 'compliance_shield'
+        ? 'professional'
+        : org.planTier;
+  const showDeveloperCheckout = !['developer', 'professional', 'enterprise', 'government'].includes(
+    normalizedTier,
+  );
+  const showProfessionalCheckout = !['professional', 'enterprise', 'government'].includes(
+    normalizedTier,
+  );
 
   return (
     <div className="space-y-6">
@@ -107,14 +175,69 @@ export function BillingCard() {
           <div>
             <h3 className="text-lg font-semibold text-text-primary">{planName} Plan</h3>
             <p className="text-sm text-text-secondary mt-1">Your current subscription plan</p>
+            <p className="mt-2 text-xs text-text-tertiary" role="note">
+              {AUTOMATION_DISCLAIMER}
+            </p>
           </div>
-          {org.planTier !== 'enterprise' && (
-            <Button variant="primary" size="sm">
-              <TrendingUp className="mr-2 h-4 w-4" aria-hidden="true" />
-              Upgrade plan
-            </Button>
-          )}
+          <div className="flex flex-col items-end gap-2">
+            {(showDeveloperCheckout || showProfessionalCheckout) && (
+              <div className="flex gap-2" role="group" aria-label="Billing period">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={period === 'monthly' ? 'primary' : 'outline'}
+                  onClick={() => setPeriod('monthly')}
+                >
+                  Monthly
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={period === 'annual' ? 'primary' : 'outline'}
+                  onClick={() => setPeriod('annual')}
+                >
+                  Annual
+                </Button>
+              </div>
+            )}
+            {showDeveloperCheckout && (
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={checkoutMutation.isPending}
+                onClick={() => checkoutMutation.mutate('developer')}
+              >
+                <TrendingUp className="mr-2 h-4 w-4" aria-hidden="true" />
+                Start Developer
+              </Button>
+            )}
+            {showProfessionalCheckout && (
+              <Button
+                variant={showDeveloperCheckout ? 'outline' : 'primary'}
+                size="sm"
+                disabled={checkoutMutation.isPending}
+                onClick={() => checkoutMutation.mutate('professional')}
+              >
+                Upgrade to Professional
+              </Button>
+            )}
+            {(normalizedTier === 'professional' ||
+              normalizedTier === 'developer' ||
+              showProfessionalCheckout) && (
+              <a
+                href="/contact?plan=enterprise"
+                className="text-sm font-medium text-primary-600 hover:text-primary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+              >
+                Talk Enterprise sales →
+              </a>
+            )}
+          </div>
         </div>
+        {checkoutMessage && (
+          <p className="mb-4 text-sm text-text-secondary" role="status">
+            {checkoutMessage}
+          </p>
+        )}
 
         {/* Usage meters */}
         <div className="space-y-4">

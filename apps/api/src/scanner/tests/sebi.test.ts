@@ -41,7 +41,11 @@ describe('SEBI rules', () => {
   it('SEBI-001 flags colour-only gain/loss indicators', async () => {
     const page = mockPage(
       vi.fn().mockResolvedValue([
-        { selector: 'span[sebi-001="0"]', html: '<span class="gain"></span>', elementType: 'span' },
+        {
+          selector: 'span[sebi-001="0"]',
+          html: '<span class="gain"></span>',
+          elementType: 'span',
+        },
       ]),
     );
 
@@ -59,9 +63,11 @@ describe('SEBI rules', () => {
 
   it('SEBI-002 flags unlabelled charts', async () => {
     const page = mockPage(
-      vi.fn().mockResolvedValue([
-        { selector: 'canvas[sebi-002="0"]', html: '<canvas></canvas>', elementType: 'canvas' },
-      ]),
+      vi
+        .fn()
+        .mockResolvedValue([
+          { selector: 'canvas[sebi-002="0"]', html: '<canvas></canvas>', elementType: 'canvas' },
+        ]),
     );
 
     const violations = await checkChartsWithoutTextAlternative(

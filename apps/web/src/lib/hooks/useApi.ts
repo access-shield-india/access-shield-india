@@ -14,7 +14,6 @@ import {
   listScans,
   listViolations,
   listIssueSummaries,
-
   cancelScan,
   pauseScan,
   resumeScan,

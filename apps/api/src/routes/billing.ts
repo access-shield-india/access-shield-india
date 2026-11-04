@@ -8,7 +8,7 @@ import type { ApiResponse } from '@accessshield/types';
 import { and, count, desc, eq, gte } from 'drizzle-orm';
 import type { NextFunction, Request, Response, Router as ExpressRouter } from 'express';
 import { Router } from 'express';
-import { isScanLimitDisabled, PLAN_ASSET_LIMITS, PLAN_SCAN_LIMITS } from '../lib/plan-limits';
+import { getAssetLimit, getScanLimit, isScanLimitDisabled } from '../lib/plan-limits';
 import { sendProblem } from '../lib/problem-details';
 import { requireRoles } from '../middleware/rbac';
 
@@ -78,11 +78,9 @@ export function createBillingRouter(db: Database): ExpressRouter {
           return;
         }
 
-        const planTier = org.planTier ?? 'starter';
-        const assetsLimit = PLAN_ASSET_LIMITS[planTier] ?? PLAN_ASSET_LIMITS.starter ?? 1;
-        const scansLimit = isScanLimitDisabled()
-          ? null
-          : (PLAN_SCAN_LIMITS[planTier] ?? PLAN_SCAN_LIMITS.starter ?? 3);
+        const planTier = org.planTier ?? 'developer';
+        const assetsLimit = getAssetLimit(planTier);
+        const scansLimit = isScanLimitDisabled() ? null : getScanLimit(planTier);
 
         const [assetCount] = await db
           .select({ count: count() })

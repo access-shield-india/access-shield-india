@@ -123,6 +123,36 @@ describe('IS 17802 Rules', () => {
       expect(violations).toHaveLength(0);
     });
 
+    it('returns no violation for lang="en-US" after primary-subtag normalize', async () => {
+      const page = mockPage({
+        $eval: vi.fn().mockResolvedValue('en-US'),
+      });
+
+      const violations = await checkHtmlLanguage(page, 'https://test.gov.in', 'asset-123');
+
+      expect(violations).toHaveLength(0);
+    });
+
+    it('returns no violation for lang="hi-IN" after primary-subtag normalize', async () => {
+      const page = mockPage({
+        $eval: vi.fn().mockResolvedValue('hi-IN'),
+      });
+
+      const violations = await checkHtmlLanguage(page, 'https://test.gov.in', 'asset-123');
+
+      expect(violations).toHaveLength(0);
+    });
+
+    it('returns no violation for lang="ta-IN" after primary-subtag normalize', async () => {
+      const page = mockPage({
+        $eval: vi.fn().mockResolvedValue('ta-IN'),
+      });
+
+      const violations = await checkHtmlLanguage(page, 'https://test.gov.in', 'asset-123');
+
+      expect(violations).toHaveLength(0);
+    });
+
     it('returns no violation for valid lang="bn"', async () => {
       const page = mockPage({
         $eval: vi.fn().mockResolvedValue('bn'),

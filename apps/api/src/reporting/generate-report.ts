@@ -4,13 +4,16 @@
 
 import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
-import { assets, organisations, reports, type Database } from '@accessshield/db';
+import { assets, reports, type Database } from '@accessshield/db';
 import type { Redis } from 'ioredis';
 import { logger } from '../lib/logger';
 import { fetchReportData } from './data-fetcher';
 import { generatePdfWithTitle } from './pdf-generator';
 import { getReportDownloadUrl, uploadHtmlReportToS3, uploadReportToS3 } from './s3-upload';
-import { renderAccessibilityStatementTemplate, DEFAULT_GRIEVANCE_OFFICER } from './templates/accessibility-statement';
+import {
+  renderAccessibilityStatementTemplate,
+  DEFAULT_GRIEVANCE_OFFICER,
+} from './templates/accessibility-statement';
 import { renderExecutiveTemplate } from './templates/executive';
 import { renderLegalRpwdTemplate } from './templates/legal-rpwd';
 import { renderSebiTemplate } from './templates/sebi';
@@ -99,28 +102,19 @@ export async function generateAndStoreReport(
     throw new Error('Asset not found for report generation');
   }
 
-  const [org] = await db
-    .select({ billingEmail: organisations.billingEmail })
-    .from(organisations)
-    .where(eq(organisations.id, orgId))
-    .limit(1);
-
   const reportData = await fetchReportData(
     db,
     orgId,
     scanId,
     assetId,
     reportType,
-    generatedBy ?? 'system',
+    // fetchReportData looks this up in users.id (uuid) — a placeholder string
+    // like 'system' crashes Postgres, so use the nil UUID when unknown.
+    generatedBy ?? '00000000-0000-0000-0000-000000000000',
   );
 
   if (redis && (reportType === 'executive' || reportType === 'sebi')) {
-    reportData.widgetUsage = await resolveWidgetUsageForReport(
-      db,
-      redis,
-      orgId,
-      widgetAnalytics,
-    );
+    reportData.widgetUsage = await resolveWidgetUsageForReport(db, redis, orgId, widgetAnalytics);
   }
 
   let html: string;

@@ -570,6 +570,8 @@ async function processScanJob(message: ScanJobMessage): Promise<void> {
             pageUrl: v.pageUrl,
             fingerprint: v.fingerprint,
             standard: v.standard,
+            reviewStatus: v.reviewStatus ?? 'confirmed',
+            metadata: (v.metadata as Record<string, unknown> | null | undefined) ?? null,
           })),
         )
         .onConflictDoNothing({

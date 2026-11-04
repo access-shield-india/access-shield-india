@@ -30,22 +30,27 @@ import {
   daysAgoUtc,
   utcDateString,
 } from '../../lib/widget-analytics';
+import { getAdminInboxStats, registerAdminConsoleRoutes } from './console';
 
 const PLAN_TIERS = [
   'trial',
-  'starter',
-  'widget',
-  'compliance_shield',
-  'regulatory_defense',
+  'free',
+  'developer',
   'professional',
   'enterprise',
   'government',
+  /** @deprecated — normalised to developer / professional / enterprise */
+  'starter',
+  'widget',
+  'widget_addon',
+  'compliance_shield',
+  'regulatory_defense',
 ] as const;
 
 const createOrgSchema = z.object({
   name: z.string().min(2).max(255),
   slug: z.string().min(2).max(100).optional(),
-  planTier: z.enum(PLAN_TIERS).default('starter'),
+  planTier: z.enum(PLAN_TIERS).default('developer'),
   billingEmail: z.string().email().optional(),
   gstin: z.string().max(15).optional(),
   isActive: z.boolean().default(true),
@@ -100,12 +105,19 @@ export function createAdminRouter(db: Database, secrets: AppSecrets, redis: Redi
           countWidgetsEnabled(db),
         ]);
 
+      const inbox = await getAdminInboxStats(db);
+
       const response: ApiResponse<{
         organisations: number;
         users: number;
         scansThisMonth: number;
         activeOrganisations: number;
         widgetsEnabled: number;
+        pendingInvoices: number;
+        pendingInvoicePaise: number;
+        newEnterpriseQuotes: number;
+        newWaitlist: number;
+        requestedEngagements: number;
       }> = {
         data: {
           organisations: orgCount?.count ?? 0,
@@ -113,6 +125,7 @@ export function createAdminRouter(db: Database, secrets: AppSecrets, redis: Redi
           scansThisMonth: scanCount?.count ?? 0,
           activeOrganisations,
           widgetsEnabled,
+          ...inbox,
         },
         timestamp: new Date().toISOString(),
       };
@@ -428,6 +441,26 @@ export function createAdminRouter(db: Database, secrets: AppSecrets, redis: Redi
         return;
       }
 
+      // Hard lock: suspend/activate all Keycloak logins for the org
+      if (data.isActive !== undefined) {
+        const members = await db
+          .select({ authUserId: users.authUserId })
+          .from(users)
+          .where(eq(users.organisationId, orgId));
+        await Promise.all(
+          members.map(async (m) => {
+            try {
+              await identityAdmin.setUserEnabled(m.authUserId, data.isActive!);
+            } catch (err) {
+              logger.warn(
+                { err, authUserId: m.authUserId, orgId },
+                'Failed to sync Keycloak enabled for org member',
+              );
+            }
+          }),
+        );
+      }
+
       const response: ApiResponse<typeof updated> = {
         data: updated,
         timestamp: new Date().toISOString(),
@@ -602,6 +635,17 @@ export function createAdminRouter(db: Database, secrets: AppSecrets, redis: Redi
         org_id: existing.organisationId,
       });
 
+      if (data.isActive !== undefined) {
+        try {
+          await identityAdmin.setUserEnabled(existing.authUserId, data.isActive);
+        } catch (err) {
+          logger.warn(
+            { err, authUserId: existing.authUserId, userId },
+            'Failed to sync Keycloak enabled for user',
+          );
+        }
+      }
+
       const response: ApiResponse<typeof updated> = {
         data: updated!,
         timestamp: new Date().toISOString(),
@@ -612,6 +656,8 @@ export function createAdminRouter(db: Database, secrets: AppSecrets, redis: Redi
       next(err);
     }
   });
+
+  registerAdminConsoleRoutes(router, db, identityAdmin);
 
   return router;
 }

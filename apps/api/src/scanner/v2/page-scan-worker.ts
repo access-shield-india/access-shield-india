@@ -124,6 +124,8 @@ async function processPageScanMessage(raw: PageScanQueueMessage): Promise<void> 
       helpUrl: v.helpUrl,
       fingerprint: v.fingerprint,
       pageUrl: v.pageUrl,
+      reviewStatus: v.reviewStatus ?? 'confirmed',
+      metadata: v.metadata ?? null,
     }));
 
     await publishFindingsPersistJob({

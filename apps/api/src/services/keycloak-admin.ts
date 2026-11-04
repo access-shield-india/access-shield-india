@@ -229,4 +229,34 @@ export class KeycloakAdminService implements IdentityAdmin {
       throw new Error('Failed to update user password');
     }
   }
+
+  async setUserEnabled(authUserId: string, enabled: boolean): Promise<void> {
+    const getResponse = await fetch(`${this.adminBase}/users/${authUserId}`, {
+      method: 'GET',
+      headers: await this.adminHeaders(),
+    });
+
+    if (!getResponse.ok) {
+      throw new Error('Failed to load Keycloak user for enable/disable');
+    }
+
+    const user = (await getResponse.json()) as KeycloakUserRepresentation;
+    const response = await fetch(`${this.adminBase}/users/${authUserId}`, {
+      method: 'PUT',
+      headers: await this.adminHeaders(),
+      body: JSON.stringify({
+        ...user,
+        enabled,
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      logger.error(
+        { authUserId, enabled, status: response.status, body },
+        'Keycloak setUserEnabled failed',
+      );
+      throw new Error('Failed to update Keycloak user enabled state');
+    }
+  }
 }

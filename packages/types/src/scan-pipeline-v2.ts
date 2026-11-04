@@ -4,6 +4,8 @@
  * @see docs/architecture/v2/01-scan-pipeline-architecture.md
  */
 
+import type { ViolationMetadata, ViolationReviewStatus } from './violation-metadata';
+
 /** Page job lifecycle (Postgres `scan_page_job_status`) */
 export type ScanPageJobStatus =
   | 'pending'
@@ -91,6 +93,8 @@ export interface ScanPipelineFinding {
   helpUrl: string;
   fingerprint: string;
   pageUrl: string;
+  reviewStatus?: ViolationReviewStatus;
+  metadata?: ViolationMetadata | null;
 }
 
 /** `findings.persist` — scanner → persister */

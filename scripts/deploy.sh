@@ -345,24 +345,32 @@ ensure_ai_venv() {
   done
   [[ -n "$py" ]] || die "Python 3.11–3.13 required for ai-service"
 
+  # venv scripts hard-code the repo path at creation time. If the repo was
+  # moved/renamed, activate/pip/uvicorn point at the old path and break.
+  if [[ -d "$venv" ]] && ! grep -qF "export VIRTUAL_ENV=$venv" "$venv/bin/activate" 2>/dev/null; then
+    log "ai-service venv points at an old repo path — recreating it…"
+    rm -rf "$venv"
+  fi
+
   if [[ ! -d "$venv" ]]; then
     log "Creating ai-service venv ($py)…"
     "$py" -m venv "$venv"
   fi
 
-  # shellcheck source=/dev/null
-  source "$venv/bin/activate"
-  if ! python -c "import uvicorn" >/dev/null 2>&1; then
+  # Use `python -m pip`, never bare `pip`: the pip console script's shebang
+  # breaks when the venv path changes, `python -m pip` does not.
+  if ! "$venv/bin/python" -c "import uvicorn" >/dev/null 2>&1; then
     log "Installing ai-service dependencies…"
-    pip install -q --upgrade pip
-    pip install -q -e "$ai_root[dev]"
+    "$venv/bin/python" -m ensurepip --upgrade >/dev/null 2>&1 || true
+    "$venv/bin/python" -m pip install -q --upgrade pip
+    "$venv/bin/python" -m pip install -q -e "$ai_root[dev]"
   fi
 
   if [[ "$WITH_LOCAL_LLM" -eq 1 ]] || should_install_local_llm; then
     log "Ensuring local LLM extras (llama-cpp)…"
-    pip install -q -e "$ai_root[local]"
+    "$venv/bin/python" -m ensurepip --upgrade >/dev/null 2>&1 || true
+    "$venv/bin/python" -m pip install -q -e "$ai_root[local]"
   fi
-  deactivate 2>/dev/null || true
 }
 
 should_install_local_llm() {

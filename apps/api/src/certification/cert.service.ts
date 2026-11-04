@@ -29,7 +29,7 @@ import {
 } from './types';
 
 const S3_BUCKET = process.env.S3_BUCKET_NAME ?? 'accessshield-data-dev';
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://accessshield.in';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://accessiblenow.in';
 
 const s3Client = getSharedS3Client();
 

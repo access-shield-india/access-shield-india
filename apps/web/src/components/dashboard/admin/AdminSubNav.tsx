@@ -6,14 +6,17 @@ import { cn } from '@/lib/utils';
 
 const LINKS = [
   { href: '/dashboard/admin', label: 'Overview', exact: true },
+  { href: '/dashboard/admin/users', label: 'Users', exact: false },
   { href: '/dashboard/admin/organisations', label: 'Organisations', exact: false },
+  { href: '/dashboard/admin/billing', label: 'Billing', exact: false },
+  { href: '/dashboard/admin/inquiries', label: 'Inquiries', exact: false },
 ] as const;
 
 export function AdminSubNav() {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Platform admin" className="flex gap-6 border-b border-gray-200">
+    <nav aria-label="Platform admin" className="flex flex-wrap gap-4 border-b border-gray-200 sm:gap-6">
       {LINKS.map((link) => {
         const isActive = link.exact ? pathname === link.href : pathname.startsWith(link.href);
 

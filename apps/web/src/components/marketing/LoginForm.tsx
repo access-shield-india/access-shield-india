@@ -9,6 +9,8 @@ import { z } from 'zod';
 import { signIn } from 'next-auth/react';
 import { Button, Input, Alert } from '@accessshield/ui';
 import { BrandLogo } from '@/components/brand/BrandLogo';
+import { LocaleLink } from '@/components/common/LocaleLink';
+import { useDictionary } from '@/lib/i18n/locale-context';
 import { signInWithGoogle } from '@/lib/auth/google-sign-in';
 
 const loginSchema = z.object({
@@ -22,6 +24,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { common } = useDictionary();
   const redirectTo = searchParams.get('redirectTo') || '/dashboard';
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -70,7 +73,13 @@ export function LoginForm() {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <BrandLogo variant="full" height={72} priority />
+            <LocaleLink
+              href="/"
+              className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+              aria-label={`${common.brand} — Home`}
+            >
+              <BrandLogo variant="full" height={72} priority decorative />
+            </LocaleLink>
           </div>
           <h1 className="text-3xl font-bold text-text-primary">Sign in to AccessibleNow</h1>
           <p className="mt-2 text-sm text-text-secondary">

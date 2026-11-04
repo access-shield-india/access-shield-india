@@ -5,7 +5,15 @@ function isDbClaimsFallbackEnabled(): boolean {
   if (process.env.AUTH_DB_CLAIMS_FALLBACK === 'false') {
     return false;
   }
-  return process.env.NODE_ENV !== 'production';
+  if (process.env.AUTH_DB_CLAIMS_FALLBACK === 'true') {
+    return true;
+  }
+  if (process.env.NODE_ENV !== 'production') {
+    return true;
+  }
+  // Local `next start` / deploy.sh often uses NODE_ENV=production against Compose Postgres.
+  const databaseUrl = process.env.DATABASE_URL ?? '';
+  return /localhost|127\.0\.0\.1/.test(databaseUrl);
 }
 
 /**

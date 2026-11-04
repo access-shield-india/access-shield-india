@@ -10,7 +10,77 @@ import { assets, organisations, scans, users, violations } from '@accessshield/d
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { logger } from '../lib/logger';
 import { isDevPreviewAiFix, stripDevPreviewComment } from '../lib/dev-mock-ai';
-import type { ReportTemplateData, ReportType, ScanTrendPoint, ViolationSummary } from './types';
+import { formatReportOrgName } from './report-org-name';
+import type {
+  ManualCheckItem,
+  ReportTemplateData,
+  ReportType,
+  ScanTrendPoint,
+  ViolationSummary,
+} from './types';
+
+/**
+ * Recommended next human checks — never claims manual testing was performed.
+ */
+function buildWebManualChecks(violations: ViolationSummary[]): ManualCheckItem[] {
+  const ruleIds = new Set(violations.map((v) => v.ruleId).filter(Boolean));
+  const needsManual = violations.filter((v) => v.reviewStatus === 'needs_manual');
+
+  const item = (
+    id: string,
+    criterion: string,
+    title: string,
+    flaggedRuleIds: string[],
+    detailWhenClear: string,
+  ): ManualCheckItem => {
+    const flagged =
+      flaggedRuleIds.some((r) => ruleIds.has(r)) ||
+      needsManual.some((v) => flaggedRuleIds.includes(v.ruleId ?? ''));
+    return {
+      id,
+      criterion,
+      title,
+      status: flagged ? 'flagged_for_review' : 'not_auto_verified',
+      statusLabel: flagged
+        ? 'Not performed — automation flagged related items'
+        : 'Not performed — recommended',
+      detail: flagged
+        ? 'Automation flagged related findings. A person should still verify this area; no expert manual review was included in this report.'
+        : detailWhenClear,
+    };
+  };
+
+  return [
+    item(
+      'keyboard',
+      '2.1.1',
+      'Keyboard operability',
+      ['scrollable-region-focusable', 'frame-focusable-content'],
+      'Recommended: test all interactive controls with keyboard only (Tab, Enter, Space, Escape).',
+    ),
+    item(
+      'focus-visible',
+      '2.4.7',
+      'Visible keyboard focus',
+      ['RULE-010', 'focus-order-semantics'],
+      'Recommended: confirm a visible focus indicator on every interactive element.',
+    ),
+    item(
+      'reflow',
+      '1.4.10',
+      'Zoom and reflow (320 CSS px / 400%)',
+      ['meta-viewport'],
+      'Recommended: resize to 320 CSS px width and 400% zoom; check for lost content or forced horizontal scrolling.',
+    ),
+    item(
+      'bypass',
+      '2.4.1',
+      'Bypass repeated content',
+      ['RULE-009', 'bypass'],
+      'Recommended: confirm a skip link or equivalent landmark bypass for repeated navigation.',
+    ),
+  ];
+}
 
 /** Custom error for resource not found scenarios */
 export class NotFoundError extends Error {
@@ -199,6 +269,9 @@ export async function fetchReportData(
       selector: violations.selector,
       html: violations.html,
       pageUrl: violations.pageUrl,
+      standard: violations.standard,
+      reviewStatus: violations.reviewStatus,
+      metadata: violations.metadata,
       aiFix: violations.aiFix,
       aiExplanation: violations.aiExplanation,
     })
@@ -222,9 +295,10 @@ export async function fetchReportData(
     const devPreview = isDevPreviewAiFix(aiExplanation, rawFix);
 
     return {
+      ruleId: v.ruleId,
       wcagCriterion: primaryCriterion,
       wcagLevel: determineCriterionLevel(primaryCriterion),
-      standard: 'WCAG22',
+      standard: v.standard ?? 'WCAG22',
       severity: v.impact,
       description: v.description,
       pageUrl: v.pageUrl ?? '',
@@ -232,6 +306,8 @@ export async function fetchReportData(
       elementHtml: v.html,
       elementSelector: v.selector,
       screenshotUrl: null,
+      reviewStatus: v.reviewStatus ?? 'confirmed',
+      metadata: (v.metadata as Record<string, unknown> | null) ?? null,
       aiFix,
       aiExplanation:
         devPreview && aiExplanation
@@ -300,7 +376,8 @@ export async function fetchReportData(
 
   const reportData: ReportTemplateData = {
     organisation: {
-      name: org.name,
+      // Internal/seed orgs print as AccessibleNow
+      name: formatReportOrgName(org.name),
       logoUrl: null,
       gstin: org.gstin,
     },
@@ -325,6 +402,8 @@ export async function fetchReportData(
     generatedAt: formatIndianDateTime(new Date()),
     generatedBy: generatedByName,
     reportType,
+    manualChecks: buildWebManualChecks(violationSummaries),
+    needsManualCount: violationSummaries.filter((v) => v.reviewStatus === 'needs_manual').length,
   };
 
   logger.info(

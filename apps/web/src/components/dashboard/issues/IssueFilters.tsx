@@ -31,6 +31,11 @@ const ASSIGNEE_OPTIONS = [
   { value: 'unassigned', label: 'Unassigned' },
 ];
 
+const SORT_OPTIONS = [
+  { value: 'newest', label: 'Newest first' },
+  { value: 'priority', label: 'Priority score (high → low)' },
+];
+
 interface IssueFiltersProps {
   searchParams: {
     search?: string;
@@ -41,6 +46,7 @@ interface IssueFiltersProps {
     wcagCriterion?: string;
     dateFrom?: string;
     dateTo?: string;
+    sort?: string;
   };
 }
 
@@ -118,7 +124,7 @@ export function IssueFilters({ searchParams }: IssueFiltersProps) {
         </form>
 
         {/* Primary filters — equal columns */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <Select
             label="Status"
             options={STATUS_OPTIONS}
@@ -156,6 +162,15 @@ export function IssueFilters({ searchParams }: IssueFiltersProps) {
             disabled={assetsLoading}
             searchable
             placeholder={assetsLoading ? 'Please wait, loading assets…' : 'All assets'}
+          />
+
+          <Select
+            label="Sort by"
+            options={SORT_OPTIONS}
+            value={searchParams.sort ?? 'newest'}
+            onValueChange={(value) =>
+              updateFilters({ sort: value === 'newest' ? undefined : value })
+            }
           />
         </div>
 

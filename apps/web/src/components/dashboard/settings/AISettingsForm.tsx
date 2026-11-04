@@ -102,7 +102,7 @@ export function AISettingsForm() {
           label="AI inference provider"
           options={AI_PROVIDER_OPTIONS}
           value={provider}
-          onValueChange={(value) => {
+          onValueChange={(_value) => {
             const next = 'local';
             setProvider(next);
             setModel((current) => {
@@ -121,9 +121,7 @@ export function AISettingsForm() {
           value={model}
           onChange={(e) => setModel(e.target.value)}
           required
-          hint={
-            "Hugging Face GGUF repo, e.g. Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF"
-          }
+          hint={'Hugging Face GGUF repo, e.g. Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF'}
         />
 
         {updateMutation.isError && (
@@ -138,7 +136,11 @@ export function AISettingsForm() {
         )}
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={updateMutation.isPending} aria-busy={updateMutation.isPending}>
+          <Button
+            type="submit"
+            disabled={updateMutation.isPending}
+            aria-busy={updateMutation.isPending}
+          >
             <Save className="mr-2 h-4 w-4" aria-hidden="true" />
             {updateMutation.isPending ? 'Saving…' : 'Save changes'}
           </Button>

@@ -87,10 +87,7 @@ export default async function AccessibilityConsultingPage({
         className="border-b border-gray-200 bg-white px-4 py-16 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-7xl">
-          <h2
-            id="tracks-heading"
-            className="text-center text-3xl font-bold text-text-primary"
-          >
+          <h2 id="tracks-heading" className="text-center text-3xl font-bold text-text-primary">
             {page.tracks.title}
           </h2>
           <div className="mt-12 grid gap-8 sm:grid-cols-2">
@@ -107,12 +104,8 @@ export default async function AccessibilityConsultingPage({
                   >
                     <Icon className="h-7 w-7" />
                   </div>
-                  <h3 className="text-2xl font-semibold text-text-primary">
-                    {title}
-                  </h3>
-                  <p className="text-base leading-normal text-text-secondary">
-                    {description}
-                  </p>
+                  <h3 className="text-2xl font-semibold text-text-primary">{title}</h3>
+                  <p className="text-base leading-normal text-text-secondary">{description}</p>
                 </div>
               );
             })}
@@ -134,19 +127,14 @@ export default async function AccessibilityConsultingPage({
           </h2>
           <div className="mt-12 grid gap-6 sm:grid-cols-3">
             {page.howItWorks.steps.map((step, index) => (
-              <div
-                key={index}
-                className="flex flex-col items-center gap-4 text-center"
-              >
+              <div key={index} className="flex flex-col items-center gap-4 text-center">
                 <span
                   className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-600 text-lg font-bold text-white"
                   aria-hidden="true"
                 >
                   {index + 1}
                 </span>
-                <p className="text-lg font-semibold text-text-primary">
-                  {step}
-                </p>
+                <p className="text-lg font-semibold text-text-primary">{step}</p>
               </div>
             ))}
           </div>
@@ -159,10 +147,7 @@ export default async function AccessibilityConsultingPage({
         className="border-b border-gray-200 bg-white px-4 py-16 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-4xl text-center">
-          <h2
-            id="team-heading"
-            className="text-3xl font-bold text-text-primary"
-          >
+          <h2 id="team-heading" className="text-3xl font-bold text-text-primary">
             {page.team.title}
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-normal text-text-secondary">
@@ -177,9 +162,7 @@ export default async function AccessibilityConsultingPage({
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
             {page.cta.title}
           </h2>
-          <p className="mt-4 text-lg leading-normal text-primary-100">
-            {page.cta.description}
-          </p>
+          <p className="mt-4 text-lg leading-normal text-primary-100">{page.cta.description}</p>
           <ButtonLink
             href="/contact?type=consultation"
             size="lg"

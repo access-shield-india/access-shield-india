@@ -1,7 +1,7 @@
 import type { UserRole } from '@accessshield/types';
 import { and, eq } from 'drizzle-orm';
 import type { Database } from './index';
-import { users } from './schema';
+import { organisations, users } from './schema';
 
 export interface ResolvedUserClaims {
   user_role: UserRole;
@@ -9,41 +9,72 @@ export interface ResolvedUserClaims {
 }
 
 export interface ResolvedApplicationUser extends ResolvedUserClaims {
-  /** Application users.id (not Supabase auth UUID) */
+  /** Application users.id (not IdP auth UUID) */
   id: string;
 }
 
+export type AccountAccessStatus =
+  | { ok: true; user: ResolvedApplicationUser }
+  | { ok: false; reason: 'user_inactive' | 'org_inactive' | 'not_found' };
+
 /**
- * Resolve application user row by Supabase auth user ID.
+ * Resolve application user + org active status by IdP auth user ID.
  */
-export async function lookupUserByAuthId(
+export async function lookupAccountAccessByAuthId(
   db: Database,
   authUserId: string,
-): Promise<ResolvedApplicationUser | null> {
+): Promise<AccountAccessStatus> {
   const [row] = await db
     .select({
       id: users.id,
       role: users.role,
       organisationId: users.organisationId,
+      userActive: users.isActive,
+      orgActive: organisations.isActive,
     })
     .from(users)
-    .where(and(eq(users.authUserId, authUserId), eq(users.isActive, true)))
+    .innerJoin(organisations, eq(users.organisationId, organisations.id))
+    .where(eq(users.authUserId, authUserId))
     .limit(1);
 
   if (!row) {
-    return null;
+    return { ok: false, reason: 'not_found' };
+  }
+
+  if (!row.userActive) {
+    return { ok: false, reason: 'user_inactive' };
+  }
+
+  if (!row.orgActive) {
+    return { ok: false, reason: 'org_inactive' };
   }
 
   return {
-    id: row.id,
-    user_role: row.role,
-    org_id: row.organisationId,
+    ok: true,
+    user: {
+      id: row.id,
+      user_role: row.role,
+      org_id: row.organisationId,
+    },
   };
 }
 
 /**
- * Resolve tenant claims from the application users table by Supabase auth user ID.
- * Used in local dev when JWT app_metadata is not yet configured on Supabase.
+ * Resolve application user row by Supabase auth user ID (active user + active org only).
+ */
+export async function lookupUserByAuthId(
+  db: Database,
+  authUserId: string,
+): Promise<ResolvedApplicationUser | null> {
+  const access = await lookupAccountAccessByAuthId(db, authUserId);
+  if (!access.ok) {
+    return null;
+  }
+  return access.user;
+}
+
+/**
+ * Resolve tenant claims from the application users table by IdP auth user ID.
  */
 export async function lookupUserClaimsByAuthId(
   db: Database,

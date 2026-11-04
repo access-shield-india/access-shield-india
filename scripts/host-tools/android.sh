@@ -111,10 +111,12 @@ install_appium() {
 
   # Drivers install into user APPIUM_HOME
   export APPIUM_HOME="${APPIUM_HOME:-$HOME/.appium}"
+  log "########## APPIUM_HOME: ${APPIUM_HOME}"
   ensure_dir "$APPIUM_HOME"
   if ! "$appium_bin" driver list --installed 2>/dev/null | grep -qi uiautomator2; then
     log "Installing Appium UiAutomator2 driver…"
-    "$appium_bin" driver install uiautomator2
+    # "$appium_bin" driver install uiautomator2
+    npx appium driver update uiautomator2 || npx appium driver install uiautomator2 --force
   fi
   ok "Appium ready ($appium_bin)"
 }

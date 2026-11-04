@@ -231,7 +231,7 @@ export function createCertificationRouter(db: Database): ExpressRouter {
    */
   router.get(
     '/verify/:token',
-    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
       try {
         const token = req.params.token ?? '';
 

@@ -1,9 +1,8 @@
 import { headers } from 'next/headers';
 import type { UserRole } from '@accessshield/types';
-import { parseAccessShieldClaims } from '@/lib/auth/claims';
-import { getAppSession } from '@/lib/auth/session';
+import { getServerAuthContext } from '@/lib/auth/server';
 
-/** Role forwarded by middleware — fast path for dashboard RSC. */
+/** Role forwarded by middleware — fast path for dashboard RSC (JWT claims only). */
 export function getDashboardRole(): UserRole | undefined {
   const role = headers().get('x-user-role');
   if (!role) return undefined;
@@ -15,18 +14,14 @@ export function getDashboardOrgId(): string | undefined {
 }
 
 /**
- * Authoritative role for gated routes (e.g. platform admin).
+ * Authoritative role for gated routes / sidebar (JWT session + Postgres fallback).
  */
 export async function getServerDashboardRole(): Promise<UserRole | undefined> {
-  const session = await getAppSession();
-  if (!session.userId) {
-    return undefined;
+  const fromHeader = getDashboardRole();
+  if (fromHeader) {
+    return fromHeader;
   }
 
-  const { user_role } = parseAccessShieldClaims(session.accessToken, {
-    user_role: session.user_role,
-    org_id: session.org_id,
-  });
-
-  return user_role;
+  const auth = await getServerAuthContext();
+  return auth?.claims.user_role;
 }

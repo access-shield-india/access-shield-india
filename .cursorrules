@@ -642,11 +642,13 @@ RAZORPAY INTEGRATION:
   - Webhook signature: HMAC-SHA256(razorpay_payment_id + "|" + razorpay_subscription_id, secret)
   - Idempotency: check razorpay_payment_id uniqueness before processing any payment
 
-PLAN LIMITS (enforce in planLimits middleware):
-  starter:      max_assets: 1,  max_scans_month: 3,   ai_remediation: false, sebi_report: false
-  professional: max_assets: 10, max_scans_month: null, ai_remediation: true,  sebi_report: false
-  enterprise:   max_assets: null, max_scans_month: null, ai_remediation: true, sebi_report: true
-  government:   max_assets: null, max_scans_month: null, ai_remediation: true, sebi_report: true
+PLAN LIMITS (enforce in plan-limits.ts — India revenue ladder):
+  free:         max_assets: 1,  max_scans_month: 1,    ai_remediation: false, widget: false, journeys: false, sebi_report: false
+  developer:    max_assets: 1,  max_scans_month: 10,   ai_remediation: limited, widget: false, journeys: false, sebi_report: false
+  professional: max_assets: 10, max_scans_month: null, ai_remediation: true, widget: true,  journeys: true,  sebi_report: false
+  enterprise:   max_assets: null, max_scans_month: null, ai_remediation: true, widget: true, journeys: true, sebi_report: true (+ posture/analytics/policy)
+  government:   same as enterprise (PO billing)
+  Legacy aliases: starter→developer, compliance_shield→professional, regulatory_defense→enterprise
 
 # ============================================================================
 # 15. TESTING CONVENTIONS

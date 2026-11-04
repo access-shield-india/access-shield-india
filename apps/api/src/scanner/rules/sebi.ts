@@ -29,7 +29,7 @@ function createSebiViolation(
     elementHtml: elementHtml.substring(0, 2000),
     elementSelector,
     description,
-    helpUrl: `https://www.accessshield.in/docs/sebi/${ruleId}`,
+    helpUrl: `https://accessiblenow.in/docs/sebi/${ruleId}`,
     fingerprint: computeFingerprint(assetId, ruleId, elementSelector),
     pageUrl,
   };

@@ -27,6 +27,8 @@ export interface IdentityAdmin {
     metadata: { user_role: UserRole; org_id: string },
   ): Promise<void>;
   updateUserPassword(authUserId: string, password: string): Promise<void>;
+  /** Enable or disable login in Keycloak (hard account lock). */
+  setUserEnabled(authUserId: string, enabled: boolean): Promise<void>;
 }
 
 export function createIdentityAdmin(secrets: AppSecrets): IdentityAdmin {

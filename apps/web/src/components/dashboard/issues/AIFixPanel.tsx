@@ -15,6 +15,7 @@ import {
   isIssueDevPreviewFix,
   resolveFixBeforeAfter,
 } from '@/components/dashboard/issues/AiFixDisplay';
+import { ApplyGitHubFix } from '@/components/dashboard/issues/ApplyGitHubFix';
 import { Lightbulb, Code, Type } from 'lucide-react';
 
 async function fetchIssueDetail(token: string, issueId: string): Promise<IssueDetail> {
@@ -284,6 +285,12 @@ function AIFixTab({
             </Button>
           )}
         </div>
+
+        <ApplyGitHubFix
+          ruleId={issue.ruleId}
+          fixedCode={beforeAfter?.afterHtml ?? issue.aiFixSuggestion ?? ''}
+          wcagCriterion={issue.wcagCriterion}
+        />
       </div>
     );
   }

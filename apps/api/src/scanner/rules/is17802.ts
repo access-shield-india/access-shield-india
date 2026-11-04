@@ -40,6 +40,26 @@ const VALID_INDIAN_LANG_CODES = new Set([
   'en-GB', // English (UK)
 ]);
 
+/**
+ * Normalize BCP-47 for IS-001 allowlist: `en-US` → `en`, `hi-IN` → `hi`.
+ * Exact codes like `en-IN` / `en-GB` are checked first.
+ */
+export function normalizeLangForIs001(lang: string): string {
+  const normalized = lang.trim().toLowerCase().replace(/_/g, '-');
+  if (VALID_INDIAN_LANG_CODES.has(normalized)) {
+    return normalized;
+  }
+  const primary = normalized.split('-')[0] ?? normalized;
+  return primary;
+}
+
+export function isValidIndianLangCode(lang: string): boolean {
+  const normalized = lang.trim().toLowerCase().replace(/_/g, '-');
+  if (VALID_INDIAN_LANG_CODES.has(normalized)) return true;
+  const primary = normalizeLangForIs001(normalized);
+  return VALID_INDIAN_LANG_CODES.has(primary);
+}
+
 /** Devanagari Unicode range regex */
 const DEVANAGARI_REGEX = /[\u0900-\u097F]/;
 
@@ -59,6 +79,7 @@ function createIS17802Violation(
   elementSelector: string,
   elementHtml: string = '',
   elementType: string = 'html',
+  extras?: Pick<RawViolation, 'reviewStatus' | 'metadata'>,
 ): RawViolation {
   return {
     ruleId,
@@ -70,9 +91,11 @@ function createIS17802Violation(
     elementHtml: elementHtml.substring(0, 2000),
     elementSelector,
     description,
-    helpUrl: `https://www.accessshield.in/docs/is17802/${ruleId}`,
+    helpUrl: `https://accessiblenow.in/docs/is17802/${ruleId}`,
     fingerprint: computeFingerprint(assetId, ruleId, elementSelector),
     pageUrl,
+    reviewStatus: extras?.reviewStatus ?? 'confirmed',
+    metadata: extras?.metadata ?? { frame: { context: 'main' } },
   };
 }
 
@@ -91,29 +114,45 @@ export async function checkHtmlLanguage(
     const lang = await page.$eval('html', (el) => el.getAttribute('lang'));
 
     if (lang === null || lang.trim() === '') {
+      // Missing lang is also covered by axe html-has-lang — keep as potential to reduce noise
       violations.push(
         createIS17802Violation(
           'IS-001',
           'critical',
-          'HTML lang attribute is missing. IS 17802 requires all pages to declare language.',
+          'HTML lang attribute is missing on the main document. IS 17802 requires all pages to declare language (observed: none).',
           assetId,
           url,
           'html',
           '<html>',
           'html',
+          {
+            reviewStatus: 'potential',
+            metadata: {
+              frame: { context: 'main' },
+              notes: 'Also flagged by axe html-has-lang when enabled; confirm on main document.',
+            },
+          },
         ),
       );
-    } else if (!VALID_INDIAN_LANG_CODES.has(lang.toLowerCase())) {
+    } else if (!isValidIndianLangCode(lang)) {
+      const primary = normalizeLangForIs001(lang);
       violations.push(
         createIS17802Violation(
           'IS-001',
           'serious',
-          `HTML lang attribute '${lang}' is not a recognised Indian language code per IS 17802 Rule IS-001.`,
+          `HTML lang attribute '${lang}' (primary subtag '${primary}') is not a recognised Indian language code per IS 17802 Rule IS-001. Context: main webpage.`,
           assetId,
           url,
           'html',
           `<html lang="${lang}">`,
           'html',
+          {
+            reviewStatus: 'confirmed',
+            metadata: {
+              frame: { context: 'main' },
+              notes: `Observed lang="${lang}"; normalized primary="${primary}".`,
+            },
+          },
         ),
       );
     }

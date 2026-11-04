@@ -5,7 +5,11 @@
  * Handles WCAG 2.2 AA, IS 17802, GIGW 3.0, and SEBI compliance scanning.
  */
 
-import type { IssueSeverity } from '@accessshield/types';
+import type {
+  IssueSeverity,
+  ViolationMetadata,
+  ViolationReviewStatus,
+} from '@accessshield/types';
 
 /** Supported WCAG conformance levels */
 export type WcagLevel = 'A' | 'AA' | 'AAA';
@@ -83,6 +87,10 @@ export interface RawViolation {
   fingerprint: string;
   /** Page URL where this violation was found */
   pageUrl: string;
+  /** confirmed | potential | needs_manual — defaults to confirmed */
+  reviewStatus?: ViolationReviewStatus;
+  /** Structured extras (contrast, link, frame, image) */
+  metadata?: ViolationMetadata | null;
 }
 
 /** Heading structure extracted from page for accessibility analysis */

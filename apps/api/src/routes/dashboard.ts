@@ -117,7 +117,7 @@ export function createDashboardRouter(db: Database): ExpressRouter {
           resourceType: row.resourceType,
           resourceId: row.resourceId,
           userId: row.userId,
-          userName: (row as any).full_name || null,
+          userName: 'full_name' in row && typeof row.full_name === 'string' ? row.full_name : null,
           description: formatAuditLogDescription(row),
           createdAt: row.createdAt,
         }));
@@ -157,16 +157,19 @@ function formatAuditLogDescription(log: {
 }): string {
   const { action, resourceType, metadata } = log;
 
-  const descriptions: Record<string, (m?: any) => string> = {
-    'scan.create': (m) => `Scan started on ${m?.assetName ?? 'asset'}`,
-    'scan.update': (m) => `Scan updated for ${m?.assetName ?? 'asset'}`,
-    'asset.create': (m) => `New asset created: ${m?.assetName ?? 'Unknown'}`,
-    'asset.update': (m) => `Asset updated: ${m?.assetName ?? 'Unknown'}`,
-    'issue.create': (m) => `New issue created`,
-    'issue.update': (m) => `Issue updated`,
-    'certificate.create': (m) => `Certificate issued for ${m?.assetName ?? 'asset'}`,
-    'report.create': (m) => `Report generated for ${m?.assetName ?? 'asset'}`,
-    'report.export': (m) => `Report exported`,
+  type Meta = Record<string, unknown> | null | undefined;
+  const assetName = (m?: Meta) => (typeof m?.assetName === 'string' ? m.assetName : undefined);
+
+  const descriptions: Record<string, (m?: Meta) => string> = {
+    'scan.create': (m) => `Scan started on ${assetName(m) ?? 'asset'}`,
+    'scan.update': (m) => `Scan updated for ${assetName(m) ?? 'asset'}`,
+    'asset.create': (m) => `New asset created: ${assetName(m) ?? 'Unknown'}`,
+    'asset.update': (m) => `Asset updated: ${assetName(m) ?? 'Unknown'}`,
+    'issue.create': () => `New issue created`,
+    'issue.update': () => `Issue updated`,
+    'certificate.create': (m) => `Certificate issued for ${assetName(m) ?? 'asset'}`,
+    'report.create': (m) => `Report generated for ${assetName(m) ?? 'asset'}`,
+    'report.export': () => `Report exported`,
   };
 
   const key = `${resourceType}.${action}`;

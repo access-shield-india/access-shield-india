@@ -4,7 +4,7 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 import type { NextFunction, Request, Response } from 'express';
 import { getAuthIssuerUrl, getAuthJwksUrl } from '../config/auth-provider';
 import type { AppSecrets } from '../config/secrets';
-import { resolveAccessShieldClaims } from '../lib/resolve-claims';
+import { resolveAccessShieldClaimsResult } from '../lib/resolve-claims';
 import { sendProblem } from '../lib/problem-details';
 
 declare global {
@@ -44,9 +44,29 @@ export function createAuthMiddleware(secrets: AppSecrets, db: Database) {
         issuer,
       });
 
-      const claims = await resolveAccessShieldClaims(payload, db);
+      const resolved = await resolveAccessShieldClaimsResult(payload, db);
 
-      if (!claims) {
+      if (!resolved.ok) {
+        if (resolved.reason === 'user_inactive') {
+          sendProblem(
+            res,
+            403,
+            'account-disabled',
+            'Account disabled',
+            'This user account has been disabled. Contact support.',
+          );
+          return;
+        }
+        if (resolved.reason === 'org_inactive') {
+          sendProblem(
+            res,
+            403,
+            'organisation-suspended',
+            'Organisation suspended',
+            'This organisation has been suspended. Contact support.',
+          );
+          return;
+        }
         sendProblem(
           res,
           403,
@@ -56,6 +76,8 @@ export function createAuthMiddleware(secrets: AppSecrets, db: Database) {
         );
         return;
       }
+
+      const claims = resolved.claims;
 
       req.user = {
         sub: payload.sub!,

@@ -15,6 +15,11 @@ import {
   PanelLeftClose,
   PanelLeft,
   FileStack,
+  Briefcase,
+  Users,
+  Building2,
+  CreditCard,
+  Inbox,
 } from 'lucide-react';
 import type { UserRole } from '@accessshield/types';
 import { BrandLogo } from '@/components/brand/BrandLogo';
@@ -22,7 +27,7 @@ import { useUIStore } from '@/lib/stores/uiStore';
 import { useDictionary } from '@/lib/i18n/locale-context';
 import { cn } from '@/lib/utils';
 
-type NavLabelKey =
+type OrgNavLabelKey =
   | 'dashboard'
   | 'assets'
   | 'scans'
@@ -30,18 +35,28 @@ type NavLabelKey =
   | 'issues'
   | 'reports'
   | 'certificates'
-  | 'settings'
-  | 'platformAdmin';
+  | 'engagements'
+  | 'settings';
+
+type AdminNavLabelKey =
+  | 'adminOverview'
+  | 'adminUsers'
+  | 'adminOrganisations'
+  | 'adminBilling'
+  | 'adminInquiries';
+
+type NavLabelKey = OrgNavLabelKey | AdminNavLabelKey;
 
 interface NavItem {
   href: string;
   labelKey: NavLabelKey;
   icon: LucideIcon;
   badge?: string;
+  exact?: boolean;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { href: '/dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
+const ORG_NAV_ITEMS: NavItem[] = [
+  { href: '/dashboard', labelKey: 'dashboard', icon: LayoutDashboard, exact: true },
   { href: '/dashboard/assets', labelKey: 'assets', icon: Globe },
   { href: '/dashboard/scans', labelKey: 'scans', icon: ScanSearch },
   {
@@ -53,11 +68,27 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard/issues', labelKey: 'issues', icon: AlertCircle },
   { href: '/dashboard/reports', labelKey: 'reports', icon: FileText },
   { href: '/dashboard/certs', labelKey: 'certificates', icon: Award },
+  { href: '/dashboard/engagements', labelKey: 'engagements', icon: Briefcase },
   { href: '/dashboard/settings', labelKey: 'settings', icon: Settings },
+];
+
+const ADMIN_NAV_ITEMS: NavItem[] = [
+  { href: '/dashboard/admin', labelKey: 'adminOverview', icon: Shield, exact: true },
+  { href: '/dashboard/admin/users', labelKey: 'adminUsers', icon: Users },
+  { href: '/dashboard/admin/organisations', labelKey: 'adminOrganisations', icon: Building2 },
+  { href: '/dashboard/admin/billing', labelKey: 'adminBilling', icon: CreditCard },
+  { href: '/dashboard/admin/inquiries', labelKey: 'adminInquiries', icon: Inbox },
 ];
 
 interface SidebarProps {
   userRole?: UserRole;
+}
+
+function isNavActive(pathname: string, item: NavItem): boolean {
+  if (item.exact) {
+    return pathname === item.href;
+  }
+  return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
 export function Sidebar({ userRole }: SidebarProps) {
@@ -65,11 +96,9 @@ export function Sidebar({ userRole }: SidebarProps) {
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const { dashboard } = useDictionary();
   const { nav } = dashboard;
-
-  const navItems: NavItem[] =
-    userRole === 'super_admin'
-      ? [...NAV_ITEMS, { href: '/dashboard/admin', labelKey: 'platformAdmin', icon: Shield }]
-      : NAV_ITEMS;
+  const isPlatformAdmin = userRole === 'super_admin';
+  const navItems = isPlatformAdmin ? ADMIN_NAV_ITEMS : ORG_NAV_ITEMS;
+  const homeHref = isPlatformAdmin ? '/dashboard/admin' : '/dashboard';
 
   return (
     <aside
@@ -81,7 +110,7 @@ export function Sidebar({ userRole }: SidebarProps) {
     >
       <div className="flex h-[4.5rem] items-center justify-between gap-2 border-b border-primary-100 px-3">
         <Link
-          href="/dashboard"
+          href={homeHref}
           className="min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
           aria-label="AccessibleNow"
         >
@@ -92,6 +121,7 @@ export function Sidebar({ userRole }: SidebarProps) {
           )}
         </Link>
         <button
+          type="button"
           onClick={toggleSidebar}
           className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-tertiary hover:bg-primary-50 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
           aria-label={sidebarCollapsed ? nav.expand : nav.collapse}
@@ -105,10 +135,15 @@ export function Sidebar({ userRole }: SidebarProps) {
         </button>
       </div>
 
+      {!sidebarCollapsed && isPlatformAdmin && (
+        <p className="px-4 pb-1 pt-3 text-[0.6875rem] font-semibold uppercase tracking-wider text-text-tertiary">
+          {nav.adminSection}
+        </p>
+      )}
+
       <nav className="flex-1 space-y-0.5 p-2" aria-label={nav.sidebarAria}>
         {navItems.map((item) => {
-          const isActive =
-            item.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.href);
+          const isActive = isNavActive(pathname, item);
           const Icon = item.icon;
           const label = nav[item.labelKey];
 

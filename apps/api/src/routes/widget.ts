@@ -12,6 +12,7 @@ import { Router } from 'express';
 import type { Redis } from 'ioredis';
 import { z } from 'zod';
 import { sendProblem } from '../lib/problem-details';
+import { requireWidgetPlan } from '../middleware/plan-gates';
 import { requireRoles } from '../middleware/rbac';
 import {
   WIDGET_EVENT_TYPES,
@@ -582,6 +583,7 @@ export function createWidgetRouter(db: Database, redis: Redis): ExpressRouter {
   router.patch(
     '/settings',
     requireRoles('customer_admin', 'accessibility_officer'),
+    requireWidgetPlan(db),
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
         const parseResult = updateWidgetSchema.safeParse(req.body);
@@ -634,6 +636,7 @@ export function createWidgetRouter(db: Database, redis: Redis): ExpressRouter {
   router.post(
     '/regenerate-token',
     requireRoles('customer_admin'),
+    requireWidgetPlan(db),
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
         const orgId = req.user!.org_id;

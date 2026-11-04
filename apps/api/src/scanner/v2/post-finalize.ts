@@ -9,11 +9,7 @@ import Redis from 'ioredis';
 import { maybeSendPublicScanReportEmail } from '../../lib/email/public-scan-report';
 import { logger } from '../../lib/logger';
 import { PUBLIC_SCANS_ORG_ID } from '../public-scan-org';
-import {
-  publishAiEnrichJob,
-  publishIssuesSyncJob,
-  publishReportGenerateJob,
-} from './publish';
+import { publishAiEnrichJob, publishIssuesSyncJob, publishReportGenerateJob } from './publish';
 
 let redisClient: Redis | null = null;
 

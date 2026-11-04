@@ -2,7 +2,6 @@ import type { Redis } from 'ioredis';
 import type { Database } from '@accessshield/db';
 import {
   buildWidgetAnalyticsSummary,
-  consumeIncludeInNextReport,
   daysAgoUtc,
   getIncludeInNextReport,
   utcDateString,

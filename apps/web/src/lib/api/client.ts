@@ -273,6 +273,51 @@ export async function downloadReportFile(reportId: string, filename: string): Pr
   URL.revokeObjectURL(objectUrl);
 }
 
+/**
+ * Generate every report type for a scan and download them as one ZIP.
+ * Each report is also saved individually in the Reports list.
+ * Returns how many reports were included in the bundle.
+ */
+export async function downloadAllReports(input: {
+  assetId: string;
+  scanId: string;
+  format: 'pdf' | 'html';
+}): Promise<{ included: number | null }> {
+  const token = await getAccessToken();
+
+  const response = await fetch(apiUrl('/api/v1/reports/download-all'), {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      asset_id: input.assetId,
+      scan_id: input.scanId,
+      format: input.format,
+    }),
+  });
+
+  if (!response.ok) {
+    const problem = (await response.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(problem?.detail ?? 'Failed to generate the reports bundle');
+  }
+
+  const disposition = response.headers.get('Content-Disposition') ?? '';
+  const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? 'AccessibleNow-Reports.zip';
+  const includedHeader = response.headers.get('X-Reports-Included');
+
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(objectUrl);
+
+  return { included: includedHeader ? Number(includedHeader) : null };
+}
+
 /** Check API health (no auth required) */
 export async function checkApiHealth(): Promise<{ status: string; db: string; redis: string }> {
   const response = await fetch(apiUrl('/health'));

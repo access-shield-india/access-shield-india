@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plug, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { getAccessToken } from '@/lib/api/client';
-import type { JiraIntegration } from '@/lib/api/types';
+import type { JiraFieldMapping, JiraIntegration } from '@/lib/api/types';
 import { Button } from '@accessshield/ui';
 import { Badge } from '@accessshield/ui';
 import { Input } from '@accessshield/ui';
@@ -18,7 +18,18 @@ const PRIORITY_OPTIONS = [
   { value: 'Medium', label: 'Medium' },
   { value: 'Low', label: 'Low' },
   { value: 'Lowest', label: 'Lowest' },
-];
+] as const;
+
+const DEFAULT_FIELD_MAPPING: JiraFieldMapping = {
+  severityToPriority: {
+    critical: 'Highest',
+    serious: 'High',
+    moderate: 'Medium',
+    minor: 'Low',
+  },
+  wcagCustomField: '',
+  statusMapping: {},
+};
 
 async function fetchJiraIntegration(token: string): Promise<JiraIntegration | null> {
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/integrations/jira`, {
@@ -26,7 +37,7 @@ async function fetchJiraIntegration(token: string): Promise<JiraIntegration | nu
   });
   if (response.status === 404) return null;
   if (!response.ok) throw new Error('Failed to fetch Jira integration');
-  const json = await response.json();
+  const json = (await response.json()) as { data: JiraIntegration };
   return json.data;
 }
 
@@ -47,6 +58,19 @@ async function syncJiraIssues(token: string) {
   return response.json();
 }
 
+function resolveFieldMapping(integration: JiraIntegration): JiraFieldMapping {
+  const mapping = integration.fieldMapping ?? DEFAULT_FIELD_MAPPING;
+  return {
+    ...DEFAULT_FIELD_MAPPING,
+    ...mapping,
+    severityToPriority: {
+      ...DEFAULT_FIELD_MAPPING.severityToPriority,
+      ...(mapping.severityToPriority ?? {}),
+    },
+    statusMapping: mapping.statusMapping ?? {},
+  };
+}
+
 export function JiraIntegrationCard() {
   const queryClient = useQueryClient();
   const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
@@ -65,7 +89,7 @@ export function JiraIntegrationCard() {
       return disconnectJira(token);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['jira-integration'] });
+      void queryClient.invalidateQueries({ queryKey: ['jira-integration'] });
       setDisconnectModalOpen(false);
     },
   });
@@ -76,15 +100,14 @@ export function JiraIntegrationCard() {
       return syncJiraIssues(token);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['jira-integration'] });
+      void queryClient.invalidateQueries({ queryKey: ['jira-integration'] });
     },
   });
 
   useEffect(() => {
-    // Listen for Jira OAuth callback
     function handleMessage(event: MessageEvent) {
       if (event.data === 'jira-connected') {
-        queryClient.invalidateQueries({ queryKey: ['jira-integration'] });
+        void queryClient.invalidateQueries({ queryKey: ['jira-integration'] });
       }
     }
 
@@ -113,7 +136,7 @@ export function JiraIntegrationCard() {
     return (
       <div className="rounded-lg border border-border bg-white p-6">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-100 shrink-0">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary-100">
             <Plug className="h-6 w-6 text-primary-700" aria-hidden="true" />
           </div>
           <div className="flex-1">
@@ -147,19 +170,21 @@ export function JiraIntegrationCard() {
     );
   }
 
+  const fieldMapping = resolveFieldMapping(integration);
+  const priorityOptions = [...PRIORITY_OPTIONS];
+
   return (
     <div className="space-y-6">
-      {/* Connection status */}
       <div className="rounded-lg border border-border bg-white p-6">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-success-100 shrink-0">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-success-100">
               <CheckCircle className="h-6 w-6 text-success-700" aria-hidden="true" />
             </div>
             <div>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="mb-2 flex items-center gap-2">
                 <h3 className="text-lg font-semibold text-text-primary">Jira Connected</h3>
-                <Badge className="bg-success-100 text-success-700">Active</Badge>
+                <Badge variant="success">Active</Badge>
               </div>
               <p className="text-sm text-text-secondary">
                 Instance: <strong>{integration.instanceUrl}</strong>
@@ -167,8 +192,8 @@ export function JiraIntegrationCard() {
               <p className="text-sm text-text-secondary">
                 Connected as: <strong>{integration.connectedEmail}</strong>
               </p>
-              {integration.lastSyncedAt && (
-                <p className="text-sm text-text-secondary mt-1">
+              {integration.lastSyncedAt ? (
+                <p className="mt-1 text-sm text-text-secondary">
                   Last synced:{' '}
                   <time dateTime={integration.lastSyncedAt}>
                     {new Date(integration.lastSyncedAt).toLocaleString('en-IN', {
@@ -181,7 +206,7 @@ export function JiraIntegrationCard() {
                   </time>{' '}
                   · {integration.syncedIssuesCount} issues synced
                 </p>
-              )}
+              ) : null}
             </div>
           </div>
           <Button
@@ -196,58 +221,61 @@ export function JiraIntegrationCard() {
         </div>
       </div>
 
-      {/* Field mapping */}
       <div className="rounded-lg border border-border bg-white p-6">
-        <h3 className="text-base font-semibold text-text-primary mb-4">Field Mapping</h3>
+        <h3 className="mb-4 text-base font-semibold text-text-primary">Field Mapping</h3>
+        <p className="mb-4 text-sm text-text-tertiary">
+          Read-only for now — editable mapping lands with the Jira OAuth connect flow.
+        </p>
         <div className="space-y-4">
           <div>
-            <h4 className="text-sm font-medium text-text-secondary mb-3">
+            <h4 className="mb-3 text-sm font-medium text-text-secondary">
               Severity to Priority Mapping
             </h4>
             <div className="grid gap-3 sm:grid-cols-2">
               <Select
+                name="jira-priority-critical"
                 label="Critical →"
-                options={PRIORITY_OPTIONS}
-                value={integration.fieldMapping.severityToPriority.critical}
-                onChange={() => {}}
+                options={priorityOptions}
+                value={fieldMapping.severityToPriority.critical}
+                disabled
               />
               <Select
+                name="jira-priority-serious"
                 label="Serious →"
-                options={PRIORITY_OPTIONS}
-                value={integration.fieldMapping.severityToPriority.serious}
-                onChange={() => {}}
+                options={priorityOptions}
+                value={fieldMapping.severityToPriority.serious}
+                disabled
               />
               <Select
+                name="jira-priority-moderate"
                 label="Moderate →"
-                options={PRIORITY_OPTIONS}
-                value={integration.fieldMapping.severityToPriority.moderate}
-                onChange={() => {}}
+                options={priorityOptions}
+                value={fieldMapping.severityToPriority.moderate}
+                disabled
               />
               <Select
+                name="jira-priority-minor"
                 label="Minor →"
-                options={PRIORITY_OPTIONS}
-                value={integration.fieldMapping.severityToPriority.minor}
-                onChange={() => {}}
+                options={priorityOptions}
+                value={fieldMapping.severityToPriority.minor}
+                disabled
               />
             </div>
           </div>
 
-          <div>
-            <Input
-              label="WCAG Criterion Custom Field"
-              placeholder="customfield_10001"
-              defaultValue={integration.fieldMapping.wcagCustomField}
-            />
-            <p className="mt-1 text-sm text-text-tertiary">
-              Custom field ID in Jira where WCAG criterion will be stored
-            </p>
-          </div>
+          <Input
+            name="jira-wcag-custom-field"
+            label="WCAG Criterion Custom Field"
+            placeholder="customfield_10001"
+            defaultValue={fieldMapping.wcagCustomField}
+            disabled
+            hint="Custom field ID in Jira where WCAG criterion will be stored"
+          />
         </div>
       </div>
 
-      {/* Sync actions */}
       <div className="rounded-lg border border-border bg-white p-6">
-        <h3 className="text-base font-semibold text-text-primary mb-4">Sync</h3>
+        <h3 className="mb-4 text-base font-semibold text-text-primary">Sync</h3>
         <Button
           variant="outline"
           onClick={() => syncMutation.mutate()}
@@ -261,22 +289,20 @@ export function JiraIntegrationCard() {
         </p>
       </div>
 
-      {/* Disconnect modal */}
       <Modal
         isOpen={disconnectModalOpen}
         onClose={() => setDisconnectModalOpen(false)}
         title="Disconnect Jira"
         description="Are you sure you want to disconnect Jira? Existing synced issues will remain in Jira, but no new issues will be created."
       >
-        <div className="flex gap-3 justify-end">
+        <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => setDisconnectModalOpen(false)}>
             Cancel
           </Button>
           <Button
-            variant="primary"
+            variant="danger"
             onClick={() => disconnectMutation.mutate()}
             isLoading={disconnectMutation.isPending}
-            className="bg-error-700 hover:bg-error-800"
           >
             Disconnect
           </Button>

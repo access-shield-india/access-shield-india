@@ -1,12 +1,15 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { MarketingContentPage } from '@/components/marketing/MarketingContentPage';
 import { ContactIllustration } from '@/components/marketing/visuals';
+import { ContactRevenueForms } from '@/components/marketing/contact/ContactRevenueForms';
+import { AUTOMATION_DISCLAIMER } from '@/lib/pricing/catalog';
 
 export const metadata: Metadata = {
   title: 'Contact',
   description:
-    'Contact AccessibleNow for sales, support, and accessibility compliance questions.',
+    'Contact AccessibleNow for sales, expert audits, Developer/Professional upgrades, and Enterprise programmes.',
 };
 
 export default function ContactPage() {
@@ -15,11 +18,14 @@ export default function ContactPage() {
   return (
     <MarketingContentPage
       title="Contact us"
-      description="We're here to help with accessibility compliance, product questions, and enterprise plans."
+      description="Sales, support, expert services, and Enterprise annual programmes — from free scan to RPwD-ready evidence."
       visual={<ContactIllustration />}
       visualLabel="Customer support and communication"
     >
       <div className="space-y-4">
+        <p className="text-sm text-text-secondary" role="note">
+          {AUTOMATION_DISCLAIMER}
+        </p>
         <p>
           <strong className="text-text-primary">Email:</strong>{' '}
           <a
@@ -59,8 +65,11 @@ export default function ContactPage() {
         )}
         <p>
           New to AccessibleNow?{' '}
-          <Link href="/signup" className="font-medium text-primary-600 hover:text-primary-700">
-            Start your free trial
+          <Link
+            href="/signup?plan=developer"
+            className="font-medium text-primary-600 hover:text-primary-700"
+          >
+            Start Developer
           </Link>{' '}
           or try our{' '}
           <Link href="/scan" className="font-medium text-primary-600 hover:text-primary-700">
@@ -69,6 +78,10 @@ export default function ContactPage() {
           .
         </p>
       </div>
+
+      <Suspense fallback={<p className="mt-8 text-sm text-text-tertiary">Loading quote form…</p>}>
+        <ContactRevenueForms />
+      </Suspense>
     </MarketingContentPage>
   );
 }

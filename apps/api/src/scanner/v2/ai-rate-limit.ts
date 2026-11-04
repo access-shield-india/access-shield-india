@@ -7,12 +7,15 @@ import { logger } from '../../lib/logger';
 import { ScanRedisKeys } from './redis-keys';
 
 const HOURLY_LIMITS: Record<string, number> = {
+  free: 0,
   trial: 0,
-  starter: 0,
+  starter: 100,
+  developer: 100,
   widget: 0,
+  widget_addon: 0,
   professional: 500,
-  government: 2000,
   compliance_shield: 500,
+  government: 2000,
   regulatory_defense: 2000,
   enterprise: 2000,
 };
@@ -28,7 +31,7 @@ function getRedis(): Redis | null {
 }
 
 export function getAiHourlyLimit(planTier: string): number {
-  return HOURLY_LIMITS[planTier] ?? HOURLY_LIMITS.starter ?? 0;
+  return HOURLY_LIMITS[planTier] ?? HOURLY_LIMITS.developer ?? 0;
 }
 
 /**

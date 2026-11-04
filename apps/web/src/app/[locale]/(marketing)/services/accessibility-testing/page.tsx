@@ -86,10 +86,7 @@ export default async function AccessibilityTestingPage({
         className="border-b border-gray-200 bg-white px-4 py-16 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-5xl">
-          <h2
-            id="layers-heading"
-            className="text-center text-3xl font-bold text-text-primary"
-          >
+          <h2 id="layers-heading" className="text-center text-3xl font-bold text-text-primary">
             {page.layers.title}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-center text-base text-text-secondary">
@@ -138,10 +135,7 @@ export default async function AccessibilityTestingPage({
         className="border-b border-gray-200 bg-bg-secondary px-4 py-16 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-4xl">
-          <h2
-            id="why-sebi-heading"
-            className="text-center text-3xl font-bold text-text-primary"
-          >
+          <h2 id="why-sebi-heading" className="text-center text-3xl font-bold text-text-primary">
             {page.whySebi.title}
           </h2>
           <p className="mx-auto mt-6 max-w-3xl text-center text-lg leading-normal text-text-secondary">

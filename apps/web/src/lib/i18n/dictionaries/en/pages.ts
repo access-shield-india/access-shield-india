@@ -98,20 +98,20 @@ export const pages: PagesDict = {
     },
     title: 'Services',
     description:
-      'From free scan to enterprise regulatory defense — pick the path that fits your team, then contact sales.',
+      'Expert services revenue engine — audits, AT testing, remediation, SEBI packs. Pair with Developer/Professional SaaS or Enterprise programmes.',
   },
   servicesHub: {
     meta: {
       title: 'Accessibility Services Built for Indian Compliance',
       description:
-        'From automated scanning to human audits, developer training, and done-for-you remediation — every service mapped to RPwD Act, IS 17802, GIGW 3.0, and SEBI 2024 mandate.',
+        'Documented audits, AT testing, remediation, and SEBI evidence — project-based services that sit beside SaaS. Automated scans alone are not full conformance.',
     },
     hero: {
-      title: 'Accessibility services built for Indian compliance',
+      title: 'Expert services after your free scan',
       subtitle:
-        "From automated scanning to human audits, developer training, and done-for-you remediation — every service mapped to the RPwD Act, IS 17802, GIGW 3.0, and SEBI's 2024 mandate.",
+        'Manual audits, screen-reader testing, remediation, and SEBI/GIGW/RPwD evidence packs — mapped to Indian law. Software helps; experts certify the path.',
       primaryCta: 'Get a free scan',
-      secondaryCta: 'Book a free consultation',
+      secondaryCta: 'Book compliance audit',
     },
     servicesGrid: [
       {

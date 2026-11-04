@@ -1,6 +1,8 @@
 import type { NextAuthOptions } from 'next-auth';
 import KeycloakProvider from 'next-auth/providers/keycloak';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { decodeJwtPayload } from '@/lib/auth/claims';
+import { lookupClaimsFromDatabase } from '@/lib/auth/db-claims';
 
 /**
  * Auth.js (next-auth v4) config for Keycloak.
@@ -78,6 +80,25 @@ export const authOptions: NextAuthOptions = {
           org_id?: string;
         };
 
+        // Prefer userinfo, then access-token claims, then Postgres (dev / missing mappers)
+        let userRole = profile.user_role;
+        let orgId = profile.org_id;
+        try {
+          const payload = decodeJwtPayload(tokens.access_token);
+          userRole ??=
+            typeof payload.user_role === 'string' ? payload.user_role : undefined;
+          orgId ??= typeof payload.org_id === 'string' ? payload.org_id : undefined;
+        } catch {
+          // ignore malformed token decode
+        }
+        if (!userRole || !orgId) {
+          const fromDb = await lookupClaimsFromDatabase(profile.sub);
+          if (fromDb) {
+            userRole ??= fromDb.user_role;
+            orgId ??= fromDb.org_id;
+          }
+        }
+
         return {
           id: profile.sub,
           email: profile.email ?? credentials.email,
@@ -85,8 +106,8 @@ export const authOptions: NextAuthOptions = {
           accessToken: tokens.access_token,
           refreshToken: tokens.refresh_token,
           accessTokenExpires: Date.now() + tokens.expires_in * 1000,
-          user_role: profile.user_role,
-          org_id: profile.org_id,
+          user_role: userRole,
+          org_id: orgId,
         };
       },
     }),
@@ -121,6 +142,20 @@ export const authOptions: NextAuthOptions = {
           if (profile) {
             userRole ??= profile.user_role;
             orgId ??= profile.org_id;
+          }
+        }
+
+        if ((!userRole || !orgId) && typeof token.sub === 'string') {
+          const fromDb = await lookupClaimsFromDatabase(token.sub);
+          if (fromDb) {
+            userRole ??= fromDb.user_role;
+            orgId ??= fromDb.org_id;
+          }
+        } else if ((!userRole || !orgId) && typeof user.id === 'string') {
+          const fromDb = await lookupClaimsFromDatabase(user.id);
+          if (fromDb) {
+            userRole ??= fromDb.user_role;
+            orgId ??= fromDb.org_id;
           }
         }
 

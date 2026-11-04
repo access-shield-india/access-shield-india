@@ -1,9 +1,14 @@
 'use client';
 
+'use client';
+
+import { useState } from 'react';
 import { ButtonLink } from '@/components/marketing/ButtonLink';
 import {
   assessCheckoutSubline,
+  formatPlanPrice,
   MONTHLY_PLANS,
+  type BillingPeriod,
   type MonthlyPlan,
 } from '@/lib/pricing/catalog';
 
@@ -11,19 +16,13 @@ function PlanBadges({ plan }: { plan: MonthlyPlan }) {
   return (
     <div className="mb-3 flex flex-wrap justify-center gap-2">
       {plan.badge && (
-        <span
-          className={`inline-flex rounded-full px-3 py-0.5 text-xs font-semibold ${
-            plan.noAuditRequired
-              ? 'bg-accent-100 text-accent-700'
-              : 'bg-primary-100 text-primary-700'
-          }`}
-        >
+        <span className="inline-flex rounded-full bg-primary-100 px-3 py-0.5 text-xs font-semibold text-primary-700">
           {plan.badge}
         </span>
       )}
-      {plan.remediationRequired && (
+      {plan.assessRequired && (
         <span className="inline-flex rounded-full bg-amber-100 px-3 py-0.5 text-xs font-semibold text-amber-900">
-          Remediation required
+          Audit recommended
         </span>
       )}
     </div>
@@ -31,23 +30,49 @@ function PlanBadges({ plan }: { plan: MonthlyPlan }) {
 }
 
 export function PricingMainPlansSection() {
+  const [period, setPeriod] = useState<BillingPeriod>('monthly');
+
   return (
     <section id="step-plans" className="mt-16 scroll-mt-20" aria-labelledby="pricing-plans-heading">
       <div className="text-center">
-        <p className="text-sm font-semibold uppercase tracking-wide text-primary-600">Step 01</p>
+        <p className="text-sm font-semibold uppercase tracking-wide text-primary-600">
+          Product revenue
+        </p>
         <h2
           id="pricing-plans-heading"
           className="mt-2 text-2xl font-bold text-text-primary sm:text-3xl"
         >
-          Pick your plan
+          Free scan → Developer → Professional → Enterprise
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-base leading-normal text-text-secondary">
-          Ongoing plans to keep your site welcoming after remediation — widget, scans, and
-          monitoring for teams and regulators. Contact sales for a tailored quote.
+          Monetise the full accessibility improvement process — not only the scan. Prices excl.
+          GST · illustrative India strategy.
         </p>
+        <div className="mt-6 inline-flex rounded-md border border-border p-1">
+          <button
+            type="button"
+            className={`min-h-11 rounded px-4 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 ${
+              period === 'monthly' ? 'bg-primary-600 text-white' : 'text-text-secondary'
+            }`}
+            onClick={() => setPeriod('monthly')}
+            aria-pressed={period === 'monthly'}
+          >
+            Monthly
+          </button>
+          <button
+            type="button"
+            className={`min-h-11 rounded px-4 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 ${
+              period === 'annual' ? 'bg-primary-600 text-white' : 'text-text-secondary'
+            }`}
+            onClick={() => setPeriod('annual')}
+            aria-pressed={period === 'annual'}
+          >
+            Annual
+          </button>
+        </div>
       </div>
 
-      <div className="mt-12 grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-12 grid grid-cols-1 items-stretch gap-6 md:grid-cols-3">
         {MONTHLY_PLANS.map((plan) => (
           <article
             key={plan.id}
@@ -58,7 +83,7 @@ export function PricingMainPlansSection() {
             {plan.popular && (
               <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                 <span className="inline-flex rounded-full bg-primary-600 px-4 py-1 text-sm font-semibold text-white">
-                  Recommended
+                  Most popular
                 </span>
               </div>
             )}
@@ -69,8 +94,16 @@ export function PricingMainPlansSection() {
               <p className="mt-2 min-h-[3rem] text-sm leading-normal text-text-secondary">
                 {plan.description}
               </p>
+              <p className="mt-4 text-2xl font-bold text-primary-600">
+                {formatPlanPrice(plan.monthlyPriceInr, plan.annualPriceInr, period)}
+              </p>
+              {plan.id === 'enterprise' ? (
+                <p className="mt-1 text-xs text-text-tertiary">From ₹2.5L / year · custom</p>
+              ) : (
+                <p className="mt-1 text-xs text-text-tertiary">+18% GST</p>
+              )}
 
-              {plan.checkoutNote === 'assess' && (
+              {(plan.checkoutNote === 'custom' || plan.assessRequired) && (
                 <p className="mt-3 text-xs leading-normal text-text-secondary">
                   {assessCheckoutSubline()}
                 </p>

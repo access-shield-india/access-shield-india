@@ -60,7 +60,7 @@ function createGIGWViolation(
     elementHtml: elementHtml.substring(0, 2000),
     elementSelector,
     description,
-    helpUrl: `https://www.accessshield.in/docs/gigw3/${ruleId}`,
+    helpUrl: `https://accessiblenow.in/docs/gigw3/${ruleId}`,
     fingerprint: computeFingerprint(assetId, ruleId, elementSelector),
     pageUrl,
   };

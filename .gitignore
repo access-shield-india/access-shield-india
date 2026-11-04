@@ -61,6 +61,7 @@ build/
 out/
 .next/
 .turbo/
+.accessiblenow/
 .nuxt/
 .output/
 *.tsbuildinfo
@@ -175,3 +176,4 @@ temp/
 *.tmp
 *.bak
 *.orig
+.bin/

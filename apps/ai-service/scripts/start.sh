@@ -41,7 +41,9 @@ fi
 
 cd "$ROOT"
 
+# `python -m uvicorn`, not bare `uvicorn`: the console script's shebang
+# breaks if the repo/venv was moved after the venv was created.
 if [[ "$RELOAD" -eq 1 ]]; then
-  exec uvicorn main:app --reload --host 0.0.0.0 --port "$PORT"
+  exec "$VENV/bin/python" -m uvicorn main:app --reload --host 0.0.0.0 --port "$PORT"
 fi
-exec uvicorn main:app --host 0.0.0.0 --port "$PORT"
+exec "$VENV/bin/python" -m uvicorn main:app --host 0.0.0.0 --port "$PORT"

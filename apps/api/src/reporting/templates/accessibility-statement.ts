@@ -6,6 +6,7 @@
  */
 
 import Handlebars from 'handlebars';
+import { formatReportOrgName } from '../report-org-name';
 import type { ReportTemplateData } from '../types';
 
 /** Grievance officer contact information */
@@ -13,6 +14,7 @@ export interface GrievanceOfficer {
   name: string;
   email: string;
   phone: string;
+  website?: string;
 }
 
 /** Options for accessibility statement generation */
@@ -27,6 +29,9 @@ export interface AccessibilityStatementOptions {
  */
 export function formatStatementOrgName(orgName: string): string {
   const trimmed = orgName.trim();
+  // Internal/seed orgs (test orgs, Public Scans, …) → brand name
+  const reportName = formatReportOrgName(trimmed);
+  if (reportName !== trimmed) return reportName;
   if (/^digiaccess\s+private\s+limited$/i.test(trimmed)) {
     return 'AccessibleNow (Digiaccess Private Limited)';
   }
@@ -38,6 +43,7 @@ export const DEFAULT_GRIEVANCE_OFFICER: GrievanceOfficer = {
   name: 'AccessibleNow Grievance Officer',
   email: 'nilesh@accessiblenow.in',
   phone: '+91-9890451667',
+  website: 'https://accessiblenow.in/',
 };
 
 /** Accessibility statement CSS - WCAG 2.2 AA compliant */
@@ -170,7 +176,7 @@ const ENGLISH_CONTENT = {
   assessment: {
     heading: 'Assessment Approach',
     text: (date: string) =>
-      `This statement is based on an assessment conducted on ${date} using a combination of automated testing tools and manual review by accessibility professionals.`,
+      `This statement is based on an automated accessibility assessment conducted on ${date} using AccessibleNow scanning tools. Manual testing by accessibility professionals was not performed as part of this assessment. Automated scanning alone cannot establish full WCAG, RPwD, IS 17802, GIGW, or SEBI conformance.`,
   },
   feedback: {
     heading: 'Feedback and Contact Information',
@@ -211,7 +217,7 @@ const HINDI_CONTENT = {
   assessment: {
     heading: 'मूल्यांकन पद्धति',
     text: (date: string) =>
-      `यह विवरण ${date} को किए गए मूल्यांकन पर आधारित है जिसमें स्वचालित परीक्षण उपकरणों और अभिगम्यता विशेषज्ञों द्वारा मैन्युअल समीक्षा के संयोजन का उपयोग किया गया था।`,
+      `यह विवरण ${date} को AccessibleNow स्वचालित स्कैनिंग उपकरणों से किए गए मूल्यांकन पर आधारित है। इस मूल्यांकन में अभिगम्यता विशेषज्ञों द्वारा मैन्युअल परीक्षण शामिल नहीं था। केवल स्वचालित स्कैनिंग से पूर्ण WCAG, RPwD, IS 17802, GIGW या SEBI अनुरूपता सिद्ध नहीं होती।`,
   },
   feedback: {
     heading: 'प्रतिक्रिया और संपर्क जानकारी',
@@ -363,6 +369,9 @@ const ENGLISH_TEMPLATE = `
       <p>Grievance Officer: {{grievanceOfficer.name}}</p>
       <p>Email: <a href="mailto:{{grievanceOfficer.email}}">{{grievanceOfficer.email}}</a></p>
       <p>Phone: <a href="tel:{{grievanceOfficer.phone}}">{{grievanceOfficer.phone}}</a></p>
+      {{#if grievanceOfficer.website}}
+      <p>Website: <a href="{{grievanceOfficer.website}}">{{grievanceOfficer.website}}</a></p>
+      {{/if}}
     </address>
     <p>We aim to respond to accessibility feedback within 30 days, in accordance with the Information Technology (Intermediary Guidelines) Rules.</p>
   </section>
@@ -431,6 +440,9 @@ const HINDI_TEMPLATE = `
       <p>शिकायत अधिकारी: {{grievanceOfficer.name}}</p>
       <p>ईमेल: <a href="mailto:{{grievanceOfficer.email}}">{{grievanceOfficer.email}}</a></p>
       <p>फ़ोन: <a href="tel:{{grievanceOfficer.phone}}">{{grievanceOfficer.phone}}</a></p>
+      {{#if grievanceOfficer.website}}
+      <p>वेबसाइट: <a href="{{grievanceOfficer.website}}">{{grievanceOfficer.website}}</a></p>
+      {{/if}}
     </address>
     <p>हम सूचना प्रौद्योगिकी (मध्यवर्ती दिशानिर्देश) नियमों के अनुसार 30 दिनों के भीतर अभिगम्यता प्रतिक्रिया का जवाब देने का लक्ष्य रखते हैं।</p>
   </section>

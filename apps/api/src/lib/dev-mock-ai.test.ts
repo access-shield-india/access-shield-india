@@ -101,7 +101,12 @@ describe('applyHeuristicFix link-name', () => {
   it('uses real aria-label instead of placeholder', () => {
     const html =
       '<a href="https://wp-asset.groww.in/wp-content/uploads/2022/05/18152816/NISM-Final-1-scaled.webp">';
-    const result = applyHeuristicFix('link-name', html, 'Links must have discernible text', '2.4.4');
+    const result = applyHeuristicFix(
+      'link-name',
+      html,
+      'Links must have discernible text',
+      '2.4.4',
+    );
     expect(result.changed).toBe(true);
     expect(result.afterHtml).toMatch(/aria-label="[^"]*NISM[^"]*"/i);
     expect(result.afterHtml).not.toContain('[Describe link purpose]');
@@ -111,7 +116,12 @@ describe('applyHeuristicFix link-name', () => {
   it('title-cases ALL CAPS Wix menu link text', () => {
     const html =
       '<a data-testid="linkElement" href="https://www.faithautomation.com/engineering-services" target="_self" class="G7GdaI wixui-vertical-menu__item-label">ENGINEERING SERVICES</a>';
-    const result = applyHeuristicFix('link-name', html, 'Links must have discernible text', '2.4.4');
+    const result = applyHeuristicFix(
+      'link-name',
+      html,
+      'Links must have discernible text',
+      '2.4.4',
+    );
     expect(result.changed).toBe(true);
     expect(result.afterHtml).toContain('Engineering Services');
     expect(result.afterHtml).not.toContain('>ENGINEERING SERVICES<');

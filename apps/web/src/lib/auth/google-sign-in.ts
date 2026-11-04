@@ -12,7 +12,9 @@ export function keycloakGoogleIdpAlias(): string {
  * `kc_idp_hint` so Keycloak skips its username/password form and forwards to
  * the Google IdP. Requires Google to be configured in the Keycloak realm.
  */
-export async function signInWithGoogle(callbackUrl: string): Promise<{ error?: string } | undefined> {
+export async function signInWithGoogle(
+  callbackUrl: string,
+): Promise<{ error?: string } | undefined> {
   const result = await signIn(
     'keycloak',
     { callbackUrl },

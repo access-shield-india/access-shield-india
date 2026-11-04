@@ -11,6 +11,7 @@ import { BillingCard } from '@/components/dashboard/settings/BillingCard';
 import { NotificationSettings } from '@/components/dashboard/settings/NotificationSettings';
 import { WidgetSettings } from '@/components/dashboard/settings/WidgetSettings';
 import { AISettingsForm } from '@/components/dashboard/settings/AISettingsForm';
+import { OnboardingChecklist } from '@/components/dashboard/enterprise/OnboardingChecklist';
 
 const SETTINGS_TABS: TabItem[] = [
   {
@@ -22,7 +23,10 @@ const SETTINGS_TABS: TabItem[] = [
           <LoadingState message="Please wait, loading organisation settings…" variant="card" />
         }
       >
-        <OrgSettingsForm />
+        <div className="space-y-6">
+          <OrgSettingsForm />
+          <OnboardingChecklist />
+        </div>
       </Suspense>
     ),
   },

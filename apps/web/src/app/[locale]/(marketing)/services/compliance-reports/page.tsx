@@ -87,10 +87,7 @@ export default async function ComplianceReportsPage({
         className="border-b border-gray-200 bg-white px-4 py-16 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-7xl">
-          <h2
-            id="catalogue-heading"
-            className="text-center text-3xl font-bold text-text-primary"
-          >
+          <h2 id="catalogue-heading" className="text-center text-3xl font-bold text-text-primary">
             {page.catalogue.title}
           </h2>
           <div className="mt-12 grid gap-8 sm:grid-cols-2">
@@ -113,9 +110,7 @@ export default async function ComplianceReportsPage({
                     </span>
                   </div>
                   <h3 className="text-xl font-semibold text-text-primary">{title}</h3>
-                  <p className="text-base leading-normal text-text-secondary">
-                    {description}
-                  </p>
+                  <p className="text-base leading-normal text-text-secondary">{description}</p>
                 </div>
               );
             })}
@@ -129,10 +124,7 @@ export default async function ComplianceReportsPage({
         className="border-b border-gray-200 bg-bg-secondary px-4 py-16 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-4xl text-center">
-          <h2
-            id="how-generated-heading"
-            className="text-3xl font-bold text-text-primary"
-          >
+          <h2 id="how-generated-heading" className="text-3xl font-bold text-text-primary">
             {page.howGenerated.title}
           </h2>
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-normal text-text-secondary">
@@ -150,9 +142,7 @@ export default async function ComplianceReportsPage({
           <h2 id="sample-heading" className="text-3xl font-bold tracking-tight text-white">
             {page.sample.title}
           </h2>
-          <p className="mt-4 text-lg leading-normal text-primary-100">
-            {page.sample.description}
-          </p>
+          <p className="mt-4 text-lg leading-normal text-primary-100">{page.sample.description}</p>
           <ButtonLink
             href="/contact?type=sample-report"
             size="lg"

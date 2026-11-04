@@ -12,6 +12,11 @@ import { ButtonLink } from '@/components/marketing/ButtonLink';
 import { ComplianceStrip } from '@/components/marketing/ComplianceStrip';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/config';
+import {
+  AUTOMATION_DISCLAIMER,
+  PRICING_CATALOG,
+  formatInr,
+} from '@/lib/pricing/catalog';
 
 export async function generateMetadata({
   params,
@@ -148,6 +153,57 @@ export default async function ServicesHubPage({
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* Expert services SKUs — second revenue engine */}
+      <section
+        aria-labelledby="expert-skus-heading"
+        className="border-b border-gray-200 bg-white px-4 py-16 sm:px-6 lg:px-8"
+      >
+        <div className="mx-auto max-w-7xl">
+          <h2
+            id="expert-skus-heading"
+            className="text-center text-3xl font-bold text-text-primary"
+          >
+            Expert services — from prices
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-center text-base text-text-secondary">
+            Project-based compliance work after your free scan. Software alone is not a conformance
+            certificate.
+          </p>
+          <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-text-tertiary" role="note">
+            {AUTOMATION_DISCLAIMER}
+          </p>
+          <ul className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {PRICING_CATALOG.expertServices.map((sku) => (
+              <li
+                key={sku.id}
+                className="flex flex-col rounded-xl border border-border bg-bg-secondary p-6"
+              >
+                <h3 className="text-lg font-semibold text-text-primary">{sku.name}</h3>
+                <p className="mt-1 text-sm text-text-secondary">{sku.subtitle}</p>
+                <p className="mt-3 text-2xl font-bold text-primary-700">
+                  From {formatInr(sku.priceInr)}
+                </p>
+                <ul className="mt-4 flex-1 space-y-2">
+                  {sku.features.slice(0, 3).map((f) => (
+                    <li key={f} className="text-sm text-text-secondary">
+                      · {f}
+                    </li>
+                  ))}
+                </ul>
+                <ButtonLink
+                  href={sku.cta.href}
+                  variant="secondary"
+                  size="sm"
+                  className="mt-6 w-full"
+                >
+                  {sku.cta.text}
+                </ButtonLink>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 

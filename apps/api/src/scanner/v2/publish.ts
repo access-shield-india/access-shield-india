@@ -91,45 +91,35 @@ export async function publishFindingsPersistJob(
 
 export async function publishIssuesSyncJob(message: IssuesSyncQueueMessage): Promise<void> {
   const channel = await ensureChannel();
-  channel.sendToQueue(
-    SCAN_PIPELINE_V2_QUEUES.ISSUES_SYNC,
-    Buffer.from(JSON.stringify(message)),
-    { persistent: true },
-  );
+  channel.sendToQueue(SCAN_PIPELINE_V2_QUEUES.ISSUES_SYNC, Buffer.from(JSON.stringify(message)), {
+    persistent: true,
+  });
   logger.info({ scanId: message.scanId }, 'Published issues.sync job');
 }
 
 export async function publishAiEnrichJob(message: AiEnrichQueueMessage): Promise<void> {
   const channel = await ensureChannel();
-  channel.sendToQueue(
-    SCAN_PIPELINE_V2_QUEUES.AI_ENRICH,
-    Buffer.from(JSON.stringify(message)),
-    { persistent: true },
-  );
+  channel.sendToQueue(SCAN_PIPELINE_V2_QUEUES.AI_ENRICH, Buffer.from(JSON.stringify(message)), {
+    persistent: true,
+  });
   logger.info({ scanId: message.scanId }, 'Published ai.enrich job');
 }
 
 export async function publishAiAltTextJob(message: AiAltTextQueueMessage): Promise<void> {
   const channel = await ensureChannel();
-  channel.sendToQueue(
-    SCAN_PIPELINE_V2_QUEUES.AI_ALT_TEXT,
-    Buffer.from(JSON.stringify(message)),
-    { persistent: true },
-  );
+  channel.sendToQueue(SCAN_PIPELINE_V2_QUEUES.AI_ALT_TEXT, Buffer.from(JSON.stringify(message)), {
+    persistent: true,
+  });
 }
 
 export async function publishAiFixJob(message: AiFixQueueMessage): Promise<void> {
   const channel = await ensureChannel();
-  channel.sendToQueue(
-    SCAN_PIPELINE_V2_QUEUES.AI_FIX,
-    Buffer.from(JSON.stringify(message)),
-    { persistent: true },
-  );
+  channel.sendToQueue(SCAN_PIPELINE_V2_QUEUES.AI_FIX, Buffer.from(JSON.stringify(message)), {
+    persistent: true,
+  });
 }
 
-export async function publishReportGenerateJob(
-  message: ReportGenerateQueueMessage,
-): Promise<void> {
+export async function publishReportGenerateJob(message: ReportGenerateQueueMessage): Promise<void> {
   const channel = await ensureChannel();
   channel.sendToQueue(
     SCAN_PIPELINE_V2_QUEUES.REPORT_GENERATE,
@@ -144,11 +134,9 @@ export async function publishReportGenerateJob(
 
 export async function publishScanJobsMessage(message: ScanJobsQueueMessage): Promise<void> {
   const channel = await ensureChannel();
-  channel.sendToQueue(
-    SCAN_PIPELINE_V2_QUEUES.SCAN_JOBS,
-    Buffer.from(JSON.stringify(message)),
-    { persistent: true },
-  );
+  channel.sendToQueue(SCAN_PIPELINE_V2_QUEUES.SCAN_JOBS, Buffer.from(JSON.stringify(message)), {
+    persistent: true,
+  });
   logger.info({ scanId: message.scanId }, 'Published scan.jobs message');
 }
 

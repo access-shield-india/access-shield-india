@@ -49,6 +49,20 @@ export function ViolationTable({ violations, isLoading, total }: ViolationTableP
       },
     },
     {
+      id: 'reviewStatus',
+      header: 'Review',
+      accessor: (violation) => {
+        const status = violation.reviewStatus ?? 'confirmed';
+        const label =
+          status === 'needs_manual'
+            ? 'Manual'
+            : status === 'potential'
+              ? 'Potential'
+              : 'Confirmed';
+        return <span className="text-sm text-text-secondary">{label}</span>;
+      },
+    },
+    {
       id: 'standard',
       header: 'Standard',
       accessor: (violation) => {

@@ -1,7 +1,7 @@
 /**
  * Reporting Module Types
  *
- * Type definitions for the AccessShield India Reporting Engine.
+ * Type definitions for the AccessibleNow Reporting Engine.
  * Generates professional PDF/HTML compliance reports from scan data.
  */
 
@@ -63,6 +63,7 @@ export interface ReportScan {
 
 /** Single violation for report display */
 export interface ViolationSummary {
+  ruleId?: string;
   wcagCriterion: string;
   wcagLevel: string;
   standard: string;
@@ -76,6 +77,19 @@ export interface ViolationSummary {
   aiFix: string | null;
   aiExplanation: string | null;
   helpUrl: string | null;
+  reviewStatus?: 'confirmed' | 'potential' | 'needs_manual';
+  metadata?: Record<string, unknown> | null;
+}
+
+/** Recommended human checks (not claims that manual testing was completed) */
+export interface ManualCheckItem {
+  id: string;
+  criterion: string;
+  title: string;
+  status: 'not_auto_verified' | 'flagged_for_review';
+  /** Human-readable status for reports */
+  statusLabel: string;
+  detail: string;
 }
 
 /** Historical scan data point for trend charts */
@@ -120,6 +134,10 @@ export interface ReportTemplateData {
   auditorSignOff?: AuditorSignOff;
   /** Present when widgetAnalytics was requested */
   widgetUsage?: WidgetUsageForReport;
+  /** Manual testing checklist (keyboard, focus, reflow, bypass) */
+  manualChecks?: ManualCheckItem[];
+  /** Count of findings marked needs_manual */
+  needsManualCount?: number;
 }
 
 /** Puppeteer PDF generation options */

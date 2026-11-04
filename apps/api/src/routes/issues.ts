@@ -328,6 +328,8 @@ export function createIssuesRouter(db: Database): ExpressRouter {
             violationAiFix: violations.aiFix,
             violationAiExplanation: violations.aiExplanation,
             violationAiAltText: violations.aiAltText,
+            violationReviewStatus: violations.reviewStatus,
+            violationMetadata: violations.metadata,
           })
           .from(issues)
           .leftJoin(assets, eq(issues.assetId, assets.id))
@@ -382,12 +384,16 @@ export function createIssuesRouter(db: Database): ExpressRouter {
                   selector: row.violationSelector,
                   html: row.violationHtml,
                   pageUrl: row.violationPageUrl,
+                  reviewStatus: row.violationReviewStatus ?? 'confirmed',
+                  metadata: row.violationMetadata ?? null,
                 }
               : undefined,
             elementHtml: row.violationHtml,
             elementSelector: row.violationSelector,
             wcagCriterion,
             wcagTitle: wcagCriterion ? `WCAG ${wcagCriterion}` : null,
+            reviewStatus: row.violationReviewStatus ?? 'confirmed',
+            metadata: row.violationMetadata ?? null,
             aiFixSuggestion: aiFixAfter,
             aiExplanation: row.violationAiExplanation,
             aiAltText: row.violationAiAltText,

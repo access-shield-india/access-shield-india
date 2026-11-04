@@ -60,17 +60,12 @@ function IssueCard({ issue }: { issue: IssueSummary }) {
   const detailsId = `issue-spots-${issue.ruleId}`;
   const priority = PRIORITY_CONFIG[issue.priority];
   const Icon = priority.icon;
-  const standardLabel = issue.standard
-    ? (STANDARD_LABELS[issue.standard] ?? issue.standard)
-    : null;
+  const standardLabel = issue.standard ? (STANDARD_LABELS[issue.standard] ?? issue.standard) : null;
 
   return (
     <article className="rounded-lg border border-gray-200 bg-white p-5">
       <div className="flex flex-wrap items-center gap-2">
-        <Badge
-          variant={priority.badge}
-          className="inline-flex items-center gap-1"
-        >
+        <Badge variant={priority.badge} className="inline-flex items-center gap-1">
           <Icon className="h-3 w-3" aria-hidden="true" />
           {issue.priority} priority
         </Badge>
@@ -110,10 +105,7 @@ function IssueCard({ issue }: { issue: IssueSummary }) {
             aria-controls={detailsId}
             onClick={() => setOpen((current) => !current)}
           >
-            <ChevronDown
-              className={`h-4 w-4 ${open ? 'rotate-180' : ''}`}
-              aria-hidden="true"
-            />
+            <ChevronDown className={`h-4 w-4 ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
             {open ? 'Hide the exact spots' : 'Show the exact spots'}
           </button>
           {open && (

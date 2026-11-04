@@ -1,4 +1,3 @@
-import type { UserRole } from '@accessshield/types';
 import { Router, type Router as ExpressRouter } from 'express';
 import type { Request, Response } from 'express';
 import { requireRoles } from '../middleware/rbac';

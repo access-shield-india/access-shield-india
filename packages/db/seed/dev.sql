@@ -15,7 +15,7 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO organisations (id, name, slug, plan_tier, billing_email, is_active)
 VALUES (
   '11111111-1111-1111-1111-111111111111',
-  'AccessShield Test Org',
+  'AccessibleNow',
   'test-org',
   'professional',
   'test@accessshield.in',

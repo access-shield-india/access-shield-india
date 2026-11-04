@@ -15,13 +15,12 @@ import { LoadingState } from '@/components/dashboard/common/LoadingState';
 
 const PLAN_OPTIONS = [
   { value: 'trial', label: 'Trial' },
-  { value: 'starter', label: 'Free' },
-  { value: 'widget', label: 'Widget Only' },
-  { value: 'compliance_shield', label: 'Stay Compliant' },
-  { value: 'regulatory_defense', label: 'Regulatory Defense' },
+  { value: 'developer', label: 'Developer' },
   { value: 'professional', label: 'Professional' },
   { value: 'enterprise', label: 'Enterprise' },
   { value: 'government', label: 'Government' },
+  { value: 'starter', label: 'Developer (legacy starter)' },
+  { value: 'widget_addon', label: 'Widget add-on' },
 ];
 
 function formatPlan(plan: string): string {
@@ -35,7 +34,7 @@ export default function AdminOrganisationsPage() {
   const [searchInput, setSearchInput] = useState('');
   const [name, setName] = useState('');
   const [billingEmail, setBillingEmail] = useState('');
-  const [planTier, setPlanTier] = useState('starter');
+  const [planTier, setPlanTier] = useState('developer');
   const [error, setError] = useState('');
 
   const { data, isLoading } = useQuery({
@@ -55,7 +54,7 @@ export default function AdminOrganisationsPage() {
       setModalOpen(false);
       setName('');
       setBillingEmail('');
-      setPlanTier('starter');
+      setPlanTier('developer');
       setError('');
     },
     onError: (err: Error) => setError(err.message),

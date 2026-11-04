@@ -75,7 +75,7 @@ function generateRoundBadge(params: BadgeParams): string {
   
   <!-- AccessibleNow wordmark -->
   <text x="60" y="112" text-anchor="middle" font-family="Arial, sans-serif" font-size="5" fill="${COLORS.textLight}">
-    accessshield.in
+    accessiblenow.in
   </text>
 </svg>
 `.trim();

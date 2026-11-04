@@ -1,14 +1,26 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Input, Button, Badge, Progress } from '@accessshield/ui';
 import { ButtonLink } from '@/components/marketing/ButtonLink';
 import { apiUrl } from '@/lib/api/base';
+import { AUTOMATION_DISCLAIMER, PRICING_CATALOG } from '@/lib/pricing/catalog';
 import { ScoreRing } from './ScoreRing';
 import type { IssueSummary } from '@/lib/api/types';
+
+function trackFunnel(event: string, meta?: Record<string, string>) {
+  void fetch(apiUrl('/api/v1/public/funnel-events'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ event, meta, path: typeof window !== 'undefined' ? window.location.pathname : '/scan' }),
+  }).catch(() => {
+    /* non-blocking */
+  });
+}
 
 const scanSchema = z.object({
   url: z.string().url('Enter a valid website URL'),
@@ -49,13 +61,22 @@ export function ScanToolWidget() {
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastAnnouncedProgress = useRef(0);
 
+  const prefillUrl = useSearchParams().get('url') ?? '';
+
   const {
     register,
     handleSubmit,
+    setFocus,
     formState: { errors, isSubmitting },
   } = useForm<ScanFormData>({
     resolver: zodResolver(scanSchema),
+    defaultValues: { url: prefillUrl, email: '' },
   });
+
+  // A11Y: when arriving from the homepage with a URL, the next thing to fill is email.
+  useEffect(() => {
+    if (prefillUrl) setFocus('email');
+  }, [prefillUrl, setFocus]);
 
   const onSubmit = async (data: ScanFormData) => {
     try {
@@ -125,6 +146,7 @@ export function ScanToolWidget() {
         if (data.status === 'completed') {
           clearInterval(pollIntervalRef.current!);
           setState('results');
+          trackFunnel('scan_completed', { scanId: data.scanId ?? '' });
         } else if (data.status === 'failed') {
           clearInterval(pollIntervalRef.current!);
           setState('error');
@@ -459,14 +481,57 @@ export function ScanToolWidget() {
                 {scanResult.remainingViolationsCount} more issues found
               </h3>
               <p className="mt-2 text-base leading-normal text-text-secondary">
-                Sign up free to see every issue, get AI fix suggestions, and generate your
-                compliance report.
+                Unlock full findings, AI remediation guidance, and repeat scans with Developer —
+                or book a documented audit for RPwD / SEBI-ready evidence.
               </p>
-              <ButtonLink href="/signup" size="lg" variant="primary" className="mt-6">
-                Get full report free
+              <ButtonLink
+                href={PRICING_CATALOG.funnelCtas.upgradeDeveloper.href}
+                size="lg"
+                variant="primary"
+                className="mt-6"
+                onClick={() => trackFunnel('upgrade_click', { plan: 'developer', source: 'locked_issues' })}
+              >
+                {PRICING_CATALOG.funnelCtas.upgradeDeveloper.text}
               </ButtonLink>
             </div>
           )}
+        </div>
+
+        <div
+          className="rounded-lg border border-primary-100 bg-primary-50 p-6"
+          role="region"
+          aria-labelledby="next-step-heading"
+        >
+          <h2 id="next-step-heading" className="text-lg font-semibold text-text-primary">
+            Next step — improve accessibility, don’t only re-scan
+          </h2>
+          <p className="mt-2 text-sm leading-normal text-text-secondary">{AUTOMATION_DISCLAIMER}</p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
+            <ButtonLink
+              href={PRICING_CATALOG.funnelCtas.upgradeDeveloper.href}
+              size="lg"
+              variant="primary"
+              onClick={() => trackFunnel('upgrade_click', { plan: 'developer', source: 'results_cta' })}
+            >
+              {PRICING_CATALOG.funnelCtas.upgradeDeveloper.text}
+            </ButtonLink>
+            <ButtonLink
+              href={PRICING_CATALOG.funnelCtas.bookAudit.href}
+              size="lg"
+              variant="secondary"
+              onClick={() => trackFunnel('contact_sales', { service: 'audit-web', source: 'results_cta' })}
+            >
+              {PRICING_CATALOG.funnelCtas.bookAudit.text}
+            </ButtonLink>
+            <ButtonLink
+              href={PRICING_CATALOG.funnelCtas.talkEnterprise.href}
+              size="lg"
+              variant="outline"
+              onClick={() => trackFunnel('contact_sales', { plan: 'enterprise', source: 'results_cta' })}
+            >
+              {PRICING_CATALOG.funnelCtas.talkEnterprise.text}
+            </ButtonLink>
+          </div>
         </div>
 
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">

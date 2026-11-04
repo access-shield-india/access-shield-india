@@ -144,6 +144,8 @@ export interface ListScansParams {
 
 export type ViolationSeverity = 'critical' | 'serious' | 'moderate' | 'minor';
 
+export type ViolationReviewStatus = 'confirmed' | 'potential' | 'needs_manual';
+
 export interface ViolationRow {
   id: string;
   scanId: string;
@@ -156,6 +158,8 @@ export interface ViolationRow {
   html: string | null;
   pageUrl: string | null;
   standard?: ComplianceStandard | string | null;
+  reviewStatus?: ViolationReviewStatus;
+  metadata?: Record<string, unknown> | null;
   createdAt: string;
   /** Tracked issue that shows details and the AI fix. */
   issueId?: string | null;
@@ -189,6 +193,8 @@ export interface Issue {
 }
 
 export interface IssueDetail extends Issue {
+  reviewStatus?: ViolationReviewStatus;
+  metadata?: Record<string, unknown> | null;
   elementHtml?: string;
   elementSelector?: string;
   wcagCriterion?: string;
@@ -357,7 +363,18 @@ export interface Organisation {
   gstin: string | null;
   billingEmail: string | null;
   isActive: boolean;
-  planTier: 'trial' | 'starter' | 'professional' | 'enterprise' | 'government';
+  planTier:
+    | 'trial'
+    | 'free'
+    | 'developer'
+    | 'starter'
+    | 'professional'
+    | 'enterprise'
+    | 'government'
+    | 'widget'
+    | 'widget_addon'
+    | 'compliance_shield'
+    | 'regulatory_defense';
   aiProvider: 'anthropic' | 'local';
   aiModel: string;
   createdAt: string;

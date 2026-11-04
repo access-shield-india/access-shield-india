@@ -318,7 +318,10 @@ export default function DocumentScannerPage() {
         {/* Past scans link */}
         <p className="text-center text-sm text-gray-500">
           View{' '}
-          <a href="/dashboard/document-scanner/history" className="text-primary-600 hover:underline">
+          <a
+            href="/dashboard/document-scanner/history"
+            className="text-primary-600 hover:underline"
+          >
             past document scans
           </a>
         </p>

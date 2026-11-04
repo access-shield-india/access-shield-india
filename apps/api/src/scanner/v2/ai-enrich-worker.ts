@@ -92,11 +92,7 @@ async function processAiEnrich(msg: z.infer<typeof enrichSchema>): Promise<void>
       altQueued += 1;
     }
 
-    if (
-      (row.impact === 'critical' || row.impact === 'serious') &&
-      !row.aiFix &&
-      row.html
-    ) {
+    if ((row.impact === 'critical' || row.impact === 'serious') && !row.aiFix && row.html) {
       await publishAiFixJob({
         violationId: row.id,
         orgId,

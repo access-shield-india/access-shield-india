@@ -38,7 +38,7 @@ async function ensurePublicScansOrg(db: Database): Promise<void> {
       name: 'Public Scans',
       slug: 'public-scans-system',
       isActive: false,
-      planTier: 'starter',
+      planTier: 'free',
     })
     .onConflictDoNothing();
 }

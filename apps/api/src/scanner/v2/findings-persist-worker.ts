@@ -56,6 +56,8 @@ async function processFindingsPersist(msg: FindingsPersistQueueMessage): Promise
             pageUrl: v.pageUrl,
             fingerprint: v.fingerprint,
             standard: v.standard,
+            reviewStatus: v.reviewStatus ?? 'confirmed',
+            metadata: (v.metadata as Record<string, unknown> | null | undefined) ?? null,
           })),
         )
         .onConflictDoNothing({

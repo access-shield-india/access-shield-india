@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   createAdminOrgUser,
+  fetchAdminOrgAssets,
   fetchAdminOrgSummary,
   fetchAdminOrgUsers,
   fetchAdminOrgWidgetAnalytics,
@@ -26,7 +28,8 @@ const PLAN_OPTIONS = [
   { value: 'trial', label: 'Trial' },
   { value: 'starter', label: 'Free' },
   { value: 'widget', label: 'Widget Only' },
-  { value: 'compliance_shield', label: 'Stay Compliant' },
+  { value: 'developer', label: 'Developer' },
+  { value: 'compliance_shield', label: 'Professional (legacy id)' },
   { value: 'regulatory_defense', label: 'Regulatory Defense' },
   { value: 'professional', label: 'Professional' },
   { value: 'enterprise', label: 'Enterprise' },
@@ -40,11 +43,12 @@ const ROLE_OPTIONS = [
   { value: 'auditor', label: 'Auditor' },
 ];
 
-type TabId = 'overview' | 'users' | 'widget' | 'settings';
+type TabId = 'overview' | 'users' | 'assets' | 'widget' | 'settings';
 
 const TABS = [
   { id: 'overview' as const, label: 'Overview' },
   { id: 'users' as const, label: 'Users' },
+  { id: 'assets' as const, label: 'Assets' },
   { id: 'widget' as const, label: 'Widget' },
   { id: 'settings' as const, label: 'Settings' },
 ];
@@ -88,6 +92,12 @@ export default function AdminOrganisationDetailPage() {
   const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ['admin', 'organisation', orgId, 'users'],
     queryFn: () => fetchAdminOrgUsers(orgId),
+  });
+
+  const { data: orgAssets = [], isLoading: assetsLoading } = useQuery({
+    queryKey: ['admin', 'organisation', orgId, 'assets'],
+    queryFn: () => fetchAdminOrgAssets(orgId),
+    enabled: activeTab === 'assets',
   });
 
   const updateOrgMutation = useMutation({
@@ -214,6 +224,67 @@ export default function AdminOrganisationDetailPage() {
                 </dd>
               </div>
             </dl>
+          </AdminCard>
+        </section>
+      )}
+
+      {activeTab === 'assets' && (
+        <section id="panel-assets" role="tabpanel" aria-labelledby="tab-assets" className="space-y-4">
+          <AdminCard
+            title="Assets"
+            description="Click an asset to see scan history, scores, and issues by severity."
+          >
+            {assetsLoading ? (
+              <LoadingState message="Loading assets…" variant="inline" size="sm" />
+            ) : orgAssets.length === 0 ? (
+              <p className="text-sm text-text-tertiary">No assets yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-left text-xs font-medium uppercase tracking-wide text-text-tertiary">
+                      <th className="px-0 py-2 font-medium">Name</th>
+                      <th className="px-4 py-2 font-medium">URL</th>
+                      <th className="px-4 py-2 font-medium">Type</th>
+                      <th className="px-4 py-2 font-medium">Status</th>
+                      <th className="px-4 py-2 font-medium">Last scan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {orgAssets.map((asset) => (
+                      <tr key={asset.id} className="hover:bg-primary-50/40">
+                        <td className="px-0 py-2.5">
+                          <Link
+                            href={`/dashboard/admin/organisations/${orgId}/assets/${asset.id}`}
+                            className="inline-flex min-h-11 items-center font-medium text-primary-600 hover:text-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                          >
+                            {asset.name}
+                          </Link>
+                        </td>
+                        <td className="max-w-xs truncate px-4 py-2.5 text-text-secondary">
+                          <Link
+                            href={`/dashboard/admin/organisations/${orgId}/assets/${asset.id}`}
+                            className="hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                          >
+                            {asset.url}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2.5 text-text-secondary">{asset.type}</td>
+                        <td className="px-4 py-2.5">
+                          <AdminBadge
+                            label={asset.isActive ? 'Active' : 'Inactive'}
+                            tone={asset.isActive ? 'success' : 'neutral'}
+                          />
+                        </td>
+                        <td className="px-4 py-2.5 text-text-secondary">
+                          {asset.lastScanAt ? formatDate(asset.lastScanAt) : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </AdminCard>
         </section>
       )}

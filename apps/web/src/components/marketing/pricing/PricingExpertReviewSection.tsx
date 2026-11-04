@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { ButtonLink } from '@/components/marketing/ButtonLink';
-import { PRICING_CATALOG } from '@/lib/pricing/catalog';
+import { PRICING_CATALOG, STANDALONE_AUDIT } from '@/lib/pricing/catalog';
 
-/** @deprecated Use PricingStandaloneAuditSection on /services */
+/** @deprecated Prefer expert SKUs on /services and /pricing one-time section */
 export function PricingExpertReviewSection() {
-  const review = PRICING_CATALOG.standaloneAssessment;
+  const review = STANDALONE_AUDIT;
 
   return (
     <section className="mt-16" aria-labelledby="expert-review-heading">

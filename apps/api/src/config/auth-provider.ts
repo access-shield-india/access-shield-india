@@ -9,10 +9,7 @@ export function getAuthIssuerUrl(secrets: { authIssuerUrl?: string }): string {
   return secrets.authIssuerUrl.replace(/\/$/, '');
 }
 
-export function getAuthJwksUrl(secrets: {
-  authIssuerUrl?: string;
-  authJwksUrl?: string;
-}): string {
+export function getAuthJwksUrl(secrets: { authIssuerUrl?: string; authJwksUrl?: string }): string {
   if (secrets.authJwksUrl) {
     return secrets.authJwksUrl;
   }

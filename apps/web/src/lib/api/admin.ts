@@ -8,6 +8,152 @@ export interface AdminStats {
   scansThisMonth: number;
   activeOrganisations: number;
   widgetsEnabled: number;
+  pendingInvoices: number;
+  pendingInvoicePaise: number;
+  newEnterpriseQuotes: number;
+  newWaitlist: number;
+  requestedEngagements: number;
+}
+
+export interface AdminInvoiceRow {
+  id: string;
+  organisationId: string;
+  organisationName: string;
+  invoiceNumber: string;
+  status: string;
+  subtotalPaise: number;
+  gstPaise: number;
+  totalPaise: number;
+  currency: string;
+  billingPeriodStart: string;
+  billingPeriodEnd: string;
+  dueDate: string;
+  paidAt: string | null;
+  createdAt: string;
+}
+
+export interface AdminAssetRow {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastScanAt: string | null;
+}
+
+export interface AdminSeverityBreakdown {
+  critical: number;
+  serious: number;
+  moderate: number;
+  minor: number;
+}
+
+export interface AdminAssetScanRow {
+  id: string;
+  status: string;
+  score: number | null;
+  pagesScanned: number;
+  violationCount: number;
+  wcagLevel: string;
+  wcagVersion: string;
+  standards: string[];
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  errorMessage: string | null;
+}
+
+export interface AdminAssetIssueRow {
+  id: string;
+  title: string;
+  severity: string;
+  status: string;
+  createdAt: string;
+  dueDate: string | null;
+}
+
+export interface AdminAssetDetail {
+  asset: {
+    id: string;
+    organisationId: string;
+    organisationName: string;
+    name: string;
+    url: string;
+    type: string;
+    description: string | null;
+    isActive: boolean;
+    standards: string[];
+    lastScannedAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+  };
+  summary: {
+    scanCount: number;
+    completedScanCount: number;
+    failedScanCount: number;
+    openIssuesCount: number;
+    latestScore: number | null;
+    latestScanAt: string | null;
+    latestPagesScanned: number | null;
+    latestViolationCount: number | null;
+    issuesBySeverity: AdminSeverityBreakdown;
+    issuesByStatus: Record<string, number>;
+    latestViolationsByImpact: AdminSeverityBreakdown;
+    topRules: Array<{ ruleId: string; impact: string; count: number }>;
+  };
+  scans: AdminAssetScanRow[];
+  openIssues: AdminAssetIssueRow[];
+}
+
+export interface AdminEnterpriseQuote {
+  id: string;
+  contactName: string;
+  contactEmail: string;
+  company: string;
+  domainsCount: number;
+  appsCount: number;
+  docsVolume: string | null;
+  sebiRequired: boolean;
+  trainingSeats: number;
+  slaHours: number;
+  notes: string | null;
+  status: string;
+  createdAt: string;
+}
+
+export interface AdminWaitlistRow {
+  id: string;
+  name: string;
+  email: string;
+  company: string;
+  companySize: string;
+  phone: string | null;
+  status: string;
+  adminNotes: string | null;
+  createdAt: string;
+}
+
+export interface AdminEngagementRow {
+  id: string;
+  organisationId: string;
+  organisationName: string;
+  type: string;
+  title: string;
+  status: string;
+  dueAt: string | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface AdminFunnelEvent {
+  id: string;
+  event: string;
+  path: string | null;
+  meta: Record<string, unknown> | null;
+  organisationId: string | null;
+  createdAt: string;
 }
 
 export interface AdminOrganisation {
@@ -35,6 +181,12 @@ export interface AdminUser {
   role: string;
   isActive: boolean;
   createdAt: string;
+}
+
+export interface AdminUserDirectoryRow extends AdminUser {
+  organisationName: string;
+  planTier: string;
+  orgActive: boolean;
 }
 
 export interface AdminOrgSummaryWidget {
@@ -176,4 +328,153 @@ export function updateAdminUser(
 /** Display widget status — null means no prefs row (defaults to on). */
 export function isWidgetOn(widgetEnabled: boolean | null | undefined): boolean {
   return widgetEnabled !== false;
+}
+
+async function adminListFetch<T>(path: string): Promise<{
+  data: T[];
+  meta?: { page: number; pageSize: number; total: number; totalPages: number };
+}> {
+  const token = await getAccessToken();
+  const response = await fetch(apiUrl(path), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error('Admin list request failed');
+  return response.json();
+}
+
+export function fetchAdminUsers(params: {
+  page?: number;
+  q?: string;
+  role?: string;
+  isActive?: string;
+}): Promise<{
+  data: AdminUserDirectoryRow[];
+  meta?: { page: number; pageSize: number; total: number; totalPages: number };
+}> {
+  const sp = new URLSearchParams({ page: String(params.page ?? 1), limit: '20' });
+  if (params.q) sp.set('q', params.q);
+  if (params.role) sp.set('role', params.role);
+  if (params.isActive) sp.set('isActive', params.isActive);
+  return adminListFetch<AdminUserDirectoryRow>(`/api/v1/admin/users?${sp}`);
+}
+
+export function fetchAdminOrgAssets(orgId: string): Promise<AdminAssetRow[]> {
+  return adminFetch<AdminAssetRow[]>(`/api/v1/admin/organisations/${orgId}/assets`);
+}
+
+export function fetchAdminOrgAssetDetail(
+  orgId: string,
+  assetId: string,
+): Promise<AdminAssetDetail> {
+  return adminFetch<AdminAssetDetail>(
+    `/api/v1/admin/organisations/${orgId}/assets/${assetId}`,
+  );
+}
+
+export function fetchAdminInvoices(params: {
+  page?: number;
+  status?: string;
+}): Promise<{
+  data: AdminInvoiceRow[];
+  meta?: { page: number; pageSize: number; total: number; totalPages: number };
+}> {
+  const sp = new URLSearchParams({ page: String(params.page ?? 1), limit: '20' });
+  if (params.status) sp.set('status', params.status);
+  return adminListFetch<AdminInvoiceRow>(`/api/v1/admin/invoices?${sp}`);
+}
+
+export function updateAdminInvoice(
+  id: string,
+  input: { status: string },
+): Promise<AdminInvoiceRow> {
+  return adminFetch<AdminInvoiceRow>(`/api/v1/admin/invoices/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export function fetchAdminEnterpriseQuotes(params: {
+  page?: number;
+  status?: string;
+}): Promise<{
+  data: AdminEnterpriseQuote[];
+  meta?: { page: number; pageSize: number; total: number; totalPages: number };
+}> {
+  const sp = new URLSearchParams({ page: String(params.page ?? 1), limit: '20' });
+  if (params.status) sp.set('status', params.status);
+  return adminListFetch<AdminEnterpriseQuote>(`/api/v1/admin/enterprise-quotes?${sp}`);
+}
+
+export function updateAdminEnterpriseQuote(
+  id: string,
+  input: { status?: string; notes?: string | null },
+): Promise<AdminEnterpriseQuote> {
+  return adminFetch<AdminEnterpriseQuote>(`/api/v1/admin/enterprise-quotes/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export function fetchAdminWaitlist(params: {
+  page?: number;
+  status?: string;
+}): Promise<{
+  data: AdminWaitlistRow[];
+  meta?: { page: number; pageSize: number; total: number; totalPages: number };
+}> {
+  const sp = new URLSearchParams({ page: String(params.page ?? 1), limit: '20' });
+  if (params.status) sp.set('status', params.status);
+  return adminListFetch<AdminWaitlistRow>(`/api/v1/admin/waitlist?${sp}`);
+}
+
+export function updateAdminWaitlist(
+  id: string,
+  input: { status?: string; adminNotes?: string | null },
+): Promise<AdminWaitlistRow> {
+  return adminFetch<AdminWaitlistRow>(`/api/v1/admin/waitlist/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export function fetchAdminEngagements(params: {
+  page?: number;
+  status?: string;
+}): Promise<{
+  data: AdminEngagementRow[];
+  meta?: { page: number; pageSize: number; total: number; totalPages: number };
+}> {
+  const sp = new URLSearchParams({ page: String(params.page ?? 1), limit: '20' });
+  if (params.status) sp.set('status', params.status);
+  return adminListFetch<AdminEngagementRow>(`/api/v1/admin/engagements?${sp}`);
+}
+
+export function updateAdminEngagement(
+  id: string,
+  input: { status?: string; notes?: string | null },
+): Promise<AdminEngagementRow> {
+  return adminFetch<AdminEngagementRow>(`/api/v1/admin/engagements/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export function fetchAdminFunnelEvents(params: {
+  page?: number;
+  event?: string;
+}): Promise<{
+  data: AdminFunnelEvent[];
+  meta?: { page: number; pageSize: number; total: number; totalPages: number };
+}> {
+  const sp = new URLSearchParams({ page: String(params.page ?? 1), limit: '20' });
+  if (params.event) sp.set('event', params.event);
+  return adminListFetch<AdminFunnelEvent>(`/api/v1/admin/funnel-events?${sp}`);
+}
+
+export function formatINRFromPaise(paise: number): string {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(paise / 100);
 }

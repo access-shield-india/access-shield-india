@@ -138,7 +138,11 @@ interface DayCounters {
   [field: string]: number;
 }
 
-async function redisDayCounters(redis: Redis, orgId: string, date: string): Promise<DayCounters | null> {
+async function redisDayCounters(
+  redis: Redis,
+  orgId: string,
+  date: string,
+): Promise<DayCounters | null> {
   const raw = await redis.hgetall(statsKey(orgId, date));
   if (!raw || Object.keys(raw).length === 0) return null;
   const out: DayCounters = {};

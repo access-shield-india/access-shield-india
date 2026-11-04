@@ -79,10 +79,7 @@ export async function startReportGenerateWorker(): Promise<void> {
           generatedBy: generatedBy ?? null,
         });
 
-        logger.info(
-          { scanId, reportId: result.reportId, reportType },
-          'report.generate completed',
-        );
+        logger.info({ scanId, reportId: result.reportId, reportType }, 'report.generate completed');
         channel.ack(msg);
       } catch (err) {
         logger.error({ err }, 'report.generate handler error');
@@ -91,10 +88,7 @@ export async function startReportGenerateWorker(): Promise<void> {
     },
   );
 
-  logger.info(
-    { queue: SCAN_PIPELINE_V2_QUEUES.REPORT_GENERATE },
-    'Report generate worker started',
-  );
+  logger.info({ queue: SCAN_PIPELINE_V2_QUEUES.REPORT_GENERATE }, 'Report generate worker started');
 }
 
 export async function shutdownReportGenerateWorker(): Promise<void> {

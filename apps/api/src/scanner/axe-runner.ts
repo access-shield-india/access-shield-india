@@ -13,7 +13,15 @@
 
 import { createHash } from 'crypto';
 import { logger } from '../lib/logger';
-import type { IssueSeverity } from '@accessshield/types';
+import type {
+  ContrastMetadata,
+  FrameMetadata,
+  ImageMetadata,
+  IssueSeverity,
+  LinkMetadata,
+  ViolationMetadata,
+  ViolationReviewStatus,
+} from '@accessshield/types';
 import { runCustomAxeRules } from './custom-rules';
 import type { ComplianceStandard, RawViolation, ScanJobConfig, WcagLevel } from './types';
 
@@ -21,11 +29,21 @@ import type { ComplianceStandard, RawViolation, ScanJobConfig, WcagLevel } from 
 type Page = import('playwright').Page;
 type Frame = import('playwright').Frame;
 
+/** axe-core check result (color-contrast data lives here) */
+interface AxeCheckResult {
+  id?: string;
+  data?: Record<string, unknown>;
+  message?: string;
+}
+
 /** axe-core result types */
 interface AxeNode {
   html: string;
   target: string[];
   failureSummary?: string;
+  any?: AxeCheckResult[];
+  all?: AxeCheckResult[];
+  none?: AxeCheckResult[];
 }
 
 interface AxeViolation {
@@ -41,7 +59,7 @@ interface AxeViolation {
 interface AxeResults {
   violations: AxeViolation[];
   passes: unknown[];
-  incomplete: unknown[];
+  incomplete: AxeViolation[];
   inapplicable: unknown[];
 }
 
@@ -238,30 +256,168 @@ async function runAxeInContext(
         values: tags,
       },
       reporter: 'v2',
-      resultTypes: ['violations'],
+      resultTypes: ['violations', 'incomplete'],
     });
   }, axeTags)) as AxeResults;
 }
 
-function mapAxeResults(
-  results: AxeResults,
+function parseFrameFromPrefix(selectorPrefix: string): FrameMetadata {
+  const match = selectorPrefix.match(/^\[iframe:(.+?)\]\s*/);
+  if (match?.[1]) {
+    return { context: 'iframe', frameUrl: match[1], crossOrigin: false };
+  }
+  return { context: 'main' };
+}
+
+function extractContrastData(node: AxeNode): ContrastMetadata | undefined {
+  const checks = [...(node.any ?? []), ...(node.all ?? []), ...(node.none ?? [])];
+  for (const check of checks) {
+    const data = check.data;
+    if (!data) continue;
+    const ratio = data.contrastRatio ?? data.contrast;
+    if (typeof ratio !== 'number' && typeof data.fgColor !== 'string') continue;
+
+    const expected =
+      typeof data.expectedContrastRatio === 'number'
+        ? data.expectedContrastRatio
+        : typeof data.contrastRatio === 'number' && data.contrastRatio < 4.5
+          ? 4.5
+          : 4.5;
+
+    return {
+      fgColor: typeof data.fgColor === 'string' ? data.fgColor : undefined,
+      bgColor: typeof data.bgColor === 'string' ? data.bgColor : undefined,
+      contrastRatio: typeof ratio === 'number' ? Math.round(ratio * 100) / 100 : undefined,
+      expectedContrastRatio: expected,
+      fontSize: typeof data.fontSize === 'string' ? data.fontSize : undefined,
+      fontWeight:
+        typeof data.fontWeight === 'string' || typeof data.fontWeight === 'number'
+          ? String(data.fontWeight)
+          : undefined,
+      wcagLevel: expected >= 7 ? 'AAA' : 'AA',
+    };
+  }
+  return undefined;
+}
+
+function extractLinkFromHtml(html: string): LinkMetadata | undefined {
+  const hrefMatch = html.match(/\bhref\s*=\s*["']([^"']*)["']/i);
+  const textMatch = html.match(/>([^<]*)</);
+  const ariaMatch = html.match(/\baria-label\s*=\s*["']([^"']*)["']/i);
+  const titleMatch = html.match(/\btitle\s*=\s*["']([^"']*)["']/i);
+  if (!hrefMatch && !textMatch && !ariaMatch) return undefined;
+  return {
+    href: hrefMatch?.[1] ?? null,
+    visibleText: textMatch?.[1]?.trim() || null,
+    accessibleName: ariaMatch?.[1] ?? titleMatch?.[1] ?? textMatch?.[1]?.trim() ?? null,
+    inNav: /role\s*=\s*["']navigation["']/i.test(html) || false,
+  };
+}
+
+function extractImageMeta(ruleId: string, html: string): ImageMetadata | undefined {
+  if (!['image-alt', 'input-image-alt', 'area-alt', 'svg-img-alt', 'role-img-alt'].includes(ruleId)) {
+    return undefined;
+  }
+  const altMatch = html.match(/\balt\s*=\s*["']([^"']*)["']/i);
+  const hasAltAttr = /\balt\s*=/i.test(html);
+  if (!hasAltAttr) {
+    return {
+      role: 'missing_alt',
+      alt: null,
+      guidance: 'Meaningful image is missing alternative text. Confirm it is not decorative.',
+    };
+  }
+  const alt = altMatch?.[1] ?? '';
+  if (alt === '') {
+    return {
+      role: 'decorative_suspect',
+      alt: '',
+      guidance:
+        'Empty alt marks the image as decorative. Manually verify it does not convey information.',
+    };
+  }
+  return {
+    role: 'meaningful_review',
+    alt,
+    guidance: 'Review whether this alternative text accurately describes the image.',
+  };
+}
+
+function buildDescription(
+  violation: AxeViolation,
+  node: AxeNode,
+  contrast: ContrastMetadata | undefined,
+  link: LinkMetadata | undefined,
+): string {
+  let base = `${violation.help}. ${node.failureSummary ?? violation.description}`;
+  if (contrast?.contrastRatio != null) {
+    const parts = [
+      `Contrast ratio ${contrast.contrastRatio}:1`,
+      contrast.expectedContrastRatio != null
+        ? `(requires ${contrast.expectedContrastRatio}:1 ${contrast.wcagLevel ?? 'AA'})`
+        : null,
+      contrast.fgColor ? `foreground ${contrast.fgColor}` : null,
+      contrast.bgColor ? `background ${contrast.bgColor}` : null,
+    ].filter(Boolean);
+    base = `${base} ${parts.join('; ')}.`;
+  }
+  if (link?.href) {
+    base = `${base} Affected link href: ${link.href}.`;
+    if (link.visibleText) {
+      base = `${base} Visible text: "${link.visibleText}".`;
+    }
+    if (!link.accessibleName) {
+      base = `${base} Accessible name is empty.`;
+    }
+  }
+  return base;
+}
+
+function mapAxeRuleList(
+  list: AxeViolation[],
   config: ScanJobConfig,
   assetId: string,
   pageUrl: string,
   seenFingerprints: Set<string>,
-  selectorPrefix = '',
+  selectorPrefix: string,
+  reviewStatus: ViolationReviewStatus,
 ): RawViolation[] {
   const violations: RawViolation[] = [];
+  const frame = parseFrameFromPrefix(selectorPrefix);
 
-  for (const violation of results.violations) {
+  for (const violation of list) {
     for (const node of violation.nodes) {
       const selector = `${selectorPrefix}${node.target.join(' > ')}`;
-      const fingerprint = computeFingerprint(assetId, violation.id, selector);
+      const fingerprint = computeFingerprint(
+        assetId,
+        reviewStatus === 'needs_manual' ? `${violation.id}:incomplete` : violation.id,
+        selector,
+      );
 
       if (seenFingerprints.has(fingerprint)) {
         continue;
       }
       seenFingerprints.add(fingerprint);
+
+      const contrast =
+        violation.id === 'color-contrast' ? extractContrastData(node) : undefined;
+      const link =
+        violation.id === 'link-name' || violation.id === 'link-in-text-block'
+          ? extractLinkFromHtml(node.html)
+          : undefined;
+      const image = extractImageMeta(violation.id, node.html);
+
+      const metadata: ViolationMetadata = {
+        frame,
+        ...(contrast ? { contrast } : {}),
+        ...(link ? { link } : {}),
+        ...(image ? { image } : {}),
+      };
+
+      let status = reviewStatus;
+      if (image?.role === 'decorative_suspect' && reviewStatus === 'confirmed') {
+        status = 'needs_manual';
+      }
 
       violations.push({
         ruleId: violation.id,
@@ -272,10 +428,12 @@ function mapAxeResults(
         elementType: extractElementType(node.html),
         elementHtml: node.html.substring(0, 2000),
         elementSelector: selector,
-        description: `${violation.help}. ${node.failureSummary ?? violation.description}`,
+        description: buildDescription(violation, node, contrast, link),
         helpUrl: violation.helpUrl,
         fingerprint,
         pageUrl,
+        reviewStatus: status,
+        metadata,
       });
     }
   }
@@ -283,9 +441,38 @@ function mapAxeResults(
   return violations;
 }
 
+function mapAxeResults(
+  results: AxeResults,
+  config: ScanJobConfig,
+  assetId: string,
+  pageUrl: string,
+  seenFingerprints: Set<string>,
+  selectorPrefix = '',
+): RawViolation[] {
+  const confirmed = mapAxeRuleList(
+    results.violations ?? [],
+    config,
+    assetId,
+    pageUrl,
+    seenFingerprints,
+    selectorPrefix,
+    'confirmed',
+  );
+  const incomplete = mapAxeRuleList(
+    results.incomplete ?? [],
+    config,
+    assetId,
+    pageUrl,
+    seenFingerprints,
+    selectorPrefix,
+    'needs_manual',
+  );
+  return [...confirmed, ...incomplete];
+}
+
 /**
  * RULE-001: axe-core cannot cross iframe boundaries. Run axe in every accessible child frame.
- * Cross-origin frames throw on script injection and are skipped (logged).
+ * Cross-origin frames throw on script injection → emit needs_manual finding with src.
  */
 async function collectIframeViolations(
   page: Page,
@@ -310,14 +497,46 @@ async function collectIframeViolations(
         ...mapAxeResults(results, config, assetId, pageUrl, seenFingerprints, prefix),
       );
       logger.info(
-        { pageUrl, frameUrl, violationCount: results.violations.length },
+        {
+          pageUrl,
+          frameUrl,
+          violationCount: results.violations.length,
+          incompleteCount: results.incomplete?.length ?? 0,
+        },
         'RULE-001 axe-core iframe scan complete',
       );
     } catch (err) {
       logger.debug(
         { err, pageUrl, frameUrl },
-        'RULE-001 skipped inaccessible iframe (likely cross-origin)',
+        'RULE-001 inaccessible iframe (likely cross-origin) — flagging for manual review',
       );
+      const selector = `[iframe:${frameUrl}]`;
+      const fingerprint = computeFingerprint(assetId, 'RULE-001-cross-origin', selector);
+      if (!seenFingerprints.has(fingerprint)) {
+        seenFingerprints.add(fingerprint);
+        collected.push({
+          ruleId: 'RULE-001-cross-origin',
+          wcagCriterion: '4.1.2',
+          wcagLevel: 'A',
+          standard: 'WCAG22',
+          severity: 'moderate',
+          elementType: 'iframe',
+          elementHtml: `<iframe src="${frameUrl}">`,
+          elementSelector: selector,
+          description: `Embedded frame at ${frameUrl} could not be inspected (cross-origin). Manually verify page title, language, and accessibility of content inside the frame.`,
+          helpUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/name-role-value.html',
+          fingerprint,
+          pageUrl,
+          reviewStatus: 'needs_manual',
+          metadata: {
+            frame: {
+              context: 'iframe',
+              frameUrl,
+              crossOrigin: true,
+            },
+          },
+        });
+      }
     }
   }
 

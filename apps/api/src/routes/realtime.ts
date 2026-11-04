@@ -22,10 +22,7 @@ const ticketBodySchema = z.object({
   channels: z.array(z.string().min(1)).min(1).max(10),
 });
 
-function parseChannelAcl(
-  channel: string,
-  orgId: string,
-): { ok: boolean; scanId?: string } {
+function parseChannelAcl(channel: string, orgId: string): { ok: boolean; scanId?: string } {
   if (channel === `org:${orgId}` || channel === `issues:${orgId}`) {
     return { ok: true };
   }

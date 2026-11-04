@@ -30,6 +30,10 @@ import { createScannerRouter, closeRabbitMQ } from './scanner/orchestrator';
 import { createPublicScanRouter } from './routes/public-scan';
 import { createPublicWaitlistRouter } from './routes/public-waitlist';
 import { createPublicSignupRouter } from './routes/public-signup';
+import { createPublicFunnelRouter } from './routes/public-funnel';
+import { createPublicEnterpriseQuotesRouter } from './routes/enterprise-quotes';
+import { createEngagementsRouter } from './routes/engagements';
+import { createCheckoutRouter } from './routes/checkout';
 import { createAdminRouter } from './routes/admin';
 import { createDocumentScansRouter } from './routes/document-scans';
 import { createRealtimeRouter } from './routes/realtime';
@@ -118,6 +122,12 @@ async function bootstrap() {
   const publicSignupRouter = createPublicSignupRouter(db, redis, secrets);
   app.use('/api/v1/public/signup', publicSignupRouter);
 
+  const publicFunnelRouter = createPublicFunnelRouter(db, redis);
+  app.use('/api/v1/public/funnel-events', publicFunnelRouter);
+
+  const publicEnterpriseQuotesRouter = createPublicEnterpriseQuotesRouter(db, redis);
+  app.use('/api/v1/public/enterprise-quotes', publicEnterpriseQuotesRouter);
+
   const publicWidgetRouter = createPublicWidgetRouter(db, redis);
   app.use('/api/v1/widget', publicWidgetRouter);
 
@@ -157,6 +167,12 @@ async function bootstrap() {
 
   const billingRouter = createBillingRouter(db);
   app.use('/api/v1', billingRouter);
+
+  const checkoutRouter = createCheckoutRouter(db);
+  app.use('/api/v1', checkoutRouter);
+
+  const engagementsRouter = createEngagementsRouter(db);
+  app.use('/api/v1/engagements', engagementsRouter);
 
   const notificationsRouter = createNotificationsRouter(db, redis);
   app.use('/api/v1/notifications', notificationsRouter);

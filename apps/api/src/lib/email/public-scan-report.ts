@@ -17,8 +17,7 @@ const LEAD_KEY = (scanId: string) => `public-scan:lead:${scanId}`;
 const SENT_KEY = (scanId: string) => `public-scan:email-sent:${scanId}`;
 
 /** Ops copy of every free-scan report (override via PUBLIC_SCAN_REPORT_BCC; empty to disable). */
-const PUBLIC_SCAN_REPORT_BCC =
-  process.env.PUBLIC_SCAN_REPORT_BCC ?? 'nilesh.varma@gmail.com';
+const PUBLIC_SCAN_REPORT_BCC = process.env.PUBLIC_SCAN_REPORT_BCC ?? 'nilesh.varma@gmail.com';
 
 interface SeverityCounts {
   critical: number;

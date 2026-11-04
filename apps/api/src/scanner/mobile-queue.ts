@@ -23,7 +23,8 @@ export interface MobileScanJobMessage {
   };
 }
 
-let rabbitConnection: Awaited<ReturnType<typeof amqp.connect>> | null = null;
+/** Kept rooted so the AMQP connection is not GC'd while the channel is open. */
+let _rabbitConnection: Awaited<ReturnType<typeof amqp.connect>> | null = null;
 let rabbitChannel: Awaited<
   ReturnType<Awaited<ReturnType<typeof amqp.connect>>['createChannel']>
 > | null = null;
@@ -37,7 +38,7 @@ async function ensureRabbitMQ() {
   }
 
   const conn = await amqp.connect(rabbitUrl);
-  rabbitConnection = conn;
+  _rabbitConnection = conn;
   const channel = await conn.createChannel();
   rabbitChannel = channel;
 
@@ -45,7 +46,7 @@ async function ensureRabbitMQ() {
 
   conn.on('close', () => {
     logger.warn('RabbitMQ mobile queue connection closed');
-    rabbitConnection = null;
+    _rabbitConnection = null;
     rabbitChannel = null;
   });
 

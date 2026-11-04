@@ -4,7 +4,10 @@ import { useState } from 'react';
 import type { Metadata } from 'next';
 import { Check, X } from 'lucide-react';
 import { ButtonLink } from '@/components/marketing/ButtonLink';
+import { RevenueLaneBadge } from '@/components/marketing/RevenueLaneBadge';
+import { WidgetComplianceDisclaimer } from '@/components/marketing/pricing/WidgetComplianceDisclaimer';
 import { useDictionary } from '@/lib/i18n/locale-context';
+import { AUTOMATION_DISCLAIMER } from '@/lib/pricing/catalog';
 import { cn } from '@/lib/utils';
 import * as Accordion from '@radix-ui/react-accordion';
 
@@ -23,6 +26,14 @@ export default function PricingPage() {
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-text-secondary">
             {pricing.hero.subtitle}
           </p>
+          <p className="mx-auto mt-4 max-w-2xl text-sm text-text-tertiary" role="note">
+            {AUTOMATION_DISCLAIMER}
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+            <RevenueLaneBadge lane="product" />
+            <RevenueLaneBadge lane="services" />
+            <RevenueLaneBadge lane="enterprise" />
+          </div>
         </div>
       </header>
 
@@ -32,7 +43,8 @@ export default function PricingPage() {
         className="border-b border-gray-200 bg-accent-50 px-4 py-16 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-5xl">
-          <div className="mb-4 flex items-center justify-center gap-3">
+          <div className="mb-4 flex flex-wrap items-center justify-center gap-3">
+            <RevenueLaneBadge lane="services" />
             <h2 id="onetime-heading" className="text-3xl font-bold text-text-primary">
               {pricing.oneTime.title}
             </h2>
@@ -61,7 +73,7 @@ export default function PricingPage() {
               ))}
             </ul>
             <ButtonLink
-              href="/contact?type=certification"
+              href="/contact?service=audit-web"
               size="lg"
               variant="primary"
               className="mt-8 w-full"
@@ -78,6 +90,9 @@ export default function PricingPage() {
         className="border-b border-gray-200 bg-white px-4 py-16 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-7xl">
+          <div className="mb-4 flex justify-center">
+            <RevenueLaneBadge lane="product" />
+          </div>
           <h2
             id="subscriptions-heading"
             className="text-center text-3xl font-bold text-text-primary"
@@ -195,7 +210,7 @@ export default function PricingPage() {
                     Feature
                   </th>
                   <th className="px-6 py-4 text-center text-sm font-semibold text-text-primary">
-                    Starter
+                    Developer
                   </th>
                   <th className="px-6 py-4 text-center text-sm font-semibold text-text-primary">
                     Professional
@@ -212,15 +227,15 @@ export default function PricingPage() {
                       {row.feature}
                     </td>
                     <td className="px-6 py-4 text-center text-base text-text-secondary">
-                      {row.starter === '✓' ? (
+                      {row.developer === '✓' ? (
                         <Check className="mx-auto h-5 w-5 text-success-700" aria-label="Included" />
-                      ) : row.starter === '✗' ? (
+                      ) : row.developer === '✗' ? (
                         <X
                           className="mx-auto h-5 w-5 text-text-tertiary"
                           aria-label="Not included"
                         />
                       ) : (
-                        row.starter
+                        row.developer
                       )}
                     </td>
                     <td className="px-6 py-4 text-center text-base text-text-secondary">
@@ -342,6 +357,10 @@ export default function PricingPage() {
             ))}
           </Accordion.Root>
         </div>
+      </section>
+
+      <section className="bg-bg-secondary px-4 py-12 sm:px-6 lg:px-8" aria-label="Compliance notes">
+        <WidgetComplianceDisclaimer />
       </section>
     </>
   );

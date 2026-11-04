@@ -6,9 +6,7 @@ describe('resolveAiBackend', () => {
     const previous = process.env.ANTHROPIC_API_KEY;
     delete process.env.ANTHROPIC_API_KEY;
 
-    expect(
-      resolveAiBackend('anthropic', 'claude-sonnet-4-5-20250929'),
-    ).toEqual({
+    expect(resolveAiBackend('anthropic', 'claude-sonnet-4-5-20250929')).toEqual({
       provider: 'local',
       model: 'Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF',
     });

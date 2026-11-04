@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Create or update sysadmin@accessshield.in in Keycloak with super_admin attributes,
-# then sync users.auth_user_id in Postgres.
+# Create or update sysadmin@accessiblenow.in in Keycloak with super_admin attributes,
+# then sync users.auth_user_id + email in Postgres.
 #
 # Required (environment or .env.local / .env):
 #   KEYCLOAK_URL, KEYCLOAK_REALM, KEYCLOAK_ADMIN_CLIENT_ID, KEYCLOAK_ADMIN_CLIENT_SECRET
@@ -51,7 +51,7 @@ CLIENT_ID="${KEYCLOAK_ADMIN_CLIENT_ID:-accessshield-api}"
 CLIENT_SECRET="${KEYCLOAK_ADMIN_CLIENT_SECRET:-}"
 PASSWORD="${SYSADMIN_INITIAL_PASSWORD:-}"
 WEB_CLIENT_ID="${NEXT_PUBLIC_AUTH_CLIENT_ID:-accessshield-web}"
-EMAIL="sysadmin@accessshield.in"
+EMAIL="sysadmin@accessiblenow.in"
 FIRST_NAME="Sys"
 LAST_NAME="Admin"
 PLATFORM_ORG_ID="44444444-4444-4444-4444-444444444444"
@@ -189,8 +189,10 @@ SQL_SYNC="
 UPDATE users SET auth_user_id = '00000000-0000-0000-0000-000000000099', updated_at = now()
 WHERE auth_user_id = '${AUTH_USER_ID}' AND id <> '${APP_USER_ID}';
 UPDATE users SET auth_user_id = '${AUTH_USER_ID}', role = 'super_admin',
-  organisation_id = '${PLATFORM_ORG_ID}', is_active = true, updated_at = now()
+  email = '${EMAIL}', organisation_id = '${PLATFORM_ORG_ID}', is_active = true, updated_at = now()
 WHERE id = '${APP_USER_ID}';
+UPDATE organisations SET billing_email = '${EMAIL}', updated_at = now()
+WHERE id = '${PLATFORM_ORG_ID}';
 "
 
 if [[ -n "${DATABASE_URL:-}" ]]; then

@@ -7,6 +7,8 @@ export { eq, and, or, not, isNull, isNotNull, inArray, sql, desc, asc } from 'dr
 export {
   lookupUserByAuthId,
   lookupUserClaimsByAuthId,
+  lookupAccountAccessByAuthId,
+  type AccountAccessStatus,
   type ResolvedApplicationUser,
   type ResolvedUserClaims,
 } from './user-claims';

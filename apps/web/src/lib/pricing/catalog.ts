@@ -1,31 +1,36 @@
-/** Single source of truth for marketing /services pricing (INR, excl. GST). */
+/**
+ * Single source of truth for AccessibleNow India revenue model (INR, excl. GST).
+ * Illustrative strategy prices — not Deque or third-party benchmarks.
+ */
 
 export type BillingPeriod = 'monthly' | 'annual';
 
+export type ProductPlanId = 'developer' | 'professional' | 'enterprise';
+
 export interface MonthlyPlan {
-  id: string;
+  id: ProductPlanId | 'widget_addon';
   name: string;
   description: string;
-  monthlyPriceInr: number;
-  annualPriceInr: number;
+  /** null = custom / contact sales */
+  monthlyPriceInr: number | null;
+  annualPriceInr: number | null;
   badge?: string;
   popular?: boolean;
-  remediationRequired?: boolean;
+  /** Requires expert audit before full value (enterprise monitoring) */
   assessRequired?: boolean;
-  noAuditRequired?: boolean;
   features: readonly string[];
   cta: { text: string; href: string };
-  checkoutNote?: string;
+  checkoutNote?: 'assess' | 'custom';
 }
 
 export interface OneTimeSku {
   id: string;
   name: string;
   subtitle: string;
+  /** Published “from” floor */
   priceInr: number;
   priceNote?: string;
   originalPriceInr?: number;
-  /** Overrides default popular / highlighted pill when set. */
   badge?: string;
   popular?: boolean;
   highlighted?: boolean;
@@ -33,113 +38,144 @@ export interface OneTimeSku {
   cta: { text: string; href: string };
 }
 
+export const AUTOMATION_DISCLAIMER =
+  'Automated scanning alone cannot establish full WCAG, RPwD, IS 17802, GIGW, or SEBI conformance. Paid offers include or recommend appropriate manual testing and expert review.';
+
+export const PRICING_STRATEGY_DISCLAIMER =
+  'Prices shown are AccessibleNow’s illustrative product strategy for the Indian market — not Deque Systems pricing or established market benchmarks.';
+
 export const PRICING_CATALOG = {
   freeTier: {
     name: 'Free scan',
-    description: '1 website · 1 scan per month · issue summary',
+    description: '1 website · 1 scan · issue summary — acquisition channel, not full compliance',
     cta: { text: 'Run free scan', href: '/scan' },
     signupCta: { text: 'Create free account', href: '/signup' },
   },
 
-  /** STEP 01 — Monthly subscriptions */
+  /** Product revenue — recurring SaaS */
   monthlyPlans: [
     {
-      id: 'widget',
-      name: 'Widget Only',
-      description: 'Standalone — works on any website. No audit or remediation required.',
-      monthlyPriceInr: 999,
-      annualPriceInr: 9990,
-      badge: 'No audit required',
-      noAuditRequired: true,
+      id: 'developer',
+      name: 'Developer',
+      description:
+        'Detailed findings, AI remediation guidance, and repeat scans for one site — land-and-expand for engineers and QA.',
+      monthlyPriceInr: 1499,
+      annualPriceInr: 14990,
+      badge: 'Start here',
       features: [
-        '14-day free trial',
-        'Accessibility widget (Hindi + English UI)',
-        'Font size, contrast & dyslexia tools',
-        'Keyboard navigation enhancements',
-        'Widget updates & uptime monitoring',
-        '10 document scans / month',
+        '1 asset',
+        '10 scans / month',
+        'Detailed axe + IS 17802 findings',
+        'AI remediation guidance (limited)',
+        'Issue tracker',
+        'Email support',
       ],
-      cta: { text: 'Contact sales', href: '/contact?plan=widget' },
+      cta: { text: 'Start Developer', href: '/signup?plan=developer' },
     },
     {
       id: 'professional',
       name: 'Professional',
-      description: 'Scan, report, and widget — for companies getting started with compliance.',
-      monthlyPriceInr: 1999,
-      annualPriceInr: 19999,
+      description:
+        'Multiple projects, team workflows, reports, and Hindi/English widget — for organisations shipping accessible products.',
+      monthlyPriceInr: 7999,
+      annualPriceInr: 79990,
       popular: true,
       badge: 'Most popular',
       features: [
-        'Everything in Widget Only',
-        '20 scans per month',
-        '100 document scans / month',
-        'Batch upload (25 files)',
+        'Everything in Developer',
+        '10 assets · unlimited scans',
+        'Accessibility widget (Hindi + English)',
         'PDF reports (WCAG 2.2 + IS 17802)',
-        'Violation severity breakdown',
-        'Scan history & email export',
+        'Team roles · Learn progress',
+        'Policy PR Gate · Dynamic journeys',
+        'Priority support',
       ],
-      cta: { text: 'Contact sales', href: '/contact?plan=professional' },
+      cta: { text: 'Start Professional', href: '/signup?plan=professional' },
     },
     {
-      id: 'compliance_shield',
-      name: 'Stay Compliant',
-      description: 'Ongoing monitoring after your site is remediated and certified.',
-      monthlyPriceInr: 4999,
-      annualPriceInr: 49990,
-      remediationRequired: true,
-      assessRequired: true,
-      features: [
-        'Everything in Professional',
-        'Unlimited WCAG + IS 17802 scans',
-        'Unlimited document scans',
-        'Batch upload (100 files)',
-        'Quarterly specialist spot-check',
-        'Annual compliance assessment report',
-        'Badge renewal & priority support',
-      ],
-      cta: { text: 'Contact sales', href: '/contact?plan=stay-compliant' },
-      checkoutNote: 'assess',
-    },
-    {
-      id: 'regulatory_defense',
-      name: 'Regulatory Defense',
-      description: 'For listed companies, BFSI, PSUs, and government-facing organisations.',
-      monthlyPriceInr: 7999,
-      annualPriceInr: 79990,
+      id: 'enterprise',
+      name: 'Enterprise',
+      description:
+        'Multi-domain monitoring, audit trails, governance, SEBI/GIGW/RPwD evidence — annual programme with expert support.',
+      monthlyPriceInr: null,
+      annualPriceInr: null,
       badge: 'BFSI & Govt',
-      remediationRequired: true,
       assessRequired: true,
+      checkoutNote: 'custom',
       features: [
-        'Website + mobile app monitoring',
-        'Everything in Stay Compliant',
-        'Unlimited document scans + API access',
-        'Batch upload (500 files)',
-        'SEBI assessment (1/year included)',
-        'RPwD & GIGW evidence pack',
-        '72-hour regulatory triage',
-        'IAAP-certified sign-off (annual)',
+        'Unlimited assets & scans',
+        'Posture · Analytics · Policy · Red',
+        'SEBI / GIGW / RPwD evidence packs',
+        'Monitoring digests & SLA options',
+        'Training seats · dedicated CSM',
+        'SSO / Keycloak org · API access',
+        'Custom annual contract (from ₹2.5L/yr)',
       ],
-      cta: { text: 'Contact sales', href: '/contact?plan=regulatory-defense' },
-      checkoutNote: 'assess',
+      cta: { text: 'Talk to sales', href: '/contact?plan=enterprise' },
     },
   ] satisfies MonthlyPlan[],
 
-  widgetDisclaimer:
-    'The accessibility widget is a user-experience enhancement — not a compliance mechanism. It does not, on its own, make a site RPwD-, SEBI-, or GIGW-compliant. True compliance requires a full assessment, code-level remediation, and documented evidence.',
+  /** Optional add-on — not a lead plan */
+  widgetAddon: {
+    id: 'widget_addon',
+    name: 'Widget only',
+    description: 'Standalone accessibility widget when you do not need the full platform yet.',
+    monthlyPriceInr: 1499,
+    annualPriceInr: 14990,
+    features: [
+      'Hindi + English UI',
+      'Font size, contrast & dyslexia tools',
+      'Keyboard navigation enhancements',
+      'Included free with Professional+',
+    ],
+    cta: { text: 'Contact sales', href: '/contact?plan=widget_addon' },
+  } satisfies MonthlyPlan,
 
-  /** STEP 02 — Remediation */
-  remediation: [
+  widgetDisclaimer:
+    'The accessibility widget is a user-experience enhancement — not a compliance mechanism. It does not, on its own, make a site RPwD-, SEBI-, or GIGW-compliant. True compliance requires assessment, code-level remediation, and documented evidence.',
+
+  automationDisclaimer: AUTOMATION_DISCLAIMER,
+  strategyDisclaimer: PRICING_STRATEGY_DISCLAIMER,
+
+  /** Expert services — project-based (published “from” floors) */
+  expertServices: [
+    {
+      id: 'audit-web',
+      name: 'Documented accessibility audit',
+      subtitle: 'Website · automated + manual · from',
+      priceInr: 24999,
+      popular: true,
+      highlighted: true,
+      priceNote: 'Scoped after discovery call · contact sales',
+      features: [
+        'WCAG 2.2 AA + IS 17802 automated scan',
+        'Manual keyboard & specialist review',
+        'Severity-ranked findings report',
+        'Prioritized remediation roadmap with owners',
+      ],
+      cta: { text: 'Book audit', href: '/contact?service=audit-web' },
+    },
+    {
+      id: 'at-manual',
+      name: 'Screen reader & keyboard testing',
+      subtitle: 'AT-assisted journeys · from',
+      priceInr: 19999,
+      features: [
+        'Keyboard-only walkthroughs',
+        'Screen-reader / AT-sim evidence',
+        'Failure map for critical flows',
+        'Notes for remediation owners',
+      ],
+      cta: { text: 'Request AT testing', href: '/contact?service=at-manual' },
+    },
     {
       id: 'remediation-small',
-      name: 'Brochure site',
-      subtitle: '1–15 pages · one-time remediation',
-      priceInr: 49999,
-      popular: true,
-      priceNote: 'Scoped after assessment · contact sales for a quote',
+      name: 'Remediation — brochure site',
+      subtitle: '1–15 pages · one-time · from',
+      priceInr: 75000,
       features: [
-        'Alt text & colour contrast fixes',
-        'Heading structure & keyboard navigation',
-        'Form labels and mobile touch targets',
+        'Alt text, contrast, headings, keyboard',
+        'Form labels & touch targets',
         'Accessibility statement page',
         'Re-scan verification before hand-off',
       ],
@@ -147,70 +183,42 @@ export const PRICING_CATALOG = {
     },
     {
       id: 'remediation-large',
-      name: 'Larger / e-commerce site',
-      subtitle: 'Transaction flows · portals',
-      priceInr: 99999,
-      priceNote: 'Scoped after assessment · contact sales for a quote',
+      name: 'Remediation — portal / checkout',
+      subtitle: 'Transaction flows · from',
+      priceInr: 200000,
       features: [
-        'Everything in Brochure site package',
-        'Checkout & payment flow accessibility',
-        'Template-level site-wide remediation',
-        'PDF and document review',
+        'Everything in brochure package',
+        'Checkout / KYC / investor flows',
+        'Template-level site-wide fixes',
         'Dedicated project manager',
       ],
       cta: { text: 'Contact sales', href: '/contact?service=remediation-large' },
     },
-  ] satisfies OneTimeSku[],
-
-  /** ADD-ON — Standalone assessment */
-  standaloneAssessment: {
-    id: 'assess',
-    name: 'Compliance Website Audit & Scan',
-    subtitle: 'Standalone or bundled with monitoring',
-    priceInr: 4999,
-    badge: 'Free for first 100 customers',
-    highlighted: true,
-    priceNote:
-      'Launch offer — free for the first 100 customers · contact sales for details',
-    features: [
-      'WCAG 2.2 AA + IS 17802 automated scan',
-      'Hands-on manual review by specialists',
-      'Keyboard and screen-reader testing',
-      'Severity-ranked findings report',
-      'Prioritized remediation roadmap',
-      'Required before Stay Compliant & Regulatory Defense',
-    ],
-    cta: { text: 'Contact sales', href: '/contact?service=assess' },
-  } satisfies OneTimeSku,
-
-  addons: [
     {
       id: 'mobile-scan',
       name: 'Mobile app assessment',
-      subtitle: 'Android APK / iOS IPA',
-      priceInr: 9999,
+      subtitle: 'Android APK / iOS IPA · from',
+      priceInr: 24999,
       features: [
-        'Native app scan (Appium)',
+        'Native app scan',
         'WCAG 2.2 + IS 17802 mobile rules',
-        'Screen-by-screen violation report',
-        'Included with Regulatory Defense',
+        'Screen-by-screen report',
+        'Included in many Enterprise deals',
       ],
       cta: { text: 'Contact sales', href: '/contact?service=mobile-scan' },
     },
     {
-      id: 'document-batch-audit',
-      name: 'Document Accessibility Batch Audit',
-      subtitle: 'Up to 500 documents per batch',
-      priceInr: 15000,
-      priceNote: 'Ideal for ministry document libraries and RTI archives',
+      id: 'sebi-pack',
+      name: 'SEBI evidence pack',
+      subtitle: 'Listed companies · from',
+      priceInr: 49999,
       features: [
-        'Up to 500 documents (PDF, Word, PowerPoint, Excel)',
-        'Unified compliance report',
-        'GIGW checkpoint summary',
-        'Priority queue (2hr turnaround)',
-        'Certificate-ready evidence pack',
+        'SEBI circular–aligned report',
+        'Evidence trail for board / compliance',
+        'Annual reassessment option',
+        'Often bundled in Enterprise',
       ],
-      cta: { text: 'Contact sales', href: '/contact?service=document-batch-audit' },
+      cta: { text: 'Contact sales', href: '/contact?service=sebi-pack' },
     },
   ] satisfies OneTimeSku[],
 
@@ -220,12 +228,12 @@ export const PRICING_CATALOG = {
     'IS 17802 India-specific rule coverage',
     'Page-by-page violation export',
     'Downloadable PDF for audit files',
-    'GIGW & RPwD alignment summary (Regulatory Defense)',
+    'GIGW & RPwD alignment summary (Enterprise)',
   ],
 
   indiaCompliance: {
     gstNote:
-      'We issue GST-compliant invoices for paid engagements. Registered businesses may claim input tax credit (ITC) where applicable. Government departments can pay via PO or annual contract. Contact sales for a tailored quote.',
+      'We issue GST-compliant invoices for paid engagements (+18% GST). Registered businesses may claim ITC where applicable. Government departments can pay via PO or annual contract.',
     links: [
       { label: 'RPwD Act 2016', href: '/rpwd-act' },
       { label: 'IS 17802', href: '/is-17802' },
@@ -235,22 +243,43 @@ export const PRICING_CATALOG = {
   },
 
   enterprise: {
-    cta: { text: 'Contact sales', href: '/contact?plan=enterprise' },
-    note: 'Multi-site portfolios, custom SLAs, and on-site training are scoped after your baseline scan.',
+    cta: { text: 'Talk to sales', href: '/contact?plan=enterprise' },
+    fromAnnualInr: 250000,
+    note: 'Multi-site portfolios, custom SLAs, training, and on-site programmes are scoped after your baseline scan and audit engagement.',
+  },
+
+  funnelCtas: {
+    upgradeDeveloper: { text: 'Upgrade to Developer', href: '/signup?plan=developer' },
+    bookAudit: { text: 'Book compliance audit', href: '/contact?service=audit-web' },
+    talkEnterprise: { text: 'Talk to sales (Enterprise)', href: '/contact?plan=enterprise' },
   },
 
   rules: {
     gstRate: 0.18,
-    assessPriceInr: 4999,
+    assessPriceInr: 24999,
     assessLaunchFreeCustomerLimit: 100,
-    professionalScansPerMonth: 20,
+    developerScansPerMonth: 10,
+    professionalScansPerMonth: null as number | null,
     remediationPerPageInr: 2000,
   },
 } as const;
 
 export const MONTHLY_PLANS = PRICING_CATALOG.monthlyPlans;
 
-/** @deprecated Use MONTHLY_PLANS */
+/** Remediation SKUs only */
+export const REMEDIATION_SKUS = PRICING_CATALOG.expertServices.filter(
+  (s) => s.id === 'remediation-small' || s.id === 'remediation-large',
+);
+
+export const STANDALONE_AUDIT = PRICING_CATALOG.expertServices.find((s) => s.id === 'audit-web')!;
+
+export const EXPERT_ADDONS = PRICING_CATALOG.expertServices.filter(
+  (s) => s.id === 'mobile-scan' || s.id === 'sebi-pack' || s.id === 'at-manual',
+);
+
+/** @deprecated */
+export const remediation = REMEDIATION_SKUS;
+
 export interface PublicPlan {
   id: string;
   name: string;
@@ -263,7 +292,17 @@ export interface PublicPlan {
   cta: { text: string; href: string };
 }
 
-export const PUBLIC_PLANS: PublicPlan[] = [];
+export const PUBLIC_PLANS: PublicPlan[] = MONTHLY_PLANS.map((p) => ({
+  id: p.id,
+  name: p.name,
+  description: p.description,
+  monthlyPriceInr: p.monthlyPriceInr,
+  annualPriceInr: p.annualPriceInr,
+  badge: p.badge,
+  popular: p.popular,
+  features: p.features,
+  cta: p.cta,
+}));
 
 function formatInrStatic(amount: number): string {
   return new Intl.NumberFormat('en-IN', {
@@ -278,16 +317,19 @@ export function formatInr(amount: number): string {
 }
 
 export function formatPlanPrice(
-  monthlyPriceInr: number,
-  annualPriceInr: number,
+  monthlyPriceInr: number | null,
+  annualPriceInr: number | null,
   period: BillingPeriod,
 ): string {
+  if (monthlyPriceInr == null || annualPriceInr == null) {
+    return 'Custom';
+  }
   const amount = period === 'monthly' ? monthlyPriceInr : annualPriceInr;
   return `${formatInr(amount)}${period === 'annual' ? '/year' : '/month'}`;
 }
 
 export function assessCheckoutSubline(): string {
-  return 'A Compliance Website Audit & Scan is required before Stay Compliant or Regulatory Defense monitoring begins. Contact sales to get started.';
+  return 'A documented accessibility audit is recommended before Enterprise monitoring and evidence packs. Contact sales to get started.';
 }
 
 export function auditCheckoutSubline(): string {
@@ -307,11 +349,13 @@ export interface SubscriptionPlan {
 
 export const MONITORING_PLANS: SubscriptionPlan[] = [];
 export const SUBSCRIPTION_PLANS = MONITORING_PLANS;
-export const PAID_PUBLIC_PLANS: PublicPlan[] = [];
+export const PAID_PUBLIC_PLANS: PublicPlan[] = PUBLIC_PLANS.filter(
+  (p) => p.monthlyPriceInr != null,
+);
 
 export function formatSubscriptionPrice(
-  monthlyPriceInr: number,
-  annualPriceInr: number,
+  monthlyPriceInr: number | null,
+  annualPriceInr: number | null,
   period: BillingPeriod,
 ): string {
   return formatPlanPrice(monthlyPriceInr, annualPriceInr, period);

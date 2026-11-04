@@ -2,7 +2,7 @@
  * Base Styles for Report Templates
  *
  * Shared CSS injected into every report template's <style> tag.
- * Uses AccessShield design tokens per .cursorrules Section 6.
+ * Uses AccessibleNow design tokens per .cursorrules Section 6.
  */
 
 export const REPORT_BASE_CSS = `

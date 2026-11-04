@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { Button } from '@accessshield/ui';
+import { BrandLogo } from '@/components/brand/BrandLogo';
+import { LocaleLink } from '@/components/common/LocaleLink';
+import { useDictionary } from '@/lib/i18n/locale-context';
 import { signInWithGoogle } from '@/lib/auth/google-sign-in';
 
 function safeRedirectPath(value: string | null): string {
@@ -17,6 +20,7 @@ function safeRedirectPath(value: string | null): string {
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { common } = useDictionary();
   const redirectTo = safeRedirectPath(searchParams.get('redirectTo'));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -56,6 +60,15 @@ export default function LoginPage() {
   return (
     <main id="main-content" className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md">
+        <div className="mb-8 flex justify-center">
+          <LocaleLink
+            href="/"
+            className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+            aria-label={`${common.brand} — Home`}
+          >
+            <BrandLogo variant="full" height={72} priority decorative />
+          </LocaleLink>
+        </div>
         <h1 className="text-2xl font-bold text-gray-900">Sign in to AccessibleNow</h1>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6" noValidate>

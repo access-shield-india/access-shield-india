@@ -86,10 +86,7 @@ export default async function MultilingualAccessibilityPage({
         className="border-b border-gray-200 bg-white px-4 py-16 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-5xl">
-          <h2
-            id="problem-heading"
-            className="text-center text-3xl font-bold text-text-primary"
-          >
+          <h2 id="problem-heading" className="text-center text-3xl font-bold text-text-primary">
             {page.problem.title}
           </h2>
           <p className="mx-auto mt-6 max-w-3xl text-center text-lg leading-normal text-text-secondary">
@@ -98,10 +95,7 @@ export default async function MultilingualAccessibilityPage({
           <div className="mt-12 grid gap-6 sm:grid-cols-2">
             <div className="rounded-xl border-2 border-error-700 bg-error-100 p-8">
               <div className="mb-3 flex items-center gap-2">
-                <span
-                  className="text-2xl font-bold text-error-700"
-                  aria-hidden="true"
-                >
+                <span className="text-2xl font-bold text-error-700" aria-hidden="true">
                   ✗
                 </span>
                 <h3 className="text-lg font-semibold text-error-700">Wrong</h3>
@@ -112,17 +106,12 @@ export default async function MultilingualAccessibilityPage({
             </div>
             <div className="rounded-xl border-2 border-success-700 bg-success-100 p-8">
               <div className="mb-3 flex items-center gap-2">
-                <span
-                  className="text-2xl font-bold text-success-700"
-                  aria-hidden="true"
-                >
+                <span className="text-2xl font-bold text-success-700" aria-hidden="true">
                   ✓
                 </span>
                 <h3 className="text-lg font-semibold text-success-700">Right</h3>
               </div>
-              <p className="text-base text-text-secondary">
-                {page.problem.example.right}
-              </p>
+              <p className="text-base text-text-secondary">{page.problem.example.right}</p>
             </div>
           </div>
         </div>
@@ -134,10 +123,7 @@ export default async function MultilingualAccessibilityPage({
         className="border-b border-gray-200 bg-bg-secondary px-4 py-16 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-7xl">
-          <h2
-            id="provide-heading"
-            className="text-center text-3xl font-bold text-text-primary"
-          >
+          <h2 id="provide-heading" className="text-center text-3xl font-bold text-text-primary">
             {page.whatWeProvide.title}
           </h2>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -155,9 +141,7 @@ export default async function MultilingualAccessibilityPage({
                     <Icon className="h-6 w-6" />
                   </div>
                   <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
-                  <p className="text-sm leading-normal text-text-secondary">
-                    {description}
-                  </p>
+                  <p className="text-sm leading-normal text-text-secondary">{description}</p>
                 </div>
               );
             })}
@@ -171,10 +155,7 @@ export default async function MultilingualAccessibilityPage({
         className="border-b border-gray-200 bg-white px-4 py-16 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-5xl">
-          <h2
-            id="coverage-heading"
-            className="text-center text-3xl font-bold text-text-primary"
-          >
+          <h2 id="coverage-heading" className="text-center text-3xl font-bold text-text-primary">
             {page.languageCoverage.title}
           </h2>
           <div className="mt-12 overflow-x-auto">
@@ -193,10 +174,7 @@ export default async function MultilingualAccessibilityPage({
               </thead>
               <tbody>
                 {page.languageCoverage.rows.map((row, index) => (
-                  <tr
-                    key={index}
-                    className="border-b border-border hover:bg-bg-secondary"
-                  >
+                  <tr key={index} className="border-b border-border hover:bg-bg-secondary">
                     <td className="px-6 py-4 text-base font-medium text-text-primary">
                       {row.language}
                     </td>

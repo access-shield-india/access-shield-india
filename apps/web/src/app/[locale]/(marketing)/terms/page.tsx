@@ -44,6 +44,12 @@ export default function TermsPage() {
           They do not constitute legal advice or a guarantee of regulatory compliance. You remain
           responsible for your organisation&apos;s compliance obligations.
         </p>
+        <p className="mt-2">
+          <strong className="text-text-primary">Automation limits:</strong> Automated scanning alone
+          cannot establish full WCAG, RPwD Act 2016, IS 17802, GIGW, or SEBI conformance. Paid
+          product plans include or recommend appropriate manual testing and expert review. Software
+          access is not a conformance certificate without an expert engagement path.
+        </p>
       </section>
       <section>
         <h2 className="text-xl font-semibold text-text-primary">5. Payment</h2>

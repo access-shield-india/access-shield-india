@@ -17,9 +17,9 @@ export default function AccessibilityStatementPage() {
       <section>
         <h2 className="text-xl font-semibold text-text-primary">Our commitment</h2>
         <p className="mt-2">
-          AccessibleNow is committed to ensuring digital accessibility for people with
-          disabilities. We continually improve the user experience for everyone and apply relevant
-          accessibility standards including WCAG 2.2 Level AA and IS 17802.
+          AccessibleNow is committed to ensuring digital accessibility for people with disabilities.
+          We continually improve the user experience for everyone and apply relevant accessibility
+          standards including WCAG 2.2 Level AA and IS 17802.
         </p>
       </section>
       <section>

@@ -63,30 +63,30 @@ export function fixColorContrastStyles(elementHtml: string): string {
   if (!/style\s*=/i.test(elementHtml)) {
     // Attach a style if the fragment looks style-like (axe sometimes truncates the tag start)
     if (/background-color\s*:/i.test(elementHtml)) {
-      return elementHtml.replace(
-        /background-color\s*:/i,
-        'color: #0f172a; background-color:',
-      );
+      return elementHtml.replace(/background-color\s*:/i, 'color: #0f172a; background-color:');
     }
     return elementHtml;
   }
 
-  return elementHtml.replace(/style\s*=\s*(["'])([\s\S]*?)\1/i, (_full, quote: string, styles: string) => {
-    let next = styles.trim();
-    if (/background-color\s*:/i.test(next) && !/(?:^|;)\s*color\s*:/i.test(next)) {
-      next = `color: #0f172a; ${next}`;
-    } else if (/(?:^|;)\s*color\s*:/i.test(next)) {
-      next = next.replace(/(?:^|;)\s*color\s*:\s*[^;]+/i, (match) => {
-        const prefix = match.startsWith(';') ? ';' : '';
-        return `${prefix} color: #0f172a`;
-      });
-    } else {
-      next = `color: #0f172a; ${next}`;
-    }
-    // Soften very light greens that often fail contrast with dark text still ok;
-    // prefer ensuring text colour first (already done).
-    return `style=${quote}${next.trim()}${quote}`;
-  });
+  return elementHtml.replace(
+    /style\s*=\s*(["'])([\s\S]*?)\1/i,
+    (_full, quote: string, styles: string) => {
+      let next = styles.trim();
+      if (/background-color\s*:/i.test(next) && !/(?:^|;)\s*color\s*:/i.test(next)) {
+        next = `color: #0f172a; ${next}`;
+      } else if (/(?:^|;)\s*color\s*:/i.test(next)) {
+        next = next.replace(/(?:^|;)\s*color\s*:\s*[^;]+/i, (match) => {
+          const prefix = match.startsWith(';') ? ';' : '';
+          return `${prefix} color: #0f172a`;
+        });
+      } else {
+        next = `color: #0f172a; ${next}`;
+      }
+      // Soften very light greens that often fail contrast with dark text still ok;
+      // prefer ensuring text colour first (already done).
+      return `style=${quote}${next.trim()}${quote}`;
+    },
+  );
 }
 
 function withStyleAttr(html: string, patch: (styles: string) => string): string {
@@ -196,7 +196,7 @@ export function suggestAccessibleNameOptions(
 
   let assetLabel = '';
   let hostHint = '';
-  let kindOf = mediaKindFromUrl(url);
+  const kindOf = mediaKindFromUrl(url);
 
   if (url) {
     try {
@@ -219,8 +219,14 @@ export function suggestAccessibleNameOptions(
 
   // Pull a short phrase from page context (description / URL path)
   if (!assetLabel && pageContext) {
-    const ctx = pageContext.replace(/https?:\/\/\S+/g, ' ').replace(/\s+/g, ' ').trim();
-    const words = ctx.split(' ').filter((w) => w.length > 2).slice(0, 6);
+    const ctx = pageContext
+      .replace(/https?:\/\/\S+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const words = ctx
+      .split(' ')
+      .filter((w) => w.length > 2)
+      .slice(0, 6);
     if (words.length >= 2) assetLabel = titleCaseWords(words.join(' ').slice(0, 48));
   }
 
@@ -263,7 +269,10 @@ export function suggestAccessibleNameOptions(
       alternatives.push(`Download ${assetLabel}`, `Open ${assetLabel} PDF`);
     } else if (assetLabel) {
       primary = assetLabel;
-      alternatives.push(`Go to ${assetLabel}`, hostHint ? `${assetLabel} — ${hostHint}` : `Visit ${assetLabel}`);
+      alternatives.push(
+        `Go to ${assetLabel}`,
+        hostHint ? `${assetLabel} — ${hostHint}` : `Visit ${assetLabel}`,
+      );
     } else if (hostHint) {
       primary = `Link to ${hostHint}`;
       alternatives.push(`Visit ${hostHint}`, `Open ${hostHint} page`);
@@ -295,7 +304,10 @@ const VAGUE_LINK_TEXT_RE =
 export function getAnchorVisibleText(elementHtml: string): string {
   const match = elementHtml.match(/<a\b[^>]*>([\s\S]*?)<\/a>/i);
   if (!match) return '';
-  return match[1]!.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return match[1]!
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /** Title-case for ALL-CAPS / noisy menu labels (better for screen readers). */
@@ -364,10 +376,7 @@ export function fixLinkAccessibleName(
   // 2) Vague "click here" style text → replace visible text with destination-based label
   if (vague) {
     const label = fromUrl;
-    const html = elementHtml.replace(
-      /(<a\b[^>]*>)([\s\S]*?)(<\/a>)/i,
-      `$1${label}$3`,
-    );
+    const html = elementHtml.replace(/(<a\b[^>]*>)([\s\S]*?)(<\/a>)/i, `$1${label}$3`);
     return {
       html,
       suggestion,
@@ -396,10 +405,7 @@ export function fixLinkAccessibleName(
     }
     // Also soften ALL CAPS visible text when present
     if (visible === visible.toUpperCase() && visible.length > 3 && /[A-Z]/.test(visible)) {
-      html = html.replace(
-        /(<a\b[^>]*>)([\s\S]*?)(<\/a>)/i,
-        `$1${readableVisible}$3`,
-      );
+      html = html.replace(/(<a\b[^>]*>)([\s\S]*?)(<\/a>)/i, `$1${readableVisible}$3`);
     }
 
     const altSuggestion: AccessibleNameSuggestion = {
@@ -423,10 +429,7 @@ export function fixLinkAccessibleName(
   if (visible.length > 3 && visible === visible.toUpperCase() && /[A-Z]/.test(visible)) {
     const readable = toReadableLinkText(visible);
     if (readable && readable !== visible) {
-      const html = elementHtml.replace(
-        /(<a\b[^>]*>)([\s\S]*?)(<\/a>)/i,
-        `$1${readable}$3`,
-      );
+      const html = elementHtml.replace(/(<a\b[^>]*>)([\s\S]*?)(<\/a>)/i, `$1${readable}$3`);
       return {
         html,
         suggestion: {
@@ -544,7 +547,9 @@ export function applyHeuristicFix(
     // Prefer ruleId for "label" — do not match class names in HTML
     rid.includes('label') &&
     !isLinkNameIssue(ruleId) &&
-    (elementHtml.includes('<input') || elementHtml.includes('<select') || elementHtml.includes('<textarea'))
+    (elementHtml.includes('<input') ||
+      elementHtml.includes('<select') ||
+      elementHtml.includes('<textarea'))
   ) {
     const suggestion = suggestAccessibleNameOptions(elementHtml, 'input', description);
     const label = suggestion.primary.replace(/"/g, "'");
@@ -555,8 +560,12 @@ export function applyHeuristicFix(
   } else if (
     isLinkNameIssue(ruleId) ||
     isDuplicateLinkPurposeIssue(ruleId, description) ||
-    ( /<a\b/i.test(elementHtml) &&
-      (rid.includes('link') || getAnchorVisibleText(elementHtml) === '' || VAGUE_LINK_TEXT_RE.test(getAnchorVisibleText(elementHtml)) || (getAnchorVisibleText(elementHtml) === getAnchorVisibleText(elementHtml).toUpperCase() && getAnchorVisibleText(elementHtml).length > 3)))
+    (/<a\b/i.test(elementHtml) &&
+      (rid.includes('link') ||
+        getAnchorVisibleText(elementHtml) === '' ||
+        VAGUE_LINK_TEXT_RE.test(getAnchorVisibleText(elementHtml)) ||
+        (getAnchorVisibleText(elementHtml) === getAnchorVisibleText(elementHtml).toUpperCase() &&
+          getAnchorVisibleText(elementHtml).length > 3)))
   ) {
     const linkFix = fixLinkAccessibleName(elementHtml, ruleId, description);
     afterHtml = linkFix.html;
@@ -566,9 +575,10 @@ export function applyHeuristicFix(
     }
   } else if (rid.includes('aria-allowed-role')) {
     afterHtml = fixAriaAllowedRole(elementHtml);
-    detail = afterHtml !== elementHtml
-      ? 'The role on this element is not allowed for its HTML tag. rowgroup is invalid on <li>; use native listitem semantics or role="group" with aria-roledescription="slide" for carousel slides (WAI-ARIA).'
-      : `${description} Review the element role against the ARIA in HTML specification and remove or replace the invalid role.`;
+    detail =
+      afterHtml !== elementHtml
+        ? 'The role on this element is not allowed for its HTML tag. rowgroup is invalid on <li>; use native listitem semantics or role="group" with aria-roledescription="slide" for carousel slides (WAI-ARIA).'
+        : `${description} Review the element role against the ARIA in HTML specification and remove or replace the invalid role.`;
   } else if (rid.includes('button-name') || /<button\b/i.test(elementHtml)) {
     const suggestion = suggestAccessibleNameOptions(elementHtml, 'button', description);
     const label = suggestion.primary.replace(/"/g, "'");
@@ -581,8 +591,7 @@ export function applyHeuristicFix(
       afterHtml = elementHtml.replace(/<button\b/i, `<button aria-label="${label}"`);
     }
     nameNote = formatNameOptionsNote(suggestion);
-    detail =
-      'Buttons need an accessible name (visible text or aria-label) under WCAG 4.1.2.';
+    detail = 'Buttons need an accessible name (visible text or aria-label) under WCAG 4.1.2.';
   } else if (rid.includes('html-has-lang') || rid === 'html-lang-valid') {
     afterHtml = /<html\b/i.test(elementHtml)
       ? elementHtml.replace(/<html\b(?![^>]*\blang=)/i, '<html lang="en"')
