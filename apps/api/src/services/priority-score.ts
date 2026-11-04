@@ -89,7 +89,7 @@ export function scoreViolation(
 ): PrioritizedViolation {
   const applied = weights ?? DEFAULT_PRIORITY_WEIGHTS;
   const impact = impactKey(row.impact);
-  const user = IMPACT_SCORE[impact] ?? IMPACT_SCORE.minor;
+  const user = IMPACT_SCORE[impact] ?? 0.15;
   const regulatory = regulatoryScore(row.standard, row.ruleId);
   const atCoverage = atCoverageScore(row.ruleId);
   const ease = easeScore(impact);
