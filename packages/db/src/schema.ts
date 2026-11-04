@@ -845,3 +845,27 @@ export const serviceEngagementsRelations = relations(serviceEngagements, ({ one 
     references: [organisations.id],
   }),
 }));
+
+/** Org-specific priority scoring weights (AN-F007) */
+export const priorityConfigs = pgTable(
+  'priority_configs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organisationId: orgId(),
+    userImpactWeight: doublePrecision('user_impact_weight').notNull().default(0.4),
+    regulatoryWeight: doublePrecision('regulatory_weight').notNull().default(0.3),
+    atCoverageWeight: doublePrecision('at_coverage_weight').notNull().default(0.2),
+    fixComplexityWeight: doublePrecision('fix_complexity_weight').notNull().default(0.1),
+    ...timestamps,
+  },
+  (table) => ({
+    orgUnique: uniqueIndex('priority_configs_org_uidx').on(table.organisationId),
+  }),
+);
+
+export const priorityConfigsRelations = relations(priorityConfigs, ({ one }) => ({
+  organisation: one(organisations, {
+    fields: [priorityConfigs.organisationId],
+    references: [organisations.id],
+  }),
+}));
