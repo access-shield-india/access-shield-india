@@ -128,16 +128,16 @@ export const organisations = pgTable(
   }),
 );
 
-/** Per-organisation weights for issue priority scoring. One row per tenant. */
+/** Org-specific priority scoring weights (AN-F007). One row per tenant. */
 export const priorityConfigs = pgTable(
   'priority_configs',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     organisationId: orgId(),
-    userImpactWeight: doublePrecision('user_impact_weight').notNull(),
-    regulatoryWeight: doublePrecision('regulatory_weight').notNull(),
-    atCoverageWeight: doublePrecision('at_coverage_weight').notNull(),
-    fixComplexityWeight: doublePrecision('fix_complexity_weight').notNull(),
+    userImpactWeight: doublePrecision('user_impact_weight').notNull().default(0.4),
+    regulatoryWeight: doublePrecision('regulatory_weight').notNull().default(0.3),
+    atCoverageWeight: doublePrecision('at_coverage_weight').notNull().default(0.2),
+    fixComplexityWeight: doublePrecision('fix_complexity_weight').notNull().default(0.1),
     ...timestamps,
   },
   (table) => ({
@@ -842,30 +842,6 @@ export const enterpriseQuotes = pgTable(
 export const serviceEngagementsRelations = relations(serviceEngagements, ({ one }) => ({
   organisation: one(organisations, {
     fields: [serviceEngagements.organisationId],
-    references: [organisations.id],
-  }),
-}));
-
-/** Org-specific priority scoring weights (AN-F007) */
-export const priorityConfigs = pgTable(
-  'priority_configs',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    organisationId: orgId(),
-    userImpactWeight: doublePrecision('user_impact_weight').notNull().default(0.4),
-    regulatoryWeight: doublePrecision('regulatory_weight').notNull().default(0.3),
-    atCoverageWeight: doublePrecision('at_coverage_weight').notNull().default(0.2),
-    fixComplexityWeight: doublePrecision('fix_complexity_weight').notNull().default(0.1),
-    ...timestamps,
-  },
-  (table) => ({
-    orgUnique: uniqueIndex('priority_configs_org_uidx').on(table.organisationId),
-  }),
-);
-
-export const priorityConfigsRelations = relations(priorityConfigs, ({ one }) => ({
-  organisation: one(organisations, {
-    fields: [priorityConfigs.organisationId],
     references: [organisations.id],
   }),
 }));

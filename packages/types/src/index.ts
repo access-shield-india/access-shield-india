@@ -72,6 +72,6 @@ export interface ApiResponse<T> {
   timestamp: string;
 }
 
-export * from './scan-pipeline-v2';
-export * from './issue-plain-language';
-export * from './violation-metadata';
+export * from './scan-pipeline-v2.js';
+export * from './issue-plain-language.js';
+export * from './violation-metadata.js';
